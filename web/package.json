@@ -1,0 +1,24 @@
+{
+  "name": "@spillway/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "data": "tsx scripts/build-data.ts",
+    "test": "echo no web tests yet"
+  },
+  "dependencies": {
+    "@spillway/engine": "workspace:*",
+    "pixi.js": "^8.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "playwright": "1.59",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.2"
+  }
+}
