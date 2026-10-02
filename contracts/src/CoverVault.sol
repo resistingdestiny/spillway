@@ -94,6 +94,7 @@ contract CoverVault is ReentrancyGuard {
     error Locked(uint256 termEnd);
     error LayerExhausted();
     error PrincipalWipedOut();
+    error ShortfallPending(uint256 pendingShortfall);
     error CapacityExceeded(uint256 assets, uint256 available);
     error ZeroShares();
     error InsufficientShares(uint256 requested, uint256 held);
@@ -130,12 +131,16 @@ contract CoverVault is ReentrancyGuard {
     /// @notice Deposits `assets` of principal and mints shares at the current
     /// principal per share (1:1 when the vault is empty).
     /// @dev Capacity is capped so principal never exceeds what the layer can still
-    /// lose. Open until `termEnd`. Money is locked until `termEnd`.
+    /// lose. Open until `termEnd`. Money is locked until `termEnd`. Closed while the
+    /// adapter has a pending shortfall, so nobody joins a layer that already owes
+    /// money. It reopens once `settle()` (or the runner's `finalizeShortfall`) clears it.
     function deposit(uint256 assets) external nonReentrant returns (uint256 shares) {
         if (assets == 0) revert ZeroAmount();
         if (block.timestamp >= termEnd) revert TermOver();
         if (remainingLimit() == 0) revert LayerExhausted();
         if (totalShares > 0 && totalPrincipal == 0) revert PrincipalWipedOut();
+        uint256 pending = adapter.pendingShortfall();
+        if (pending > 0) revert ShortfallPending(pending);
         uint256 available = remainingLimit() - totalPrincipal;
         if (assets > available) revert CapacityExceeded(assets, available);
 
@@ -256,6 +261,7 @@ contract CoverVault is ReentrancyGuard {
     function availableCapacity() external view returns (uint256) {
         if (block.timestamp >= termEnd) return 0;
         if (totalShares > 0 && totalPrincipal == 0) return 0;
+        if (adapter.pendingShortfall() > 0) return 0;
         uint256 remaining = remainingLimit();
         return remaining > totalPrincipal ? remaining - totalPrincipal : 0;
     }
