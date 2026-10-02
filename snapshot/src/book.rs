@@ -28,9 +28,13 @@ pub struct Levels {
 }
 
 impl Levels {
-    pub fn best_bid(&self) -> Option<UD64> { self.bids.first().map(|l| l.price) }
+    pub fn best_bid(&self) -> Option<UD64> {
+        self.bids.first().map(|l| l.price)
+    }
 
-    pub fn best_ask(&self) -> Option<UD64> { self.asks.first().map(|l| l.price) }
+    pub fn best_ask(&self) -> Option<UD64> {
+        self.asks.first().map(|l| l.price)
+    }
 }
 
 /// Walks every L3 order, skips expired ones and sums size and count per price.
@@ -53,7 +57,11 @@ pub fn aggregate(book: &OrderBook) -> Levels {
         entry.1 += 1;
     }
 
-    let level = |price: UD64, (size, orders): (UD64, u32)| Level { price, size, orders };
+    let level = |price: UD64, (size, orders): (UD64, u32)| Level {
+        price,
+        size,
+        orders,
+    };
     let bids: Vec<Level> = bids.into_iter().map(|(p, v)| level(p.0, v)).collect();
     let asks: Vec<Level> = asks.into_iter().map(|(p, v)| level(p, v)).collect();
 
@@ -73,7 +81,12 @@ pub fn aggregate(book: &OrderBook) -> Levels {
         .collect();
     let l2_mismatches = count_mismatches(&bids, &sdk_bids) + count_mismatches(&asks, &sdk_asks);
 
-    Levels { bids, asks, expired_orders, l2_mismatches }
+    Levels {
+        bids,
+        asks,
+        expired_orders,
+        l2_mismatches,
+    }
 }
 
 fn count_mismatches(ours: &[Level], sdk: &[Level]) -> usize {

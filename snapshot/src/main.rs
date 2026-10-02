@@ -98,9 +98,13 @@ async fn run(args: Args) -> anyhow::Result<()> {
         .into_header();
     let block_number = block.number;
 
-    let perp_id =
-        market::resolve_onchain(&chain, &provider, BlockId::number(block_number), &args.market)
-            .await?;
+    let perp_id = market::resolve_onchain(
+        &chain,
+        &provider,
+        BlockId::number(block_number),
+        &args.market,
+    )
+    .await?;
     eprintln!(
         "reading {} perp {perp_id} at block {block_number}",
         args.network.name()
@@ -150,7 +154,11 @@ async fn run(args: Args) -> anyhow::Result<()> {
         .filter_map(|account| account.positions().get(&perp_id))
         .map(|p| schema::Position {
             account_id: p.account_id(),
-            side: if p.r#type().is_long() { "long" } else { "short" },
+            side: if p.r#type().is_long() {
+                "long"
+            } else {
+                "short"
+            },
             size: num(p.size()),
             entry_price: num(p.entry_price()),
             deposit: num(p.deposit()),
@@ -165,7 +173,11 @@ async fn run(args: Args) -> anyhow::Result<()> {
     // The SDK stores margins as leverage (notional / requirement), so the
     // fraction of notional is its inverse.
     let fraction = |leverage: UD64| {
-        if leverage == UD64::ZERO { 0.0 } else { num(UD64::ONE / leverage) }
+        if leverage == UD64::ZERO {
+            0.0
+        } else {
+            num(UD64::ONE / leverage)
+        }
     };
 
     let market = schema::Market {
@@ -201,7 +213,10 @@ async fn run(args: Args) -> anyhow::Result<()> {
             .map(|l| (num(l.price), num(l.size), l.orders))
             .collect::<Vec<_>>()
     };
-    let book = schema::Book { bids: side(&levels.bids), asks: side(&levels.asks) };
+    let book = schema::Book {
+        bids: side(&levels.bids),
+        asks: side(&levels.asks),
+    };
 
     let instant = exchange.instant();
     let snapshot = schema::Snapshot {
@@ -227,8 +242,9 @@ async fn run(args: Args) -> anyhow::Result<()> {
     let mut json = serde_json::to_string_pretty(&snapshot)?;
     json.push('\n');
     match &args.out {
-        Some(path) => std::fs::write(path, json)
-            .with_context(|| format!("writing {}", path.display()))?,
+        Some(path) => {
+            std::fs::write(path, json).with_context(|| format!("writing {}", path.display()))?
+        }
         None => std::io::stdout().write_all(json.as_bytes())?,
     }
     eprintln!(
