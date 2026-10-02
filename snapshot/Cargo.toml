@@ -1,0 +1,41 @@
+[package]
+name = "spillway-snapshot"
+description = "Reads one Perpl market at one block into a spillway.snapshot/1 JSON file"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97"
+license = "MIT"
+publish = false
+
+# Standalone workspace: the repository root is not a Cargo workspace.
+[workspace]
+
+[[bin]]
+name = "spillway-snapshot"
+path = "src/main.rs"
+
+[dependencies]
+# Perpl's official Rust SDK, pinned to a reviewed revision. Default features
+# are off: `testing` would pull anvil bindings and `display` is not needed.
+perpl-sdk = { git = "https://github.com/PerplFoundation/dex-sdk", rev = "01b9910761755b0a0d9c710c1ede62ab937daa7d", default-features = false }
+# Same alloy line as the SDK, with only what a read-only client needs.
+alloy = { version = "2.5.0", default-features = false, features = [
+  "contract",
+  "eips",
+  "provider-http",
+  "reqwest",
+  "reqwest-rustls-tls",
+  "rpc",
+  "rpc-client",
+  "rpc-types",
+  "transport-throttle",
+] }
+anyhow = "1.0.104"
+clap = { version = "4.6.7", features = ["derive"] }
+fastnum = "0.7.5"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.148"
+tokio = { version = "1.53.1", features = ["rt-multi-thread", "macros"] }
+
+[profile.release]
+codegen-units = 4

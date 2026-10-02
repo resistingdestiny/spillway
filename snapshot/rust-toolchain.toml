@@ -1,0 +1,3 @@
+[toolchain]
+# Matches the toolchain the Perpl SDK pins (edition 2024).
+channel = "1.97"
