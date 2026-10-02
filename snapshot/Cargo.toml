@@ -31,6 +31,7 @@ alloy = { version = "2.5.0", default-features = false, features = [
   "transport-throttle",
 ] }
 anyhow = "1.0.104"
+chrono = { version = "0.4.45", default-features = false, features = ["now"] }
 clap = { version = "4.6.7", features = ["derive"] }
 fastnum = "0.7.5"
 serde = { version = "1.0.228", features = ["derive"] }
