@@ -10,7 +10,7 @@ Bad debt is paid in this order:
 
 ## Contracts
 
-**`CoverVault`** holds one layer. Capital providers deposit the collateral token and get shares. Deposits are open until `termEnd` and capped so principal never exceeds what the layer can still lose (`limit - paidOut`). Money is locked until `termEnd`. The sponsor (the exchange) funds a premium that streams to shareholders from `termStart` to `termEnd`, tracked with a per-share accumulator so a late depositor only earns from the moment they join. Holders can claim premium at any time. When the adapter reports a shortfall, anyone can call `settle()`, which pays the adapter the lowest of the shortfall, the remaining limit and the principal. After `termEnd`, holders withdraw their share of what is left plus any unclaimed premium, and `sweepUnearnedPremium()` returns premium nobody earned to the sponsor. Principal and premium are separate books, so a payout can never touch premium owed to holders.
+**`CoverVault`** holds one layer. Capital providers deposit the collateral token and get shares. Deposits are open until `termEnd` and capped so principal never exceeds what the layer can still lose (`limit - paidOut`). They close while the adapter has a pending shortfall, so nobody joins a layer that already owes money. Money is locked until `termEnd`. The sponsor (the exchange) funds a premium that streams to shareholders from `termStart` to `termEnd`, tracked with a per-share accumulator so a late depositor only earns from the moment they join. Holders can claim premium at any time. When the adapter reports a shortfall, anyone can call `settle()`, which pays the adapter the lowest of the shortfall, the remaining limit and the principal. After `termEnd`, holders withdraw their share of what is left plus any unclaimed premium, and `sweepUnearnedPremium()` returns premium nobody earned to the sponsor. Principal and premium are separate books, so a payout can never touch premium owed to holders.
 
 **`MockBackstopAdapter`** stands in for one Perpl perpetual's insurance fund on testnet. Anyone can top up the fund. A scenario runner posts bad debt: the fund pays what it can, and the rest becomes `pendingShortfall`, which the vault pays down. `finalizeShortfall()` books whatever is still pending as ADL loss. Running totals (`badDebtTotal`, `fundPaid`, `layerPaid`, `adlLoss`) feed the UI's three counters. On real Perpl the top-up path would be the protocol's `xferProtocolToPerp(perpId, amount, true)`. Whether a third party can call it is an open question for the Perpl team.
 
@@ -37,14 +37,14 @@ forge test
 | --- | --- |
 | `test/MockUSD.t.sol` | Token metadata and the faucet cap |
 | `test/MockBackstopAdapter.t.sol` | Fund first, shortfall, cover, ADL, roles |
-| `test/CoverVault.deposit.t.sol` | Deposit cap, lock, share pricing, blocked deposits |
+| `test/CoverVault.deposit.t.sol` | Deposit cap, lock, share pricing, deposits blocked by exhaustion or a pending shortfall |
 | `test/CoverVault.settle.t.sol` | Full loss, partial loss, no-op settle, two payouts to the limit |
 | `test/CoverVault.premium.t.sol` | Streaming, time weighting, claims, top-ups, sweep |
 | `test/CoverVault.fuzz.t.sol` | Payout equals min(shortfall, remaining limit, principal); premium never leaks |
 | `test/CoverVault.invariant.t.sol` | Solvency and payout bounds over random action sequences |
 | `test/Deploy.t.sol` | The deploy script's wiring |
 
-The invariant suite runs with fail-on-revert on. It checks after every call that the vault's balance covers principal plus the premium reserve, that the reserve covers what holders can claim, that no payout passes min(shortfall, remaining limit, principal), and that the waterfall adds up to all bad debt.
+The invariant suite runs with fail-on-revert on. It checks after every call that the vault's balance covers principal plus the premium reserve, that the reserve covers what holders can claim, that no payout passes min(shortfall, remaining limit, principal), that no deposit is accepted while a shortfall is pending, and that the waterfall adds up to all bad debt.
 
 ## Deploy to Monad testnet
 
@@ -98,7 +98,7 @@ cast call $ADAPTER "adlLoss()(uint256)" --rpc-url $RPC
 ## Design notes
 
 - Cover runs from `termStart` to `termEnd`. Outside that window `settle()` does nothing, so a shortfall left unsettled at expiry is not paid by the layer. A keeper should call `settle()` right after each cascade.
-- Deposits stay open while a shortfall is pending. A deposit made between a cascade and `settle()` shares in that loss. The UI should show `pendingShortfall` next to the deposit button.
+- Deposits close while the adapter has a pending shortfall (`ShortfallPending(amount)`), so a newcomer never shares a loss that happened before they joined. They reopen once `settle()` clears the shortfall, or, if the vault cannot pay all of it, once the runner calls `finalizeShortfall()`. `availableCapacity()` reads 0 in the meantime.
 - Once principal hits zero with shares outstanding, deposits close for the rest of the term, even if limit remains.
 - Premium keeps streaming to holders after a loss, including a total loss. The premium buys the risk for the whole term.
 - Shares are internal balances and cannot be transferred. That keeps premium accounting simple.

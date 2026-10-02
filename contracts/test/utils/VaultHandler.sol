@@ -25,6 +25,8 @@ contract VaultHandler is Test {
     uint256 public payouts;
     /// @notice Count of withdrawals after the term.
     uint256 public withdrawals;
+    /// @notice Set if a deposit ever went through while the adapter had a shortfall.
+    bool public depositedWhilePending;
 
     constructor(
         MockUSD usd_,
@@ -63,10 +65,21 @@ contract VaultHandler is Test {
     // ---------------------------------------------------------------- actions
 
     function deposit(uint256 actorSeed, uint256 amount) external {
+        address who = _actor(actorSeed);
+        if (adapter.pendingShortfall() > 0) {
+            // The layer owes money, so any deposit must be refused. Try one to prove it.
+            _mint(who, 1e6);
+            vm.startPrank(who);
+            usd.approve(address(vault), 1e6);
+            try vault.deposit(1e6) {
+                depositedWhilePending = true;
+            } catch {}
+            vm.stopPrank();
+            return;
+        }
         uint256 room = vault.availableCapacity();
         if (room == 0) return;
         amount = bound(amount, 1, room);
-        address who = _actor(actorSeed);
         _mint(who, amount);
         vm.startPrank(who);
         usd.approve(address(vault), amount);
