@@ -277,8 +277,8 @@ contract CoverVault is ReentrancyGuard {
         uint256 to = Math.min(block.timestamp, termEnd);
         uint256 shares = totalShares;
         if (to > lastAccrual && shares > 0) pps += premiumRate * (to - lastAccrual) / shares;
-        return accruedPremium[account]
-            + sharesOf[account] * (pps - premiumPerSharePaid[account]) / PRECISION;
+        uint256 earned = sharesOf[account] * (pps - premiumPerSharePaid[account]) / PRECISION;
+        return accruedPremium[account] + earned;
     }
 
     /// @notice Premium tokens the vault still holds: owed to holders, still to

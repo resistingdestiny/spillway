@@ -23,9 +23,7 @@ contract CoverVaultFuzzTest is VaultFixture {
         _fundPremium(1_000e6);
 
         uint256[3] memory debts = [
-            bound(debt1, 1, 1_000_000e6),
-            bound(debt2, 1, 1_000_000e6),
-            bound(debt3, 1, 1_000_000e6)
+            bound(debt1, 1, 1_000_000e6), bound(debt2, 1, 1_000_000e6), bound(debt3, 1, 1_000_000e6)
         ];
         for (uint256 i; i < 3; ++i) {
             vm.warp(block.timestamp + 1 days);

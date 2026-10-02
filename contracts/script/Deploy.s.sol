@@ -38,7 +38,8 @@ contract Deploy is Script {
         adapter.setRunner(runner);
 
         uint256 start = block.timestamp;
-        vault = new CoverVault(usd, adapter, deployer, start, start + termDays * 1 days, limit, seed);
+        vault =
+            new CoverVault(usd, adapter, deployer, start, start + termDays * 1 days, limit, seed);
         adapter.setVault(address(vault));
 
         _mint(usd, deployer, seed + premium);

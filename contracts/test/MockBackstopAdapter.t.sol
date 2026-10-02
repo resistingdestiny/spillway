@@ -72,7 +72,9 @@ contract MockBackstopAdapterTest is Test {
 
     function test_onlyOwnerSetsRunner() public {
         vm.prank(stranger);
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, stranger));
+        vm.expectRevert(
+            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, stranger)
+        );
         adapter.setRunner(stranger);
     }
 
