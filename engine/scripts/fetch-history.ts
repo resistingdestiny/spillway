@@ -1,6 +1,8 @@
 // Fetch the price history the engine needs, once, and save it under engine/data.
 //
 //   - BTC-USD daily candles since 2016, for the Monte Carlo's daily moves.
+//   - BTC-USD hourly candles since 2016, reduced to each day's worst one-hour fall and rise, so the
+//     Monte Carlo samples fast moves rather than whole-day drifts.
 //   - BTC-USD one-minute candles around the 10 October 2025 crash, for the replay.
 //
 // Source: Coinbase Exchange public candles API (no key). Run: pnpm --filter @spillway/engine fetch-history
@@ -41,12 +43,37 @@ async function candles(granularity: number, start: Date, end: Date): Promise<Row
 
 const fetchedAt = new Date().toISOString();
 
-const daily = await candles(86_400, new Date("2016-01-01T00:00:00Z"), new Date("2026-10-01T00:00:00Z"));
-writeFileSync(
+const daily = process.argv.includes("--hourly-only") ? [] : await candles(86_400, new Date("2016-01-01T00:00:00Z"), new Date("2026-10-01T00:00:00Z"));
+if (daily.length) writeFileSync(
   out("btc-usd-daily.json"),
   JSON.stringify({ source: "Coinbase Exchange, BTC-USD daily candles", fetchedAt, columns: ["unix", "open", "high", "low", "close"], rows: daily }) + "\n",
 );
-console.log(`daily: ${daily.length} days, ${new Date(daily[0]![0] * 1000).toISOString().slice(0, 10)} to ${new Date(daily.at(-1)![0] * 1000).toISOString().slice(0, 10)}`);
+if (daily.length) console.log(`daily: ${daily.length} days, ${new Date(daily[0]![0] * 1000).toISOString().slice(0, 10)} to ${new Date(daily.at(-1)![0] * 1000).toISOString().slice(0, 10)}`);
+
+// Hourly candles are too many to commit, so keep each day's worst hour only.
+const onlyHourly = process.argv.includes("--hourly-only");
+const hourly = await candles(3_600, new Date("2016-01-01T00:00:00Z"), new Date("2026-10-01T00:00:00Z"));
+const byDay = new Map<string, { down: number; up: number; hours: number }>();
+for (const [t, open, high, low] of hourly) {
+  const day = new Date(t * 1000).toISOString().slice(0, 10);
+  const d = byDay.get(day) ?? { down: 0, up: 0, hours: 0 };
+  d.down = Math.max(d.down, open > 0 ? 1 - low / open : 0);
+  d.up = Math.max(d.up, open > 0 ? high / open - 1 : 0);
+  d.hours += 1;
+  byDay.set(day, d);
+}
+const worstHour = [...byDay.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+writeFileSync(
+  out("btc-usd-worst-hour.json"),
+  JSON.stringify({
+    source: "Coinbase Exchange, BTC-USD hourly candles, reduced to each UTC day's largest open-to-low fall and open-to-high rise within one hour",
+    fetchedAt,
+    columns: ["day", "down", "up", "hours"],
+    rows: worstHour.map(([day, d]) => [day, Number(d.down.toFixed(6)), Number(d.up.toFixed(6)), d.hours]),
+  }) + "\n",
+);
+console.log(`worst hour: ${worstHour.length} days from ${hourly.length} hourly candles`);
+if (onlyHourly) process.exit(0);
 
 const crash = await candles(60, new Date("2025-10-10T20:00:00Z"), new Date("2025-10-10T22:30:00Z"));
 writeFileSync(
