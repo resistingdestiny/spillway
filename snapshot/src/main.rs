@@ -7,6 +7,7 @@ mod market;
 mod network;
 mod onchain;
 mod schema;
+mod summary;
 
 use std::{io::Write, path::PathBuf};
 
@@ -18,7 +19,7 @@ use alloy::{
 };
 use anyhow::{Context, bail};
 use clap::Parser;
-use fastnum::UD64;
+use fastnum::{UD64, UD128};
 use perpl_sdk::state::SnapshotBuilder;
 
 use crate::{network::Network, schema::num};
@@ -247,6 +248,57 @@ async fn run(args: Args) -> anyhow::Result<()> {
         .collect();
     positions.sort_by_key(|p| p.account_id);
 
+    // Consistency: per side, the position sizes must add up to the contract's
+    // open interest counter. Summed as exact decimals, not floats.
+    let oi_check = |long: bool, open_interest: UD128| {
+        let sides: Vec<UD64> = exchange
+            .accounts()
+            .values()
+            .filter_map(|account| account.positions().get(&perp_id))
+            .filter(|p| p.r#type().is_long() == long)
+            .map(|p| p.size())
+            .collect();
+        summary::OiCheck {
+            positions: sides.len(),
+            sum_sizes: sides
+                .iter()
+                .fold(UD128::ZERO, |sum, size| sum + size.resize()),
+            open_interest,
+        }
+    };
+    let checks = summary::Checks {
+        long: oi_check(true, extras.long_open_interest),
+        short: oi_check(false, extras.short_open_interest),
+        mark_age_secs: perp.instant().block_timestamp() as i64 - perp.mark_price_timestamp() as i64,
+        oracle_age_secs: perp.instant().block_timestamp() as i64
+            - perp.oracle_price_timestamp() as i64,
+    };
+    for (side, check) in [("long", &checks.long), ("short", &checks.short)] {
+        if !check.ok() {
+            notes.push(format!(
+                "{side} position sizes sum to {} but open interest is {}",
+                check.sum_sizes, check.open_interest
+            ));
+        }
+    }
+    if perp.is_paused() {
+        notes.push("market is paused".to_string());
+    }
+    if perp.is_mark_price_obsolete() {
+        notes.push(format!(
+            "mark price is {}s old, past the {}s the exchange accepts",
+            checks.mark_age_secs,
+            perp.price_max_age_sec()
+        ));
+    }
+    if perp.is_oracle_used() && perp.is_oracle_price_obsolete() {
+        notes.push(format!(
+            "oracle price is {}s old, past the {}s the exchange accepts",
+            checks.oracle_age_secs,
+            perp.price_max_age_sec()
+        ));
+    }
+
     // The SDK stores margins as leverage (notional / requirement), so the
     // fraction of notional is its inverse.
     let fraction = |leverage: UD64| {
@@ -295,6 +347,19 @@ async fn run(args: Args) -> anyhow::Result<()> {
         asks: side(&levels.asks),
     };
 
+    if levels.expired_orders > 0 {
+        notes.push(format!(
+            "{} expired orders still in the contract book were left out",
+            levels.expired_orders
+        ));
+    }
+    if levels.l2_mismatches > 0 {
+        notes.push(format!(
+            "{} book levels differ from the SDK's cached L2 view",
+            levels.l2_mismatches
+        ));
+    }
+
     let instant = exchange.instant();
     let snapshot = schema::Snapshot {
         schema: schema::SCHEMA,
@@ -324,17 +389,6 @@ async fn run(args: Args) -> anyhow::Result<()> {
         }
         None => std::io::stdout().write_all(json.as_bytes())?,
     }
-    eprintln!(
-        "block {} positions {} mark {} best bid {:?} best ask {:?} levels {}/{} expired {} l2 mismatches {}",
-        snapshot.block,
-        snapshot.positions.len(),
-        snapshot.market.mark_price,
-        levels.best_bid().map(num),
-        levels.best_ask().map(num),
-        snapshot.book.bids.len(),
-        snapshot.book.asks.len(),
-        levels.expired_orders,
-        levels.l2_mismatches,
-    );
+    summary::print(&snapshot, &levels, &checks);
     Ok(())
 }

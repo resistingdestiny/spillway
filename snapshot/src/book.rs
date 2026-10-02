@@ -27,16 +27,6 @@ pub struct Levels {
     pub l2_mismatches: usize,
 }
 
-impl Levels {
-    pub fn best_bid(&self) -> Option<UD64> {
-        self.bids.first().map(|l| l.price)
-    }
-
-    pub fn best_ask(&self) -> Option<UD64> {
-        self.asks.first().map(|l| l.price)
-    }
-}
-
 /// Walks every L3 order, skips expired ones and sums size and count per price.
 /// Then checks the result against the SDK's cached L2 levels.
 pub fn aggregate(book: &OrderBook) -> Levels {
