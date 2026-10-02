@@ -22,7 +22,7 @@
 import { writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { DEFAULT_CONFIG, type EngineConfig, type RunResult, type Snapshot } from "@spillway/engine";
-import type { Hash } from "viem";
+import { type Address, type Hash, type Hex, encodeFunctionData } from "viem";
 import { adapterAbi, mockUsdAbi } from "./abi.js";
 import {
   type ChainState,
@@ -40,6 +40,7 @@ import {
   loadKey,
   publicClientFor,
   readState,
+  sendTx,
   sleep,
   walletClientFor,
 } from "./chain.js";
@@ -130,14 +131,9 @@ export async function runScenario(ctx: RunnerContext, spec: ScenarioSpec, snapsh
   const runner = await publicClient.readContract({ address: adapter, abi: adapterAbi, functionName: "runner" });
   if (runner.toLowerCase() !== me.toLowerCase()) throw new Error(`${me} is not the adapter's runner (${runner})`);
 
-  const send = async (kind: SentKind, units: bigint, write: () => Promise<Hash>) => {
-    const hash = await write();
-    const r = await publicClient.waitForTransactionReceipt({ hash, pollingInterval: Math.min(pollMs, 250) });
-    if (r.status !== "success") {
-      const sent = await publicClient.getTransaction({ hash });
-      throw new Error(`${kind} reverted in ${hash} (gas used ${r.gasUsed} of limit ${sent.gas})`);
-    }
-    run.sent.push({ kind, units, hash, block: r.blockNumber, gasUsed: r.gasUsed });
+  const send = async (kind: SentKind, units: bigint, to: Address, data: Hex, gas?: bigint) => {
+    const r = await sendTx(publicClient, wallet, { to, data, gas }, kind, Math.min(pollMs, 250));
+    run.sent.push({ kind, units, hash: r.transactionHash, block: r.blockNumber, gasUsed: r.gasUsed });
   };
 
   // Income is paid in by the runner, so it needs the tokens and the allowance up front.
@@ -147,21 +143,20 @@ export async function runScenario(ctx: RunnerContext, spec: ScenarioSpec, snapsh
     let balance = await publicClient.readContract({ address: usd, abi: mockUsdAbi, functionName: "balanceOf", args: [me] });
     while (balance < need) {
       const chunk = need - balance < cap ? need - balance : cap;
-      await send("mint", chunk, () => wallet.writeContract({ address: usd, abi: mockUsdAbi, functionName: "mint", args: [me, chunk] }));
+      await send("mint", chunk, usd, encodeFunctionData({ abi: mockUsdAbi, functionName: "mint", args: [me, chunk] }));
       balance += chunk;
     }
     const allowance = await publicClient.readContract({ address: usd, abi: mockUsdAbi, functionName: "allowance", args: [me, adapter] });
     if (allowance < need) {
-      await send("approve", need, () => wallet.writeContract({ address: usd, abi: mockUsdAbi, functionName: "approve", args: [adapter, need] }));
+      await send("approve", need, usd, encodeFunctionData({ abi: mockUsdAbi, functionName: "approve", args: [adapter, need] }));
     }
   }
 
   for (const [i, tx] of plan.txs.entries()) {
-    await send(tx.kind, tx.units, async () => {
-      const req = { address: adapter, abi: adapterAbi, functionName: tx.kind, args: [tx.units], account: wallet.account } as const;
-      const gas = await publicClient.estimateContractGas(req);
-      return wallet.writeContract({ ...req, gas: tx.kind === "reportBadDebt" ? gas + BAD_DEBT_GAS_HEADROOM : gas });
-    });
+    const data = encodeFunctionData({ abi: adapterAbi, functionName: tx.kind, args: [tx.units] });
+    let gas = await publicClient.estimateGas({ account: wallet.account, to: adapter, data });
+    if (tx.kind === "reportBadDebt") gas += BAD_DEBT_GAS_HEADROOM;
+    await send(tx.kind, tx.units, adapter, data, gas);
     if ((i + 1) % 50 === 0) log(`runner: ${i + 1}/${plan.txs.length} transactions`);
   }
   log(`runner: all ${plan.txs.length} transactions mined`);
@@ -180,7 +175,7 @@ export async function runScenario(ctx: RunnerContext, spec: ScenarioSpec, snapsh
 
   const pending = await publicClient.readContract({ address: adapter, abi: adapterAbi, functionName: "pendingShortfall" });
   if (pending > 0n) {
-    await send("finalizeShortfall", pending, () => wallet.writeContract({ address: adapter, abi: adapterAbi, functionName: "finalizeShortfall" }));
+    await send("finalizeShortfall", pending, adapter, encodeFunctionData({ abi: adapterAbi, functionName: "finalizeShortfall" }));
     run.finalized = pending;
     log(`runner: finalized ${toDollars(pending)} of shortfall as ADL`);
   } else {

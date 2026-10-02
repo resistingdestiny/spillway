@@ -19,7 +19,7 @@ import { homedir, tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import { createInterface } from "node:readline";
 import { DEFAULT_CONFIG, type Snapshot } from "@spillway/engine";
-import { type Abi, type Address, type Hash, type Hex, getAddress, toHex } from "viem";
+import { type Abi, type Address, type Hex, encodeDeployData, encodeFunctionData, getAddress, toHex } from "viem";
 import { mnemonicToAccount } from "viem/accounts";
 import { adapterAbi, mockUsdAbi, vaultAbi } from "./abi.js";
 import {
@@ -31,6 +31,7 @@ import {
   bigintReplacer,
   chainFor,
   publicClientFor,
+  sendTx,
   sleep,
   walletClientFor,
 } from "./chain.js";
@@ -108,15 +109,14 @@ interface Actors {
 
 async function deploy(pub: Public, a: Actors, snapshot: Snapshot): Promise<{ deployment: Deployment; gas: bigint }> {
   let gas = 0n;
-  const wait = async (hash: Hash) => {
-    const r = await pub.waitForTransactionReceipt({ hash, pollingInterval: 50 });
-    if (r.status !== "success") throw new Error(`setup transaction reverted: ${hash}`);
+  const tx = async (w: Wallet, to: Address | undefined, data: Hex, label: string) => {
+    const r = await sendTx(pub, w, { to, data }, label, 50);
     gas += r.gasUsed;
     return r;
   };
   const create = async (name: string, args: readonly unknown[]) => {
     const { abi, bytecode } = artifact(name);
-    const r = await wait(await a.deployer.deployContract({ abi, bytecode, args }));
+    const r = await tx(a.deployer, undefined, encodeDeployData({ abi, bytecode, args }), `deploy ${name}`);
     if (!r.contractAddress) throw new Error(`${name} has no address`);
     return { address: getAddress(r.contractAddress), block: r.blockNumber };
   };
@@ -124,7 +124,7 @@ async function deploy(pub: Public, a: Actors, snapshot: Snapshot): Promise<{ dep
     const cap = 100_000_000_000n;
     for (let left = amount; left > 0n; ) {
       const chunk = left < cap ? left : cap;
-      await wait(await w.writeContract({ address: usd, abi: mockUsdAbi, functionName: "mint", args: [w.account.address, chunk] }));
+      await tx(w, usd, encodeFunctionData({ abi: mockUsdAbi, functionName: "mint", args: [w.account.address, chunk] }), "mint");
       left -= chunk;
     }
   };
@@ -135,22 +135,22 @@ async function deploy(pub: Public, a: Actors, snapshot: Snapshot): Promise<{ dep
 
   const usd = await create("MockUSD", []);
   const adapter = await create("MockBackstopAdapter", [usd.address, BigInt(snapshot.market.perpId), owner]);
-  await wait(await a.deployer.writeContract({ address: adapter.address, abi: adapterAbi, functionName: "setRunner", args: [a.runner.account.address] }));
+  await tx(a.deployer, adapter.address, encodeFunctionData({ abi: adapterAbi, functionName: "setRunner", args: [a.runner.account.address] }), "setRunner");
   const termStart = (await pub.getBlock()).timestamp;
   const vault = await create("CoverVault", [usd.address, adapter.address, owner, termStart, termStart + TERM_SECONDS, limit, seed]);
-  await wait(await a.deployer.writeContract({ address: adapter.address, abi: adapterAbi, functionName: "setVault", args: [vault.address] }));
+  await tx(a.deployer, adapter.address, encodeFunctionData({ abi: adapterAbi, functionName: "setVault", args: [vault.address] }), "setVault");
 
   // Seed the insurance fund with the snapshot's, to the unit, and fund the premium.
   await mint(a.deployer, usd.address, seed + PREMIUM);
-  await wait(await a.deployer.writeContract({ address: usd.address, abi: mockUsdAbi, functionName: "approve", args: [adapter.address, seed] }));
-  await wait(await a.deployer.writeContract({ address: adapter.address, abi: adapterAbi, functionName: "fundInsurance", args: [seed] }));
-  await wait(await a.deployer.writeContract({ address: usd.address, abi: mockUsdAbi, functionName: "approve", args: [vault.address, PREMIUM] }));
-  await wait(await a.deployer.writeContract({ address: vault.address, abi: vaultAbi, functionName: "fundPremium", args: [PREMIUM] }));
+  await tx(a.deployer, usd.address, encodeFunctionData({ abi: mockUsdAbi, functionName: "approve", args: [adapter.address, seed] }), "approve");
+  await tx(a.deployer, adapter.address, encodeFunctionData({ abi: adapterAbi, functionName: "fundInsurance", args: [seed] }), "fundInsurance");
+  await tx(a.deployer, usd.address, encodeFunctionData({ abi: mockUsdAbi, functionName: "approve", args: [vault.address, PREMIUM] }), "approve");
+  await tx(a.deployer, vault.address, encodeFunctionData({ abi: vaultAbi, functionName: "fundPremium", args: [PREMIUM] }), "fundPremium");
 
   // One LP takes the whole layer.
   await mint(a.lp, usd.address, limit);
-  await wait(await a.lp.writeContract({ address: usd.address, abi: mockUsdAbi, functionName: "approve", args: [vault.address, limit] }));
-  await wait(await a.lp.writeContract({ address: vault.address, abi: vaultAbi, functionName: "deposit", args: [limit] }));
+  await tx(a.lp, usd.address, encodeFunctionData({ abi: mockUsdAbi, functionName: "approve", args: [vault.address, limit] }), "approve");
+  await tx(a.lp, vault.address, encodeFunctionData({ abi: vaultAbi, functionName: "deposit", args: [limit] }), "deposit");
 
   const deployment: Deployment = {
     schema: "spillway.deployment/1",

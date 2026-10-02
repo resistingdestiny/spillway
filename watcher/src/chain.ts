@@ -10,12 +10,14 @@ import {
   type Chain,
   type Hex,
   type PublicClient,
+  type TransactionReceipt,
   type Transport,
   type WalletClient,
   createPublicClient,
   createWalletClient,
   defineChain,
   http,
+  keccak256,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { foundry, monadTestnet } from "viem/chains";
@@ -182,3 +184,39 @@ export function bigintReplacer(_key: string, value: unknown): unknown {
 }
 
 export const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+const TRANSIENT = /took too long|timed out|HTTP request failed|fetch failed|ECONNRESET|socket hang up/i;
+
+/**
+ * Signs locally, sends, and waits for the receipt. The hash is known before the send, so a
+ * send that times out (the node may have taken the transaction and answered late) is checked
+ * by hash and retried with the same signed bytes, never with a new nonce. Throws on a revert.
+ */
+export async function sendTx(
+  pub: Public,
+  wallet: Wallet,
+  req: { to?: Address; data: Hex; gas?: bigint },
+  label: string,
+  pollMs: number,
+): Promise<TransactionReceipt> {
+  const prepared = await wallet.prepareTransactionRequest({ account: wallet.account, chain: wallet.chain, to: req.to, data: req.data, gas: req.gas });
+  const raw = await wallet.signTransaction(prepared);
+  const hash = keccak256(raw);
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await pub.sendRawTransaction({ serializedTransaction: raw });
+      break;
+    } catch (e) {
+      const known = await pub.getTransaction({ hash }).then(
+        () => true,
+        () => false,
+      );
+      if (known) break;
+      if (attempt >= 4 || !TRANSIENT.test(String((e as Error)?.message))) throw e;
+      await sleep(1000 * attempt);
+    }
+  }
+  const r = await pub.waitForTransactionReceipt({ hash, pollingInterval: pollMs, retryCount: 10 });
+  if (r.status !== "success") throw new Error(`${label} reverted in ${hash} (gas used ${r.gasUsed} of limit ${prepared.gas})`);
+  return r;
+}

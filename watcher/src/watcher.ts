@@ -14,7 +14,7 @@
 //   pnpm --filter @spillway/watcher watcher [--deployment <file>] [--rpc <url>] [--poll-ms 1000]
 
 import { pathToFileURL } from "node:url";
-import { type Address, parseEventLogs } from "viem";
+import { type Address, encodeFunctionData, parseEventLogs } from "viem";
 import { adapterAbi, vaultAbi } from "./abi.js";
 import {
   MONAD_TESTNET_RPC,
@@ -28,6 +28,7 @@ import {
   loadDotEnv,
   loadKey,
   publicClientFor,
+  sendTx,
   walletClientFor,
 } from "./chain.js";
 
@@ -88,9 +89,8 @@ export async function startWatcher(o: WatcherOptions): Promise<WatcherHandle> {
       exhaustedLogged = true;
       return;
     }
-    const hash = await wallet.writeContract({ address: vault, abi: vaultAbi, functionName: "settle" });
-    const r = await publicClient.waitForTransactionReceipt({ hash, pollingInterval: o.pollMs });
-    if (r.status !== "success") throw new Error(`settle reverted in ${hash}`);
+    const r = await sendTx(publicClient, wallet, { to: vault, data: encodeFunctionData({ abi: vaultAbi, functionName: "settle" }) }, "settle", o.pollMs);
+    const hash = r.transactionHash;
     let firstShortfall: bigint | undefined;
     try {
       const evs = await publicClient.getContractEvents({
