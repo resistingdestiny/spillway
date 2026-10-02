@@ -1,0 +1,10 @@
+{
+  "name": "spillway",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "pnpm -r test",
+    "engine": "pnpm --filter @spillway/engine run cli"
+  },
+  "packageManager": "pnpm@9.12.3"
+}
