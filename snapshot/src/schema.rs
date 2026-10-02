@@ -65,7 +65,7 @@ pub struct Market {
     pub funding_rate: f64,
 }
 
-#[derive(Debug, Default, Serialize)]
+#[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LiquidationSplit {
     pub trader: f64,

@@ -3,6 +3,7 @@
 
 mod market;
 mod network;
+mod onchain;
 mod schema;
 
 use std::{io::Write, path::PathBuf};
@@ -121,6 +122,26 @@ async fn run(args: Args) -> anyhow::Result<()> {
         .get(&perp_id)
         .with_context(|| format!("perpetual {perp_id} missing from the SDK snapshot"))?;
 
+    // The insurance fund, position balance, open interest per side and the
+    // liquidation split are not on the SDK's Perpetual. Read them through the
+    // SDK's Exchange binding at the same block.
+    let extras = onchain::read(
+        &chain,
+        &provider,
+        exchange.instant().block_number(),
+        perp_id,
+        exchange.collateral_converter(),
+        perp.size_converter(),
+    )
+    .await?;
+    if extras.long_open_interest != perp.open_interest() {
+        bail!(
+            "SDK open interest {} differs from getPerpetualInfoV2 {} at the same block",
+            perp.open_interest(),
+            extras.long_open_interest
+        );
+    }
+
     // Every open position on this perpetual, in account order.
     let mut positions: Vec<schema::Position> = exchange
         .accounts()
@@ -159,12 +180,16 @@ async fn run(args: Args) -> anyhow::Result<()> {
         initial_margin_fraction: fraction(perp.initial_margin()),
         taker_fee: num(perp.taker_fee()),
         maker_fee: num(perp.maker_fee()),
-        long_open_interest: num(perp.open_interest()),
-        short_open_interest: 0.0,
-        insurance_fund: 0.0,
-        position_balance: 0.0,
-        liquidation_split: schema::LiquidationSplit::default(),
-        fee_insurance_share: 0.0,
+        long_open_interest: num(extras.long_open_interest),
+        short_open_interest: num(extras.short_open_interest),
+        insurance_fund: num(extras.insurance_fund),
+        position_balance: num(extras.position_balance),
+        liquidation_split: schema::LiquidationSplit {
+            trader: num(extras.liq_trader),
+            insurance: num(extras.liq_insurance),
+            protocol: num(extras.liq_protocol),
+        },
+        fee_insurance_share: num(extras.fee_insurance_share),
         funding_rate: num(perp.funding_rate()),
     };
 
