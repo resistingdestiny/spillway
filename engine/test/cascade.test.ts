@@ -53,7 +53,7 @@ describe("single position", () => {
 describe("fund first", () => {
   it("takes a bankrupt position on and sells it into the book, below the mark", () => {
     const snap = syntheticSnapshot({ positions: [docsLong], insuranceFund: 1_000 });
-    const gapCfg = withConfig({ stress: { shockSeconds: 1, holdSeconds: 60 }, backstop: { capacityUsd: 0 } });
+    const gapCfg = withConfig({ stress: { shockSeconds: 1, holdSeconds: 60 }, backstop: { capacityUsd: 0 }, liquidation: { bankruptPolicy: "fund" } });
     const r = stress(snap, 0.2, gapCfg, { layerLimitUsd: 5_000 });
     const fills = r.events.filter((e) => e.kind === "fill");
     expect(fills.length).toBeGreaterThan(0);

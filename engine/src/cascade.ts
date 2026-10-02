@@ -8,10 +8,11 @@
 //   5. Flagged positions are sold into the book, but no further below the mark than a slippage
 //      floor. What the book can not take goes to the backstop buyer while it has capacity. The rest
 //      waits for depth to refill. A position the mark carries past its bankruptcy price is either
-//      taken on by the fund and sold at any price (fund first, the waterfall Spillway proposes), or
-//      deleveraged against winners at the mark (Perpl today). See liquidation.bankruptPolicy.
-//   6. Margin left after a fill feeds the insurance fund. A fill past the bankruptcy price leaves bad
-//      debt, paid by the fund, then the Spillway layer, then winning traders.
+//      deleveraged against winners at its bankruptcy price (Perpl's design), or taken on by the fund
+//      and sold at any price. See liquidation.bankruptPolicy.
+//   6. Margin left after a fill feeds the insurance fund. A fill past the bankruptcy price, or a
+//      deleverage below it, leaves bad debt. The fund pays it, then the Spillway layer, and only the
+//      rest is lost by winning traders.
 //
 // The run is deterministic: same snapshot, config and path give the same timeline.
 
@@ -229,7 +230,8 @@ export function simulate(snapshot: Snapshot, cfg: EngineConfig, opts: SimulateOp
       }
       const bankrupt = s * (mark - pos.bank) <= 0;
       if (bankrupt && cfg.liquidation.bankruptPolicy === "adl") {
-        // Perpl today: no margin left to sell, so it is deleveraged against winners at the mark.
+        // Perpl's design: no margin left to sell, so it is deleveraged against winners at its bankruptcy
+        // price. Their shortfall against the mark is the bad debt the fund, then the layer, make good.
         fill(pos, pos.remaining, mark, "gap", t, spot);
         continue;
       }

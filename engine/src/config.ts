@@ -9,7 +9,11 @@ export interface EngineConfig {
   stepSeconds: number;
 
   stress: {
-    /** Seconds over which the outside price falls to the chosen drop. Assumption: a fast crash, as on 10 Oct 2025, plays out over minutes. */
+    /**
+     * Seconds over which the outside price falls to the chosen drop. Assumption: ten minutes. The
+     * Monte Carlo feeds in each day's worst one-hour fall, so this plays an hour's fall six times
+     * faster than it happened, on the cautious side.
+     */
     shockSeconds: number;
     /** Seconds to hold the final price so pending liquidations can finish. Assumption. */
     holdSeconds: number;
@@ -71,11 +75,12 @@ export interface EngineConfig {
     maxSlippage: number;
     /**
      * What happens to a position the mark carries past its bankruptcy price before it is sold.
-     * "fund": the fund takes it on and sells it at whatever the book pays, and only an empty fund and
-     * layer push the loss onto winners. This is the waterfall Spillway proposes, and how most
-     * centralised exchanges run their insurance funds.
-     * "adl": Perpl today (docs, Insurance & ADL): it is deleveraged against profitable positions at
-     * the mark, and the fund is not touched.
+     * "adl" (default): Perpl's design (docs, Insurance & ADL; co-founder's posts of 15 Oct and 20 Nov
+     * 2025). It is deleveraged against profitable positions at its bankruptcy price. The winners'
+     * shortfall against the mark is the bad debt: the insurance fund pays them the difference, then the
+     * Spillway layer, and only what is left is lost by the winners.
+     * "fund": the fund takes the position on and sells it at whatever the book pays, as most
+     * centralised exchanges do. Costs more in a thin book.
      */
     bankruptPolicy: "fund" | "adl";
     /**
@@ -119,11 +124,11 @@ const grid = (from: number, to: number, step: number): number[] => {
 
 export const DEFAULT_CONFIG: EngineConfig = {
   stepSeconds: 1,
-  stress: { shockSeconds: 300, holdSeconds: 300 },
+  stress: { shockSeconds: 600, holdSeconds: 300 },
   mark: { bandToSpot: 0.0025, localBookWeight: 0.5 },
   book: { stressDepthFactor: 0.5, refillSeconds: 120, tailDepthUsdPerPct: 0, impactNotionalUsd: 5_000 },
   backstop: { discount: 0.05, capacityUsd: 250_000 },
-  liquidation: { delaySteps: 1, maxSlippage: 0.05, bankruptPolicy: "fund", split: { trader: 0.8, insurance: 0.1, protocol: 0.1 } },
+  liquidation: { delaySteps: 1, maxSlippage: 0.05, bankruptPolicy: "adl", split: { trader: 0.8, insurance: 0.1, protocol: 0.1 } },
   layer: { limitUsd: 250_000 },
   monteCarlo: { years: 20_000, seed: 20251010, daysPerYear: 365 },
   pricing: { riskLoad: 1.0, capitalCharge: 0.04 },
