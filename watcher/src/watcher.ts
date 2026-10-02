@@ -68,7 +68,7 @@ export interface WatcherHandle {
 export async function startWatcher(o: WatcherOptions): Promise<WatcherHandle> {
   const { publicClient, wallet, adapter, vault, log } = o;
   let busy: Promise<void> | null = null;
-  let again = false;
+  let queued: "event" | "poll" | null = null;
   let stopped = false;
   let exhaustedLogged = false;
   // Shortfalls after this block are not paid yet. Used to measure how fast payouts land.
@@ -123,18 +123,20 @@ export async function startWatcher(o: WatcherOptions): Promise<WatcherHandle> {
   const kick = (trigger: "event" | "poll") => {
     if (stopped) return;
     if (busy) {
-      again = true;
+      queued ??= trigger;
       return;
     }
     busy = (async () => {
-      do {
-        again = false;
+      let next: "event" | "poll" | null = trigger;
+      while (next && !stopped) {
+        queued = null;
         try {
-          await trySettle(trigger);
+          await trySettle(next);
         } catch (e) {
           log({ type: "error", message: e instanceof Error ? e.message.split("\n")[0] ?? "" : String(e) });
         }
-      } while (again && !stopped);
+        next = queued;
+      }
       busy = null;
     })();
   };
