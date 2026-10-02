@@ -111,12 +111,15 @@ export function chainFor(chainId: number, rpcUrl: string): Chain {
 export type Public = PublicClient<Transport, Chain>;
 export type Wallet = WalletClient<Transport, Chain, Account>;
 
+// A loaded machine can take a while to answer, even on anvil. viem's default is 10 seconds.
+const transportFor = (chain: Chain) => http(chain.rpcUrls.default.http[0], { timeout: 60_000 });
+
 export function publicClientFor(chain: Chain, pollingInterval: number): Public {
-  return createPublicClient({ chain, transport: http(chain.rpcUrls.default.http[0]), pollingInterval }) as Public;
+  return createPublicClient({ chain, transport: transportFor(chain), pollingInterval }) as Public;
 }
 
 export function walletClientFor(chain: Chain, account: Account, pollingInterval: number): Wallet {
-  return createWalletClient({ chain, account, transport: http(chain.rpcUrls.default.http[0]), pollingInterval });
+  return createWalletClient({ chain, account, transport: transportFor(chain), pollingInterval });
 }
 
 /** Loads watcher/.env when it exists. It should hold paths and URLs, never keys. */
