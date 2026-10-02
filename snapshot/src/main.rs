@@ -1,0 +1,394 @@
+//! `spillway-snapshot`: reads one Perpl market at one block through the Perpl
+//! Rust SDK and writes a `spillway.snapshot/1` JSON file.
+
+mod book;
+mod context;
+mod market;
+mod network;
+mod onchain;
+mod schema;
+mod summary;
+
+use std::{io::Write, path::PathBuf};
+
+use alloy::{
+    eips::BlockId,
+    providers::{Provider, ProviderBuilder},
+    rpc::client::RpcClient,
+    transports::layers::{RetryBackoffLayer, ThrottleLayer},
+};
+use anyhow::{Context, bail};
+use clap::Parser;
+use fastnum::{UD64, UD128};
+use perpl_sdk::state::SnapshotBuilder;
+
+use crate::{network::Network, schema::num};
+
+#[derive(Debug, Parser)]
+#[command(name = "spillway-snapshot", version, about)]
+struct Args {
+    /// Perpl deployment to read.
+    #[arg(long, value_enum, default_value_t = Network::Mainnet)]
+    network: Network,
+
+    /// Market symbol (BTC, ETH, MON, ...) or numeric perpetual id.
+    #[arg(long)]
+    market: String,
+
+    /// Block to read at. Defaults to the latest safe block.
+    #[arg(long)]
+    block: Option<u64>,
+
+    /// RPC endpoint. Defaults to the public Monad RPC of the network.
+    #[arg(long)]
+    rpc: Option<String>,
+
+    /// Output file. Writes to stdout when omitted.
+    #[arg(long)]
+    out: Option<PathBuf>,
+
+    /// Perpl REST API base. Defaults to the public API of the network.
+    #[arg(long)]
+    api: Option<String>,
+
+    /// Maximum RPC requests per second.
+    #[arg(long, default_value_t = 15)]
+    rps: u32,
+
+    /// Positions and orders read per multicall. The SDK default fits Monad's
+    /// eth_call gas cap, and the SDK halves a batch that still fails.
+    #[arg(long)]
+    batch: Option<usize>,
+}
+
+#[tokio::main]
+async fn main() {
+    if let Err(err) = run(Args::parse()).await {
+        eprintln!("error: {err:#}");
+        std::process::exit(1);
+    }
+}
+
+async fn run(args: Args) -> anyhow::Result<()> {
+    let chain = args.network.chain();
+    let rpc = args
+        .rpc
+        .clone()
+        .unwrap_or_else(|| args.network.default_rpc().to_string());
+
+    // Public RPCs rate limit. Throttle the request rate and back off on 429s.
+    let client = RpcClient::builder()
+        .layer(ThrottleLayer::new(args.rps))
+        .layer(RetryBackoffLayer::new(12, 250, 330))
+        .connect(&rpc)
+        .await
+        .with_context(|| format!("connecting to RPC {rpc}"))?;
+    let provider = ProviderBuilder::new().connect_client(client);
+
+    let chain_id = provider.get_chain_id().await.context("reading chain id")?;
+    if chain_id != chain.chain_id() {
+        bail!(
+            "RPC is on chain {chain_id}, but {} is chain {}",
+            args.network.name(),
+            chain.chain_id()
+        );
+    }
+
+    // Pin one block number up front so every read below sees the same state.
+    let block_id = args.block.map(BlockId::number).unwrap_or(BlockId::safe());
+    let block = provider
+        .get_block(block_id)
+        .await
+        .context("reading block header")?
+        .context("block not found")?
+        .into_header();
+    let block_number = block.number;
+
+    let mut notes = Vec::new();
+
+    // Perpl's public REST context names every market. Use it to resolve the
+    // market, but never depend on it: the chain is the source of truth.
+    let api = args
+        .api
+        .clone()
+        .unwrap_or_else(|| args.network.api_base().to_string());
+    let api_context = match context::fetch(&api).await {
+        Ok(ctx) if ctx.chain.chain_id == chain_id => Some(ctx),
+        Ok(ctx) => {
+            notes.push(format!(
+                "REST context at {api} is for chain {}, not {chain_id}; ignored it",
+                ctx.chain.chain_id
+            ));
+            None
+        }
+        Err(err) => {
+            notes.push(format!(
+                "REST context unavailable ({err:#}); market resolved on-chain"
+            ));
+            None
+        }
+    };
+    let api_market = api_context
+        .as_ref()
+        .and_then(|ctx| match ctx.find_market(&args.market) {
+            Ok(m) => Some(m),
+            Err(err) => {
+                notes.push(format!("{err:#}; market resolved on-chain"));
+                None
+            }
+        });
+
+    // Either way the perpetual must be listed on-chain at the snapshot block.
+    let wanted = api_market
+        .map(|m| m.perpetual_id.to_string())
+        .unwrap_or_else(|| args.market.clone());
+    let perp_id =
+        market::resolve_onchain(&chain, &provider, BlockId::number(block_number), &wanted).await?;
+    eprintln!(
+        "reading {} perp {perp_id} at block {block_number}",
+        args.network.name()
+    );
+
+    // One SDK snapshot: the perpetual's parameters, prices and full L3 book,
+    // plus every open position on it, all at the pinned block.
+    let mut builder = SnapshotBuilder::new(&chain, provider.clone())
+        .with_perpetuals(vec![perp_id])
+        .with_all_positions()
+        .at_block(BlockId::number(block_number));
+    if let Some(batch) = args.batch {
+        builder = builder
+            .with_positions_per_batch(batch)
+            .with_orders_per_batch(batch);
+    }
+    let exchange = builder.build().await.context("building SDK snapshot")?;
+    let perp = exchange
+        .perpetuals()
+        .get(&perp_id)
+        .with_context(|| format!("perpetual {perp_id} missing from the SDK snapshot"))?;
+
+    // The insurance fund, position balance, open interest per side and the
+    // liquidation split are not on the SDK's Perpetual. Read them through the
+    // SDK's Exchange binding at the same block.
+    let extras = onchain::read(
+        &chain,
+        &provider,
+        exchange.instant().block_number(),
+        perp_id,
+        exchange.collateral_converter(),
+        perp.size_converter(),
+    )
+    .await?;
+    if extras.long_open_interest != perp.open_interest() {
+        bail!(
+            "SDK open interest {} differs from getPerpetualInfoV2 {} at the same block",
+            perp.open_interest(),
+            extras.long_open_interest
+        );
+    }
+
+    // Cross-check the REST market configuration against the chain.
+    if let Some(cfg) = api_market.and_then(|m| m.config.as_ref()) {
+        let hundredths = |v: UD64| (num(v) * 100.0).round() as u64;
+        let checks = [
+            (
+                "price decimals",
+                cfg.price_decimals.map(u64::from),
+                u64::from(perp.price_converter().decimals()),
+            ),
+            (
+                "lot decimals",
+                cfg.size_decimals.map(u64::from),
+                u64::from(perp.size_converter().decimals()),
+            ),
+            (
+                "initial margin",
+                cfg.initial_margin,
+                hundredths(perp.initial_margin()),
+            ),
+            (
+                "maintenance margin",
+                cfg.maintenance_margin,
+                hundredths(perp.maintenance_margin()),
+            ),
+        ];
+        for (what, rest, chain_value) in checks {
+            if let Some(rest) = rest
+                && rest != chain_value
+            {
+                notes.push(format!(
+                    "REST {what} is {rest}, chain says {chain_value}; used the chain"
+                ));
+            }
+        }
+        if cfg.is_open == Some(false) {
+            notes.push("REST context reports the market as not open".to_string());
+        }
+    }
+
+    // Every open position on this perpetual, in account order.
+    let mut positions: Vec<schema::Position> = exchange
+        .accounts()
+        .values()
+        .filter_map(|account| account.positions().get(&perp_id))
+        .map(|p| schema::Position {
+            account_id: p.account_id(),
+            side: if p.r#type().is_long() {
+                "long"
+            } else {
+                "short"
+            },
+            size: num(p.size()),
+            entry_price: num(p.entry_price()),
+            deposit: num(p.deposit()),
+            premium_pnl: num(p.premium_pnl()),
+            delta_pnl: num(p.delta_pnl()),
+            liquidation_price: num(p.liquidation_price()),
+            bankruptcy_price: num(p.bankruptcy_price()),
+        })
+        .collect();
+    positions.sort_by_key(|p| p.account_id);
+
+    // Consistency: per side, the position sizes must add up to the contract's
+    // open interest counter. Summed as exact decimals, not floats.
+    let oi_check = |long: bool, open_interest: UD128| {
+        let sides: Vec<UD64> = exchange
+            .accounts()
+            .values()
+            .filter_map(|account| account.positions().get(&perp_id))
+            .filter(|p| p.r#type().is_long() == long)
+            .map(|p| p.size())
+            .collect();
+        summary::OiCheck {
+            positions: sides.len(),
+            sum_sizes: sides
+                .iter()
+                .fold(UD128::ZERO, |sum, size| sum + size.resize()),
+            open_interest,
+        }
+    };
+    let checks = summary::Checks {
+        long: oi_check(true, extras.long_open_interest),
+        short: oi_check(false, extras.short_open_interest),
+        mark_age_secs: perp.instant().block_timestamp() as i64 - perp.mark_price_timestamp() as i64,
+        oracle_age_secs: perp.instant().block_timestamp() as i64
+            - perp.oracle_price_timestamp() as i64,
+    };
+    for (side, check) in [("long", &checks.long), ("short", &checks.short)] {
+        if !check.ok() {
+            notes.push(format!(
+                "{side} position sizes sum to {} but open interest is {}",
+                check.sum_sizes, check.open_interest
+            ));
+        }
+    }
+    if perp.is_paused() {
+        notes.push("market is paused".to_string());
+    }
+    if perp.is_mark_price_obsolete() {
+        notes.push(format!(
+            "mark price is {}s old, past the {}s the exchange accepts",
+            checks.mark_age_secs,
+            perp.price_max_age_sec()
+        ));
+    }
+    if perp.is_oracle_used() && perp.is_oracle_price_obsolete() {
+        notes.push(format!(
+            "oracle price is {}s old, past the {}s the exchange accepts",
+            checks.oracle_age_secs,
+            perp.price_max_age_sec()
+        ));
+    }
+
+    // The SDK stores margins as leverage (notional / requirement), so the
+    // fraction of notional is its inverse.
+    let fraction = |leverage: UD64| {
+        if leverage == UD64::ZERO {
+            0.0
+        } else {
+            num(UD64::ONE / leverage)
+        }
+    };
+
+    let market = schema::Market {
+        perp_id,
+        symbol: perp.symbol(),
+        name: perp.name(),
+        price_decimals: perp.price_converter().decimals(),
+        lot_decimals: perp.size_converter().decimals(),
+        mark_price: num(perp.mark_price()),
+        oracle_price: num(perp.oracle_price()),
+        last_price: num(perp.last_price()),
+        maintenance_margin_fraction: fraction(perp.maintenance_margin()),
+        initial_margin_fraction: fraction(perp.initial_margin()),
+        taker_fee: num(perp.taker_fee()),
+        maker_fee: num(perp.maker_fee()),
+        long_open_interest: num(extras.long_open_interest),
+        short_open_interest: num(extras.short_open_interest),
+        insurance_fund: num(extras.insurance_fund),
+        position_balance: num(extras.position_balance),
+        liquidation_split: schema::LiquidationSplit {
+            trader: num(extras.liq_trader),
+            insurance: num(extras.liq_insurance),
+            protocol: num(extras.liq_protocol),
+        },
+        fee_insurance_share: num(extras.fee_insurance_share),
+        funding_rate: num(perp.funding_rate()),
+    };
+
+    // Full L3 book aggregated to price levels, expired orders left out.
+    let levels = book::aggregate(perp.l3_book());
+    let side = |side: &[book::Level]| {
+        side.iter()
+            .map(|l| (num(l.price), num(l.size), l.orders))
+            .collect::<Vec<_>>()
+    };
+    let book = schema::Book {
+        bids: side(&levels.bids),
+        asks: side(&levels.asks),
+    };
+
+    if levels.expired_orders > 0 {
+        notes.push(format!(
+            "{} expired orders still in the contract book were left out",
+            levels.expired_orders
+        ));
+    }
+    if levels.l2_mismatches > 0 {
+        notes.push(format!(
+            "{} book levels differ from the SDK's cached L2 view",
+            levels.l2_mismatches
+        ));
+    }
+
+    let instant = exchange.instant();
+    let snapshot = schema::Snapshot {
+        schema: schema::SCHEMA,
+        network: args.network.name(),
+        chain_id,
+        exchange: chain.exchange().to_string(),
+        block: instant.block_number(),
+        block_timestamp: instant.block_timestamp(),
+        taken_at: chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
+        source: schema::Source {
+            sdk: format!("perpl-sdk {}", env!("PERPL_SDK_VERSION")),
+            dex_revision: perpl_sdk::abi::DEX_REVISION.trim().to_string(),
+            contract_version: exchange.contract_version().map(|v| v.to_string()),
+            api,
+            notes,
+        },
+        market,
+        positions,
+        book,
+    };
+
+    let mut json = serde_json::to_string_pretty(&snapshot)?;
+    json.push('\n');
+    match &args.out {
+        Some(path) => {
+            std::fs::write(path, json).with_context(|| format!("writing {}", path.display()))?
+        }
+        None => std::io::stdout().write_all(json.as_bytes())?,
+    }
+    summary::print(&snapshot, &levels, &checks);
+    Ok(())
+}
