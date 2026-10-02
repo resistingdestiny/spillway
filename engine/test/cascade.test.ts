@@ -33,10 +33,10 @@ describe("single position", () => {
     expectConserved(r.totals);
   });
 
-  it("is deleveraged at the mark when the price gaps past bankruptcy", () => {
+  it("under Perpl's rules, is deleveraged at the mark when the price gaps past bankruptcy", () => {
     // An instant 20% gap: the mark lands far below the $90,000 bankruptcy price.
     const snap = syntheticSnapshot({ positions: [docsLong], insuranceFund: 1_000 });
-    const gapCfg = withConfig({ stress: { shockSeconds: 1, holdSeconds: 60 } });
+    const gapCfg = withConfig({ stress: { shockSeconds: 1, holdSeconds: 60 }, liquidation: { bankruptPolicy: "adl" } });
     const r = stress(snap, 0.2, gapCfg, { layerLimitUsd: 5_000 });
     const fill = r.events.find((e) => e.kind === "fill");
     expect(fill?.kind === "fill" && fill.path).toBe("gap");
@@ -46,6 +46,21 @@ describe("single position", () => {
     expect(r.totals.layerPaid).toBeCloseTo(5_000, 6);
     expect(r.totals.tradersLose).toBeCloseTo(r.totals.badDebt - 6_000, 6);
     expect(r.totals.band).toBe(3);
+    expectConserved(r.totals);
+  });
+});
+
+describe("fund first", () => {
+  it("takes a bankrupt position on and sells it into the book, below the mark", () => {
+    const snap = syntheticSnapshot({ positions: [docsLong], insuranceFund: 1_000 });
+    const gapCfg = withConfig({ stress: { shockSeconds: 1, holdSeconds: 60 }, backstop: { capacityUsd: 0 } });
+    const r = stress(snap, 0.2, gapCfg, { layerLimitUsd: 5_000 });
+    const fills = r.events.filter((e) => e.kind === "fill");
+    expect(fills.length).toBeGreaterThan(0);
+    for (const f of fills) expect(f.kind === "fill" && f.path).toBe("system");
+    // Selling into the book costs more than closing at the mark would.
+    const atMark = stress(snap, 0.2, withConfig({ ...gapCfg, liquidation: { bankruptPolicy: "adl" } }), { layerLimitUsd: 5_000 });
+    expect(r.totals.badDebt).toBeGreaterThan(atMark.totals.badDebt);
     expectConserved(r.totals);
   });
 });
