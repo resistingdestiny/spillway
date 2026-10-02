@@ -7,8 +7,9 @@
 //   4. Positions whose liquidation price the mark has reached are flagged.
 //   5. Flagged positions are sold into the book, but no further below the mark than a slippage
 //      floor. What the book can not take goes to the backstop buyer while it has capacity. The rest
-//      waits for depth to refill. A position the mark has carried past its bankruptcy price is
-//      deleveraged at the mark instead.
+//      waits for depth to refill. A position the mark carries past its bankruptcy price is either
+//      taken on by the fund and sold at any price (fund first, the waterfall Spillway proposes), or
+//      deleveraged against winners at the mark (Perpl today). See liquidation.bankruptPolicy.
 //   6. Margin left after a fill feeds the insurance fund. A fill past the bankruptcy price leaves bad
 //      debt, paid by the fund, then the Spillway layer, then winning traders.
 //
@@ -226,13 +227,16 @@ export function simulate(snapshot: Snapshot, cfg: EngineConfig, opts: SimulateOp
         pos.triggered = false;
         continue;
       }
-      if (s * (mark - pos.bank) <= 0) {
-        // Already past bankruptcy at the mark: no margin left to sell, so it is deleveraged at the mark.
+      const bankrupt = s * (mark - pos.bank) <= 0;
+      if (bankrupt && cfg.liquidation.bankruptPolicy === "adl") {
+        // Perpl today: no margin left to sell, so it is deleveraged against winners at the mark.
         fill(pos, pos.remaining, mark, "gap", t, spot);
         continue;
       }
+      // Fund first: a bankrupt position is taken on by the fund and sold at whatever the book pays.
+      const path = bankrupt ? "system" : "book";
       const backstopPrice = mark * (1 - s * cfg.backstop.discount);
-      const floorPrice = mark * (1 - s * cfg.liquidation.maxSlippage);
+      const floorPrice = bankrupt ? spot * (1 - s * 0.95) : mark * (1 - s * cfg.liquidation.maxSlippage);
       const offsetOf = (price: number) => Math.abs(spot - price) / spot;
       const hasBuyer = backstopLeft > 0;
 
@@ -240,7 +244,7 @@ export function simulate(snapshot: Snapshot, cfg: EngineConfig, opts: SimulateOp
       const firstLimit = hasBuyer ? Math.min(offsetOf(backstopPrice), offsetOf(floorPrice)) : offsetOf(floorPrice);
       let w = book.walk(pos.remaining, spot, firstLimit);
       if (w.filled > 0) {
-        fill(pos, w.filled, w.notional / w.filled, "book", t, spot);
+        fill(pos, w.filled, w.notional / w.filled, path, t, spot);
       }
       // 2. The backstop buyer, while it has capacity.
       if (!pos.done && hasBuyer) {
@@ -254,7 +258,7 @@ export function simulate(snapshot: Snapshot, cfg: EngineConfig, opts: SimulateOp
       if (!pos.done && offsetOf(floorPrice) > firstLimit) {
         w = book.walk(pos.remaining, spot, offsetOf(floorPrice));
         if (w.filled > 0) {
-          fill(pos, w.filled, w.notional / w.filled, "book", t, spot);
+          fill(pos, w.filled, w.notional / w.filled, path, t, spot);
         }
       }
       // Anything left waits for the book to refill, or for the mark to pass bankruptcy.
@@ -284,6 +288,28 @@ export function simulate(snapshot: Snapshot, cfg: EngineConfig, opts: SimulateOp
     totals.duration = t;
     step++;
     if (t >= pathEnd && (pending === 0 || t >= maxT)) break;
+  }
+
+  // Whatever the fund took on and could not sell before the run ended is valued at the last mark.
+  if (cfg.liquidation.bankruptPolicy === "fund") {
+    const lastMark = frames.length ? (frames[frames.length - 1] as Frame).mark : totals.spotEnd;
+    for (const pos of positions) {
+      if (pos.done || !pos.triggered || s * (lastMark - pos.bank) > 0) continue;
+      fill(pos, pos.remaining, lastMark, "system", totals.duration, totals.spotEnd);
+    }
+    if (record && frames.length) {
+      const f = frames[frames.length - 1] as Frame;
+      Object.assign(f, {
+        fund,
+        layerRemaining,
+        badDebt: totals.badDebt,
+        fundPaid: totals.fundPaid,
+        layerPaid: totals.layerPaid,
+        tradersLose: totals.tradersLose,
+        liquidatedNotional: totals.liquidatedNotional,
+        liquidations: totals.liquidations,
+      });
+    }
   }
 
   totals.fundEnd = fund;

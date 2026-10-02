@@ -71,8 +71,10 @@ export type LiquidationPath =
   | "book"
   /** Bought by the backstop buyer (Perpl's PLP buy-to-liquidate) at a discount. */
   | "backstop"
-  /** Mark passed the bankruptcy price before the position could be sold; deleveraged. */
-  | "gap";
+  /** Mark passed the bankruptcy price before the position could be sold; deleveraged at the mark. */
+  | "gap"
+  /** Mark passed the bankruptcy price; the fund took the position on and sold it into the book. */
+  | "system";
 
 export interface LiquidationFill {
   t: number;

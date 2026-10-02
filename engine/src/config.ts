@@ -70,6 +70,15 @@ export interface EngineConfig {
      */
     maxSlippage: number;
     /**
+     * What happens to a position the mark carries past its bankruptcy price before it is sold.
+     * "fund": the fund takes it on and sells it at whatever the book pays, and only an empty fund and
+     * layer push the loss onto winners. This is the waterfall Spillway proposes, and how most
+     * centralised exchanges run their insurance funds.
+     * "adl": Perpl today (docs, Insurance & ADL): it is deleveraged against profitable positions at
+     * the mark, and the fund is not touched.
+     */
+    bankruptPolicy: "fund" | "adl";
+    /**
      * Perpl docs: liquidation sends 10% of the remaining margin to the insurance fund. When the snapshot
      * carries the market's split it wins over this default.
      */
@@ -89,12 +98,13 @@ export interface EngineConfig {
   };
 
   pricing: {
-    /** Multiple of expected loss added for the risk of being wrong. Assumption. */
+    /** Multiple of expected loss added for the risk that the model is wrong. Assumption. */
     riskLoad: number;
-    /** Yearly cost of running the layer, as a share of the limit. Assumption. */
-    expenseRate: number;
-    /** Floor on the yearly premium rate. Assumption: capital wants paying even for a remote risk. */
-    minRate: number;
+    /**
+     * Yearly return capital wants for being locked in the vault even if nothing ever happens, as a
+     * share of the limit. Assumption: about what a dollar earns parked elsewhere on chain.
+     */
+    capitalCharge: number;
   };
 
   /** Drop sizes for the stress curve, as fractions. */
@@ -113,10 +123,10 @@ export const DEFAULT_CONFIG: EngineConfig = {
   mark: { bandToSpot: 0.0025, localBookWeight: 0.5 },
   book: { stressDepthFactor: 0.5, refillSeconds: 120, tailDepthUsdPerPct: 0, impactNotionalUsd: 5_000 },
   backstop: { discount: 0.05, capacityUsd: 250_000 },
-  liquidation: { delaySteps: 1, maxSlippage: 0.05, split: { trader: 0.8, insurance: 0.1, protocol: 0.1 } },
+  liquidation: { delaySteps: 1, maxSlippage: 0.05, bankruptPolicy: "fund", split: { trader: 0.8, insurance: 0.1, protocol: 0.1 } },
   layer: { limitUsd: 250_000 },
   monteCarlo: { years: 20_000, seed: 20251010, daysPerYear: 365 },
-  pricing: { riskLoad: 1.0, expenseRate: 0.01, minRate: 0.02 },
+  pricing: { riskLoad: 1.0, capitalCharge: 0.04 },
   stressGrid: grid(0.005, 0.4, 0.005),
 };
 
