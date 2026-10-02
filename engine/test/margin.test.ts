@@ -70,3 +70,17 @@ describe("funding moves both prices", () => {
     expect(bankruptcyPrice(paid)).toBe(89_500);
   });
 });
+
+describe("engine against the Perpl SDK on live data", () => {
+  it("computes the same liquidation and bankruptcy prices as the SDK for every mainnet BTC position", async () => {
+    const { readFileSync } = await import("node:fs");
+    const snap = JSON.parse(readFileSync(new URL("../../fixtures/snapshots/btc-mainnet.json", import.meta.url), "utf8"));
+    const mm = snap.market.maintenanceMarginFraction;
+    expect(snap.positions.length).toBeGreaterThan(100);
+    for (const p of snap.positions as SnapshotPosition[]) {
+      // The SDK floors to the market's price precision (1 decimal for BTC).
+      expect(Math.abs(liquidationPrice(p, mm) - (p.liquidationPrice as number))).toBeLessThan(0.11);
+      expect(Math.abs(bankruptcyPrice(p) - (p.bankruptcyPrice as number))).toBeLessThan(0.11);
+    }
+  });
+});
