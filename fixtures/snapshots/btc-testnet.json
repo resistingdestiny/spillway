@@ -1,0 +1,1454 @@
+{
+  "schema": "spillway.snapshot/1",
+  "network": "testnet",
+  "chainId": 10143,
+  "exchange": "0x1964C32f0bE608E7D29302AFF5E61268E72080cc",
+  "block": 67641543,
+  "blockTimestamp": 1790973815,
+  "takenAt": "2026-10-02T20:43:37Z",
+  "source": {
+    "sdk": "perpl-sdk 0.2.9",
+    "dexRevision": "rc_v1.1.7-203-g0e5902dd",
+    "contractVersion": "v1.1.7.5",
+    "api": "https://testnet.perpl.xyz/api",
+    "notes": []
+  },
+  "market": {
+    "perpId": 16,
+    "symbol": "BTC",
+    "name": "BTC Perp",
+    "priceDecimals": 1,
+    "lotDecimals": 5,
+    "markPrice": 84241.0,
+    "oraclePrice": 84249.2,
+    "lastPrice": 84270.4,
+    "maintenanceMarginFraction": 0.04,
+    "initialMarginFraction": 0.06666666666666667,
+    "takerFee": 0.000345,
+    "makerFee": 0.000045,
+    "longOpenInterest": 23.24058,
+    "shortOpenInterest": 23.24058,
+    "insuranceFund": 114116.359784,
+    "positionBalance": 468379.609822,
+    "liquidationSplit": {
+      "trader": 0.8,
+      "insurance": 0.1,
+      "protocol": 0.1
+    },
+    "feeInsuranceShare": 0.15,
+    "fundingRate": 0.0
+  },
+  "positions": [
+    {
+      "accountId": 1,
+      "side": "short",
+      "size": 22.2486,
+      "entryPrice": 84879.61021881104,
+      "deposit": 188845.154448,
+      "premiumPnl": 0.0,
+      "deltaPnl": 14208.183314,
+      "liquidationPrice": 89972.38255556168,
+      "bankruptcyPrice": 93367.56696431413
+    },
+    {
+      "accountId": 2,
+      "side": "long",
+      "size": 17.23305,
+      "entryPrice": 84957.71123199463,
+      "deposit": 158652.41025,
+      "premiumPnl": 0.0,
+      "deltaPnl": -12351.120496,
+      "liquidationPrice": 79149.73232935471,
+      "bankruptcyPrice": 75751.42388007492
+    },
+    {
+      "accountId": 12,
+      "side": "short",
+      "size": 0.05978,
+      "entryPrice": 67080.4,
+      "deposit": 1338.201205,
+      "premiumPnl": 718.79472,
+      "deltaPnl": -1025.860668,
+      "liquidationPrice": 98806.61733890933,
+      "bankruptcyPrice": 101489.83333890933
+    },
+    {
+      "accountId": 13,
+      "side": "long",
+      "size": 0.05659,
+      "entryPrice": 67084.4,
+      "deposit": 1265.984322,
+      "premiumPnl": -680.43816,
+      "deltaPnl": 970.891994,
+      "liquidationPrice": 59420.60932744301,
+      "bankruptcyPrice": 56737.23332744301
+    },
+    {
+      "accountId": 17,
+      "side": "short",
+      "size": 0.00015,
+      "entryPrice": 88188.9,
+      "deposit": 6.614168,
+      "premiumPnl": 0.539235,
+      "deltaPnl": 0.592185,
+      "liquidationPrice": 132350.69733333334,
+      "bankruptcyPrice": 135878.25333333333
+    },
+    {
+      "accountId": 19,
+      "side": "short",
+      "size": 0.00635,
+      "entryPrice": 67834.5,
+      "deposit": 143.583174,
+      "premiumPnl": 76.3524,
+      "deltaPnl": -104.181275,
+      "liquidationPrice": 99756.64346456694,
+      "bankruptcyPrice": 102470.02346456693
+    },
+    {
+      "accountId": 24,
+      "side": "long",
+      "size": 0.5,
+      "entryPrice": 84029.5,
+      "deposit": 2810.333334,
+      "premiumPnl": -219.5,
+      "deltaPnl": 105.75,
+      "liquidationPrice": 82209.013332,
+      "bankruptcyPrice": 78847.833332
+    },
+    {
+      "accountId": 100,
+      "side": "long",
+      "size": 0.21901,
+      "entryPrice": 68556.0,
+      "deposit": 5011.124008,
+      "premiumPnl": -2633.37624,
+      "deltaPnl": 3435.17185,
+      "liquidationPrice": 60441.44,
+      "bankruptcyPrice": 57699.2
+    },
+    {
+      "accountId": 121,
+      "side": "long",
+      "size": 0.02952,
+      "entryPrice": 68035.2,
+      "deposit": 723.316018,
+      "premiumPnl": -370.644264,
+      "deltaPnl": 478.395216,
+      "liquidationPrice": 58809.73286449865,
+      "bankruptcyPrice": 56088.324864498645
+    },
+    {
+      "accountId": 122,
+      "side": "short",
+      "size": 0.0002,
+      "entryPrice": 68115.7,
+      "deposit": 5.449262,
+      "premiumPnl": 2.51114,
+      "deltaPnl": -3.22506,
+      "liquidationPrice": 105193.082,
+      "bankruptcyPrice": 107917.71
+    },
+    {
+      "accountId": 123,
+      "side": "long",
+      "size": 0.00009,
+      "entryPrice": 68455.4,
+      "deposit": 1.987761,
+      "premiumPnl": -1.115775,
+      "deltaPnl": 1.420704,
+      "liquidationPrice": 61504.882666666665,
+      "bankruptcyPrice": 58766.666666666664
+    },
+    {
+      "accountId": 124,
+      "side": "short",
+      "size": 0.00733,
+      "entryPrice": 68189.1,
+      "deposit": 499.916262,
+      "premiumPnl": 92.033281,
+      "deltaPnl": -117.660427,
+      "liquidationPrice": 146218.636,
+      "bankruptcyPrice": 148946.2
+    },
+    {
+      "accountId": 126,
+      "side": "long",
+      "size": 0.12346,
+      "entryPrice": 68026.0,
+      "deposit": 3011.900359,
+      "premiumPnl": -1548.793354,
+      "deltaPnl": 2001.9039,
+      "liquidationPrice": 58896.18138182407,
+      "bankruptcyPrice": 56175.14138182407
+    },
+    {
+      "accountId": 127,
+      "side": "long",
+      "size": 0.0228,
+      "entryPrice": 67994.7,
+      "deposit": 689.842801,
+      "premiumPnl": -286.26996,
+      "deltaPnl": 370.41564,
+      "liquidationPrice": 53013.924798245615,
+      "bankruptcyPrice": 50294.136798245614
+    },
+    {
+      "accountId": 128,
+      "side": "short",
+      "size": 0.00001,
+      "entryPrice": 67604.6,
+      "deposit": 0.169861,
+      "premiumPnl": 0.121383,
+      "deltaPnl": -0.166364,
+      "liquidationPrice": 94024.816,
+      "bankruptcyPrice": 96729.0
+    },
+    {
+      "accountId": 130,
+      "side": "short",
+      "size": 0.00229,
+      "entryPrice": 67802.8,
+      "deposit": 129.445762,
+      "premiumPnl": 27.53496,
+      "deltaPnl": -37.643478,
+      "liquidationPrice": 133641.22162445413,
+      "bankruptcyPrice": 136353.33362445416
+    },
+    {
+      "accountId": 148,
+      "side": "long",
+      "size": 0.00094,
+      "entryPrice": 66743.2,
+      "deposit": 20.91287,
+      "premiumPnl": -11.30256,
+      "deltaPnl": 16.447932,
+      "liquidationPrice": 59189.193957446805,
+      "bankruptcyPrice": 56519.46595744681
+    },
+    {
+      "accountId": 160,
+      "side": "long",
+      "size": 0.34654,
+      "entryPrice": 76761.7,
+      "deposit": 1777.246562,
+      "premiumPnl": -343.975604,
+      "deltaPnl": 2591.876622,
+      "liquidationPrice": 75696.22133294858,
+      "bankruptcyPrice": 72625.75333294857
+    },
+    {
+      "accountId": 162,
+      "side": "short",
+      "size": 0.0055,
+      "entryPrice": 68071.3,
+      "deposit": 124.878784,
+      "premiumPnl": 67.56255,
+      "deltaPnl": -88.93335,
+      "liquidationPrice": 100337.78145454546,
+      "bankruptcyPrice": 103060.63345454546
+    },
+    {
+      "accountId": 164,
+      "side": "long",
+      "size": 0.00146,
+      "entryPrice": 68053.7,
+      "deposit": 999.965224,
+      "premiumPnl": -18.041804,
+      "deltaPnl": 23.633458,
+      "liquidationPrice": 0.0,
+      "bankruptcyPrice": 0.0
+    },
+    {
+      "accountId": 198,
+      "side": "short",
+      "size": 0.68135,
+      "entryPrice": 78194.1,
+      "deposit": 5327.755004,
+      "premiumPnl": 7515.631175,
+      "deltaPnl": -4120.055315,
+      "liquidationPrice": 93916.24600073384,
+      "bankruptcyPrice": 97044.01000073383
+    },
+    {
+      "accountId": 215,
+      "side": "long",
+      "size": 0.00054,
+      "entryPrice": 67720.93240203857,
+      "deposit": 18.284658,
+      "premiumPnl": -4.116744,
+      "deltaPnl": 8.920836,
+      "liquidationPrice": 44192.89192034234,
+      "bankruptcyPrice": 41484.054624260796
+    },
+    {
+      "accountId": 219,
+      "side": "long",
+      "size": 0.07047,
+      "entryPrice": 63106.6,
+      "deposit": 890.432143,
+      "premiumPnl": -490.414824,
+      "deltaPnl": 1489.341168,
+      "liquidationPrice": 59954.443977295305,
+      "bankruptcyPrice": 57430.1799772953
+    },
+    {
+      "accountId": 226,
+      "side": "long",
+      "size": 0.05049,
+      "entryPrice": 60469.18708648682,
+      "deposit": 205.962152,
+      "premiumPnl": -274.973589,
+      "deltaPnl": 1200.238834,
+      "liquidationPrice": 64254.78833900947,
+      "bankruptcyPrice": 61836.02085555
+    },
+    {
+      "accountId": 229,
+      "side": "long",
+      "size": 0.013,
+      "entryPrice": 64639.87630767822,
+      "deposit": 168.06368,
+      "premiumPnl": -50.8781,
+      "deltaPnl": 254.814608,
+      "liquidationPrice": 58211.19597536997,
+      "bankruptcyPrice": 55625.60092306284
+    },
+    {
+      "accountId": 241,
+      "side": "long",
+      "size": 0.001,
+      "entryPrice": 63682.03333282471,
+      "deposit": 12.736407,
+      "premiumPnl": -4.8575,
+      "deltaPnl": 20.558966,
+      "liquidationPrice": 58350.4076661377,
+      "bankruptcyPrice": 55803.12633282471
+    },
+    {
+      "accountId": 246,
+      "side": "short",
+      "size": 0.001,
+      "entryPrice": 62890.9,
+      "deposit": 31.46665,
+      "premiumPnl": 4.5014,
+      "deltaPnl": -21.3501,
+      "liquidationPrice": 96343.314,
+      "bankruptcyPrice": 98858.95
+    },
+    {
+      "accountId": 292,
+      "side": "short",
+      "size": 0.14991,
+      "entryPrice": 64382.97863769531,
+      "deposit": 9656.107005,
+      "premiumPnl": 585.743343,
+      "deltaPnl": -2976.915982,
+      "liquidationPrice": 130127.65380877745,
+      "bankruptcyPrice": 132702.97295428527
+    },
+    {
+      "accountId": 293,
+      "side": "short",
+      "size": 0.024,
+      "entryPrice": 77465.628125,
+      "deposit": 371.867869,
+      "premiumPnl": 62.6016,
+      "deltaPnl": -162.608925,
+      "liquidationPrice": 92469.89754166667,
+      "bankruptcyPrice": 95568.52266666667
+    },
+    {
+      "accountId": 302,
+      "side": "short",
+      "size": 0.00027,
+      "entryPrice": 65981.3,
+      "deposit": 8.907476,
+      "premiumPnl": 0.985824,
+      "deltaPnl": -4.930119,
+      "liquidationPrice": 99983.89985185185,
+      "bankruptcyPrice": 102623.15185185186
+    },
+    {
+      "accountId": 335,
+      "side": "long",
+      "size": 0.0078,
+      "entryPrice": 77169.95281982422,
+      "deposit": 601.934955,
+      "premiumPnl": -11.1618,
+      "deltaPnl": 55.154168,
+      "liquidationPrice": 4516.602855694111,
+      "bankruptcyPrice": 1429.804742901142
+    },
+    {
+      "accountId": 340,
+      "side": "short",
+      "size": 0.006,
+      "entryPrice": 63554.22466583252,
+      "deposit": 382.033352,
+      "premiumPnl": 21.3336,
+      "deltaPnl": -124.120652,
+      "liquidationPrice": 128239.88101253255,
+      "bankruptcyPrice": 130782.04999916586
+    },
+    {
+      "accountId": 348,
+      "side": "short",
+      "size": 0.0002,
+      "entryPrice": 63871.25428466797,
+      "deposit": 6.389735,
+      "premiumPnl": 0.70992,
+      "deltaPnl": -4.073949,
+      "liquidationPrice": 96814.67911328125,
+      "bankruptcyPrice": 99369.52928466797
+    },
+    {
+      "accountId": 359,
+      "side": "long",
+      "size": 2.31862,
+      "entryPrice": 63701.8,
+      "deposit": 9846.684502,
+      "premiumPnl": -8066.015256,
+      "deltaPnl": 47622.599904,
+      "liquidationPrice": 65481.8853329308,
+      "bankruptcyPrice": 62933.8133329308
+    },
+    {
+      "accountId": 361,
+      "side": "long",
+      "size": 0.00793,
+      "entryPrice": 62980.4,
+      "deposit": 33.316257,
+      "premiumPnl": -27.45366,
+      "deltaPnl": 168.596558,
+      "liquidationPrice": 64760.32255737705,
+      "bankruptcyPrice": 62241.10655737705
+    },
+    {
+      "accountId": 365,
+      "side": "long",
+      "size": 0.00062,
+      "entryPrice": 63564.6,
+      "deposit": 82.84171,
+      "premiumPnl": -2.129328,
+      "deltaPnl": 12.819368,
+      "liquidationPrice": 0.0,
+      "bankruptcyPrice": 0.0
+    },
+    {
+      "accountId": 381,
+      "side": "short",
+      "size": 0.00664,
+      "entryPrice": 84531.62257232665,
+      "deposit": 187.09666,
+      "premiumPnl": 3.926232,
+      "deltaPnl": 1.929733,
+      "liquidationPrice": 109918.8655007589,
+      "bankruptcyPrice": 113300.13040365196
+    },
+    {
+      "accountId": 384,
+      "side": "long",
+      "size": 0.10025,
+      "entryPrice": 63880.2,
+      "deposit": 2668.329188,
+      "premiumPnl": -310.384025,
+      "deltaPnl": 2041.1702,
+      "liquidationPrice": 42914.75799501247,
+      "bankruptcyPrice": 40359.54999501247
+    },
+    {
+      "accountId": 389,
+      "side": "long",
+      "size": 0.079,
+      "entryPrice": 63071.18641662598,
+      "deposit": 4982.629,
+      "premiumPnl": -233.3739,
+      "deltaPnl": 1672.415273,
+      "liquidationPrice": 5476.880708734054,
+      "bankruptcyPrice": 2954.0332520690145
+    },
+    {
+      "accountId": 394,
+      "side": "long",
+      "size": 0.54802,
+      "entryPrice": 68390.6,
+      "deposit": 2532.879025,
+      "premiumPnl": -1512.590002,
+      "deltaPnl": 8686.336208,
+      "liquidationPrice": 69264.45066508521,
+      "bankruptcyPrice": 66528.82666508522
+    },
+    {
+      "accountId": 398,
+      "side": "long",
+      "size": 0.00063,
+      "entryPrice": 80295.8,
+      "deposit": 10.130879,
+      "premiumPnl": -0.583506,
+      "deltaPnl": 2.485476,
+      "liquidationPrice": 68353.07168253968,
+      "bankruptcyPrice": 65141.23968253968
+    },
+    {
+      "accountId": 470,
+      "side": "long",
+      "size": 0.12421,
+      "entryPrice": 84085.64186859131,
+      "deposit": 712.785848,
+      "premiumPnl": -70.377386,
+      "deltaPnl": 19.297033,
+      "liquidationPrice": 82277.1130952229,
+      "bankruptcyPrice": 78913.68742047924
+    },
+    {
+      "accountId": 476,
+      "side": "long",
+      "size": 0.07285,
+      "entryPrice": 79104.66015014649,
+      "deposit": 3116.181533,
+      "premiumPnl": -115.72951,
+      "deltaPnl": 374.182358,
+      "liquidationPrice": 41082.133817648566,
+      "bankruptcyPrice": 37917.94741164271
+    },
+    {
+      "accountId": 499,
+      "side": "long",
+      "size": 0.70041,
+      "entryPrice": 84028.9824935913,
+      "deposit": 3933.722951,
+      "premiumPnl": -392.2296,
+      "deltaPnl": 148.499181,
+      "liquidationPrice": 82333.82713335009,
+      "bankruptcyPrice": 78972.66783360644
+    },
+    {
+      "accountId": 518,
+      "side": "short",
+      "size": 0.03865,
+      "entryPrice": 84019.2,
+      "deposit": 250.06223,
+      "premiumPnl": 20.241005,
+      "deltaPnl": -8.57257,
+      "liquidationPrice": 87652.04739456662,
+      "bankruptcyPrice": 91012.81539456663
+    },
+    {
+      "accountId": 519,
+      "side": "long",
+      "size": 0.02601,
+      "entryPrice": 76838.3,
+      "deposit": 133.362461,
+      "premiumPnl": -28.811277,
+      "deltaPnl": 192.544227,
+      "liquidationPrice": 75892.17863590927,
+      "bankruptcyPrice": 72818.64663590926
+    },
+    {
+      "accountId": 621,
+      "side": "long",
+      "size": 0.0012,
+      "entryPrice": 83296.1,
+      "deposit": 99.99024,
+      "premiumPnl": -0.23592,
+      "deltaPnl": 1.13388,
+      "liquidationPrice": 3499.344,
+      "bankruptcyPrice": 167.5
+    },
+    {
+      "accountId": 639,
+      "side": "short",
+      "size": 0.00017,
+      "entryPrice": 84592.2,
+      "deposit": 4.793762,
+      "premiumPnl": 0.080886,
+      "deltaPnl": 0.059704,
+      "liquidationPrice": 109882.912,
+      "bankruptcyPrice": 113266.6
+    },
+    {
+      "accountId": 640,
+      "side": "long",
+      "size": 0.33815,
+      "entryPrice": 83996.0,
+      "deposit": 1893.549827,
+      "premiumPnl": -136.240635,
+      "deltaPnl": 82.84675,
+      "liquidationPrice": 82159.0066656809,
+      "bankruptcyPrice": 78799.16666568091
+    },
+    {
+      "accountId": 642,
+      "side": "long",
+      "size": 0.002,
+      "entryPrice": 85184.4,
+      "deposit": 14.613952,
+      "premiumPnl": -0.1352,
+      "deltaPnl": -1.8868,
+      "liquidationPrice": 81352.4,
+      "bankruptcyPrice": 77945.024
+    },
+    {
+      "accountId": 643,
+      "side": "long",
+      "size": 0.11851,
+      "entryPrice": 84431.1,
+      "deposit": 673.331157,
+      "premiumPnl": 0.0,
+      "deltaPnl": -22.528751,
+      "liquidationPrice": 82126.70399493714,
+      "bankruptcyPrice": 78749.45999493713
+    },
+    {
+      "accountId": 690,
+      "side": "long",
+      "size": 0.00059,
+      "entryPrice": 84434.6,
+      "deposit": 16.621697,
+      "premiumPnl": -0.342554,
+      "deltaPnl": -0.114224,
+      "liquidationPrice": 60220.21620338983,
+      "bankruptcyPrice": 56842.83220338983
+    },
+    {
+      "accountId": 696,
+      "side": "long",
+      "size": 0.1016,
+      "entryPrice": 83640.5275970459,
+      "deposit": 652.603873,
+      "premiumPnl": -23.93696,
+      "deltaPnl": 61.007996,
+      "liquidationPrice": 80798.4822343923,
+      "bankruptcyPrice": 77452.86113051047
+    },
+    {
+      "accountId": 709,
+      "side": "short",
+      "size": 0.00018,
+      "entryPrice": 83995.0,
+      "deposit": 15.1191,
+      "premiumPnl": 0.07281,
+      "deltaPnl": -0.04428,
+      "liquidationPrice": 165034.7,
+      "bankruptcyPrice": 168394.5
+    },
+    {
+      "accountId": 712,
+      "side": "long",
+      "size": 0.00121,
+      "entryPrice": 83767.33032684326,
+      "deposit": 9.214414,
+      "premiumPnl": -0.077803,
+      "deltaPnl": 0.57314,
+      "liquidationPrice": 79567.10535809881,
+      "bankruptcyPrice": 76216.41214502508
+    },
+    {
+      "accountId": 714,
+      "side": "long",
+      "size": 0.00001,
+      "entryPrice": 83218.7,
+      "deposit": 0.832316,
+      "premiumPnl": -0.001933,
+      "deltaPnl": 0.010223,
+      "liquidationPrice": 3509.148,
+      "bankruptcyPrice": 180.4
+    },
+    {
+      "accountId": 749,
+      "side": "long",
+      "size": 0.01,
+      "entryPrice": 84887.0,
+      "deposit": 283.077667,
+      "premiumPnl": -0.537,
+      "deltaPnl": -6.46,
+      "liquidationPrice": 60028.4133,
+      "bankruptcyPrice": 56632.9333
+    },
+    {
+      "accountId": 750,
+      "side": "short",
+      "size": 0.002,
+      "entryPrice": 86501.4,
+      "deposit": 58.5717,
+      "premiumPnl": 0.0366,
+      "deltaPnl": 4.5208,
+      "liquidationPrice": 112345.494,
+      "bankruptcyPrice": 115805.55
+    },
+    {
+      "accountId": 752,
+      "side": "long",
+      "size": 0.001,
+      "entryPrice": 85147.4,
+      "deposit": 28.426667,
+      "premiumPnl": -0.0503,
+      "deltaPnl": -0.9064,
+      "liquidationPrice": 60176.929,
+      "bankruptcyPrice": 56771.033
+    },
+    {
+      "accountId": 757,
+      "side": "long",
+      "size": 0.001,
+      "entryPrice": 86327.2,
+      "deposit": 28.791934,
+      "premiumPnl": -0.0318,
+      "deltaPnl": -2.0862,
+      "liquidationPrice": 61020.154,
+      "bankruptcyPrice": 57567.066
+    },
+    {
+      "accountId": 758,
+      "side": "long",
+      "size": 0.001,
+      "entryPrice": 86407.4,
+      "deposit": 28.828167,
+      "premiumPnl": -0.0318,
+      "deltaPnl": -2.1664,
+      "liquidationPrice": 61067.329,
+      "bankruptcyPrice": 57611.033
+    },
+    {
+      "accountId": 759,
+      "side": "long",
+      "size": 0.001,
+      "entryPrice": 86379.5,
+      "deposit": 28.801167,
+      "premiumPnl": -0.0301,
+      "deltaPnl": -2.1385,
+      "liquidationPrice": 61063.613,
+      "bankruptcyPrice": 57608.433
+    },
+    {
+      "accountId": 760,
+      "side": "long",
+      "size": 0.001,
+      "entryPrice": 86358.1,
+      "deposit": 28.796534,
+      "premiumPnl": -0.0301,
+      "deltaPnl": -2.1171,
+      "liquidationPrice": 61045.99,
+      "bankruptcyPrice": 57591.666
+    },
+    {
+      "accountId": 761,
+      "side": "long",
+      "size": 0.001,
+      "entryPrice": 86376.1,
+      "deposit": 28.804234,
+      "premiumPnl": -0.0301,
+      "deltaPnl": -2.1351,
+      "liquidationPrice": 61057.01,
+      "bankruptcyPrice": 57601.966
+    },
+    {
+      "accountId": 762,
+      "side": "long",
+      "size": 0.001,
+      "entryPrice": 86419.1,
+      "deposit": 28.834067,
+      "premiumPnl": -0.0267,
+      "deltaPnl": -2.1781,
+      "liquidationPrice": 61068.497,
+      "bankruptcyPrice": 57611.733
+    },
+    {
+      "accountId": 763,
+      "side": "long",
+      "size": 0.001,
+      "entryPrice": 86720.4,
+      "deposit": 28.9473,
+      "premiumPnl": -0.0191,
+      "deltaPnl": -2.4794,
+      "liquidationPrice": 61261.016,
+      "bankruptcyPrice": 57792.2
+    },
+    {
+      "accountId": 764,
+      "side": "long",
+      "size": 0.001,
+      "entryPrice": 86678.5,
+      "deposit": 28.902934,
+      "premiumPnl": -0.0191,
+      "deltaPnl": -2.4375,
+      "liquidationPrice": 61261.806,
+      "bankruptcyPrice": 57794.666
+    },
+    {
+      "accountId": 765,
+      "side": "long",
+      "size": 0.001,
+      "entryPrice": 87111.1,
+      "deposit": 29.054034,
+      "premiumPnl": -0.0183,
+      "deltaPnl": -2.8701,
+      "liquidationPrice": 61559.81,
+      "bankruptcyPrice": 58075.366
+    },
+    {
+      "accountId": 778,
+      "side": "long",
+      "size": 0.001,
+      "entryPrice": 85078.5,
+      "deposit": 28.4113,
+      "premiumPnl": -0.0082,
+      "deltaPnl": -0.8375,
+      "liquidationPrice": 60078.54,
+      "bankruptcyPrice": 56675.4
+    },
+    {
+      "accountId": 779,
+      "side": "long",
+      "size": 0.001,
+      "entryPrice": 84365.4,
+      "deposit": 28.1539,
+      "premiumPnl": 0.0,
+      "deltaPnl": -0.1244,
+      "liquidationPrice": 59586.116,
+      "bankruptcyPrice": 56211.5
+    }
+  ],
+  "book": {
+    "bids": [
+      [
+        84220.4,
+        2.38381,
+        1
+      ],
+      [
+        84210.4,
+        3.26117,
+        1
+      ],
+      [
+        84200.4,
+        3.50226,
+        1
+      ],
+      [
+        84190.4,
+        2.46708,
+        1
+      ],
+      [
+        83439.0,
+        0.002,
+        1
+      ],
+      [
+        60000.0,
+        0.17171,
+        2
+      ],
+      [
+        57662.1,
+        0.001,
+        1
+      ],
+      [
+        57567.3,
+        0.001,
+        1
+      ],
+      [
+        57485.8,
+        0.001,
+        1
+      ],
+      [
+        57245.8,
+        0.001,
+        1
+      ],
+      [
+        57220.9,
+        0.001,
+        1
+      ],
+      [
+        56902.2,
+        0.001,
+        1
+      ],
+      [
+        56763.0,
+        0.001,
+        1
+      ],
+      [
+        56704.1,
+        0.001,
+        1
+      ],
+      [
+        56692.6,
+        0.001,
+        1
+      ],
+      [
+        56570.9,
+        0.001,
+        1
+      ],
+      [
+        56423.7,
+        0.001,
+        1
+      ],
+      [
+        56302.2,
+        0.001,
+        1
+      ],
+      [
+        56246.3,
+        0.001,
+        1
+      ],
+      [
+        56062.7,
+        0.001,
+        1
+      ],
+      [
+        55898.2,
+        0.001,
+        1
+      ],
+      [
+        55859.0,
+        0.001,
+        1
+      ],
+      [
+        55744.7,
+        0.001,
+        1
+      ],
+      [
+        55555.0,
+        0.001,
+        1
+      ],
+      [
+        55315.8,
+        0.001,
+        1
+      ],
+      [
+        55071.9,
+        0.001,
+        1
+      ],
+      [
+        55062.0,
+        0.001,
+        1
+      ],
+      [
+        54992.5,
+        0.001,
+        1
+      ],
+      [
+        54963.0,
+        0.001,
+        1
+      ],
+      [
+        54883.4,
+        0.001,
+        1
+      ],
+      [
+        54883.2,
+        0.001,
+        1
+      ],
+      [
+        54835.1,
+        0.001,
+        1
+      ],
+      [
+        54677.1,
+        0.001,
+        1
+      ],
+      [
+        54508.7,
+        0.001,
+        1
+      ],
+      [
+        54408.4,
+        0.001,
+        1
+      ],
+      [
+        54385.2,
+        0.001,
+        1
+      ],
+      [
+        54349.5,
+        0.001,
+        1
+      ],
+      [
+        54336.6,
+        0.001,
+        1
+      ],
+      [
+        54303.6,
+        0.001,
+        1
+      ],
+      [
+        54295.0,
+        0.001,
+        1
+      ],
+      [
+        54161.0,
+        0.001,
+        1
+      ],
+      [
+        54102.0,
+        0.001,
+        1
+      ],
+      [
+        54072.6,
+        0.001,
+        1
+      ],
+      [
+        53972.6,
+        0.001,
+        1
+      ],
+      [
+        53836.8,
+        0.001,
+        1
+      ],
+      [
+        53743.0,
+        0.001,
+        1
+      ],
+      [
+        53726.6,
+        0.001,
+        1
+      ],
+      [
+        53710.7,
+        0.001,
+        1
+      ],
+      [
+        53689.1,
+        0.001,
+        1
+      ],
+      [
+        53563.8,
+        0.001,
+        1
+      ],
+      [
+        53547.5,
+        0.001,
+        1
+      ],
+      [
+        53453.6,
+        0.001,
+        1
+      ],
+      [
+        53423.5,
+        0.001,
+        1
+      ],
+      [
+        53376.5,
+        0.001,
+        1
+      ],
+      [
+        53303.0,
+        0.001,
+        1
+      ],
+      [
+        53285.1,
+        0.001,
+        1
+      ],
+      [
+        53064.7,
+        0.001,
+        1
+      ],
+      [
+        53027.4,
+        0.001,
+        1
+      ],
+      [
+        52816.3,
+        0.001,
+        1
+      ],
+      [
+        52743.3,
+        0.001,
+        1
+      ],
+      [
+        52565.4,
+        0.001,
+        1
+      ],
+      [
+        52457.4,
+        0.001,
+        1
+      ],
+      [
+        52390.6,
+        0.001,
+        1
+      ],
+      [
+        52013.4,
+        0.001,
+        1
+      ],
+      [
+        51934.7,
+        0.001,
+        1
+      ],
+      [
+        51765.1,
+        0.001,
+        1
+      ],
+      [
+        51759.7,
+        0.001,
+        1
+      ],
+      [
+        51482.9,
+        0.001,
+        1
+      ],
+      [
+        51412.6,
+        0.001,
+        1
+      ],
+      [
+        51368.3,
+        0.001,
+        1
+      ],
+      [
+        51365.8,
+        0.001,
+        1
+      ],
+      [
+        51301.4,
+        0.001,
+        1
+      ],
+      [
+        51156.2,
+        0.001,
+        1
+      ],
+      [
+        51120.4,
+        0.001,
+        1
+      ],
+      [
+        51042.1,
+        0.001,
+        1
+      ],
+      [
+        51023.4,
+        0.001,
+        1
+      ],
+      [
+        50944.6,
+        0.001,
+        1
+      ],
+      [
+        50877.4,
+        0.001,
+        1
+      ],
+      [
+        50840.7,
+        0.001,
+        1
+      ],
+      [
+        50683.8,
+        0.001,
+        1
+      ],
+      [
+        50681.7,
+        0.001,
+        1
+      ],
+      [
+        50540.9,
+        0.001,
+        1
+      ],
+      [
+        50375.2,
+        0.001,
+        1
+      ],
+      [
+        50375.0,
+        0.001,
+        1
+      ],
+      [
+        50329.2,
+        0.001,
+        1
+      ],
+      [
+        50320.9,
+        0.001,
+        1
+      ],
+      [
+        50301.9,
+        0.001,
+        1
+      ],
+      [
+        50206.7,
+        0.001,
+        1
+      ],
+      [
+        50203.7,
+        0.001,
+        1
+      ],
+      [
+        50202.7,
+        0.001,
+        1
+      ],
+      [
+        50169.4,
+        0.001,
+        1
+      ],
+      [
+        50139.2,
+        0.001,
+        1
+      ],
+      [
+        50012.6,
+        0.001,
+        1
+      ],
+      [
+        50000.0,
+        0.0001,
+        1
+      ],
+      [
+        49988.0,
+        0.001,
+        1
+      ],
+      [
+        49980.6,
+        0.001,
+        1
+      ],
+      [
+        49729.8,
+        0.001,
+        1
+      ],
+      [
+        49356.2,
+        0.001,
+        1
+      ],
+      [
+        49354.2,
+        0.001,
+        1
+      ],
+      [
+        49316.6,
+        0.001,
+        1
+      ],
+      [
+        49313.7,
+        0.001,
+        1
+      ],
+      [
+        48585.8,
+        0.001,
+        1
+      ],
+      [
+        48253.8,
+        0.001,
+        1
+      ],
+      [
+        48234.9,
+        0.001,
+        1
+      ],
+      [
+        48190.2,
+        0.001,
+        1
+      ],
+      [
+        48079.7,
+        0.001,
+        1
+      ],
+      [
+        48072.2,
+        0.001,
+        1
+      ],
+      [
+        47541.9,
+        0.001,
+        1
+      ],
+      [
+        47486.3,
+        0.003,
+        3
+      ],
+      [
+        46886.6,
+        0.001,
+        1
+      ]
+    ],
+    "asks": [
+      [
+        84300.4,
+        2.16727,
+        1
+      ],
+      [
+        84320.4,
+        3.31168,
+        1
+      ],
+      [
+        84330.4,
+        3.08879,
+        1
+      ],
+      [
+        84340.4,
+        2.40934,
+        1
+      ],
+      [
+        86289.0,
+        0.001,
+        1
+      ],
+      [
+        86424.0,
+        0.001,
+        1
+      ],
+      [
+        87643.0,
+        0.002,
+        2
+      ],
+      [
+        87667.0,
+        0.001,
+        1
+      ],
+      [
+        87703.0,
+        0.001,
+        1
+      ],
+      [
+        88013.0,
+        0.001,
+        1
+      ],
+      [
+        88188.9,
+        0.173,
+        2
+      ],
+      [
+        88401.0,
+        0.001,
+        1
+      ],
+      [
+        830951.0,
+        0.00035,
+        1
+      ],
+      [
+        831306.5,
+        0.00009,
+        3
+      ],
+      [
+        831333.5,
+        0.00009,
+        3
+      ],
+      [
+        831463.5,
+        0.00009,
+        3
+      ],
+      [
+        832579.0,
+        0.00035,
+        1
+      ]
+    ]
+  }
+}
