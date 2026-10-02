@@ -26,3 +26,7 @@ monad_testnet = "https://testnet-rpc.monad.xyz"
 
 [fmt]
 line_length = 100
+
+[lint]
+# The vault runs on a fixed term measured in days. A few seconds of drift does not matter.
+exclude_lints = ["block-timestamp"]
