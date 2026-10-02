@@ -1,5 +1,5 @@
 import { type Bundle, type Ledge, type RunResult, type Snapshot, ledges as groupLedges, scaleOpenInterest, stress } from "@spillway/engine";
-import { layout } from "./layout.js";
+import { MAX_MOVE, layout } from "./layout.js";
 import { renderOverlay, usd } from "./overlay.js";
 import { Picture, type Scene } from "./picture.js";
 
@@ -58,7 +58,8 @@ function scene(): Scene {
     broken,
     ledgeBadDebt,
     ghostRatio: run ? run.totals.spotEnd / m.markPrice : null,
-    realRatio: run ? run.totals.bookLow / m.markPrice : null,
+    // Below the bottom of the cliff, the marker rests on the last tick.
+    realRatio: run ? Math.max(1 - MAX_MOVE, run.totals.bookLow / m.markPrice) : null,
     water: run ? run.totals.badDebt : 0,
     layerOn: cfg.layer.limitUsd > 0,
   };

@@ -29,7 +29,9 @@ export function renderOverlay(el: HTMLElement, geo: Geometry, scene: Scene, paid
     label(geo.rightX - 2, geo.priceY(scene.ghostRatio) - 3, `Outside price −${drop.toFixed(1)}%  ${usd(scene.mark * scene.ghostRatio)}`, "right above halo");
   }
   if (scene.realRatio !== null && scene.ghostRatio !== null && scene.realRatio < scene.ghostRatio - 1e-4) {
-    label(geo.rightX - 2, geo.priceY(scene.realRatio) + 4, `Perpl's book went to ${usd(scene.mark * scene.realRatio)}`, "ink right halo");
+    const floor = scene.realRatio <= 0.6 + 1e-9;
+    const text = floor ? "Perpl's book went below the last tick" : `Perpl's book went to ${usd(scene.mark * scene.realRatio)}`;
+    label(geo.rightX - 2, geo.priceY(scene.realRatio) + 4, text, "ink right halo");
   }
   for (let m = 0.1; m <= 0.4 + 1e-9; m += 0.1) {
     label(geo.wallX - 12, geo.priceY(1 - m) - 7, `−${Math.round(m * 100)}%`, "right");
