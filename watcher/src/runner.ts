@@ -46,6 +46,16 @@ import { type Batching, type Plan, type TxKind, type WaterfallTotals, planTransa
 import { buildReport, compare, formatTable } from "./report.js";
 import { type ScenarioSpec, adhocScenario, findScenario, loadSnapshot, runEngine } from "./scenario.js";
 
+/**
+ * Extra gas on top of the estimate for reportBadDebt. The keeper's settle() can land between
+ * the estimate and the transaction. If it clears the pending shortfall, reportBadDebt writes
+ * pendingShortfall from zero again, which costs 17,100 more gas than the estimate assumed
+ * (SSTORE zero to non-zero 22,100 against 5,000). Without headroom the transaction runs out of
+ * gas and reverts. Seen in the e2e at 10x open interest, and reproduced with cast: estimate
+ * 39,074 with a shortfall pending, 56,174 once settle() has cleared it.
+ */
+export const BAD_DEBT_GAS_HEADROOM = 20_000n;
+
 export interface RunnerContext {
   publicClient: Public;
   /** The adapter's runner account. */
@@ -121,7 +131,10 @@ export async function runScenario(ctx: RunnerContext, spec: ScenarioSpec, snapsh
   const send = async (kind: SentKind, units: bigint, write: () => Promise<Hash>) => {
     const hash = await write();
     const r = await publicClient.waitForTransactionReceipt({ hash, pollingInterval: Math.min(pollMs, 250) });
-    if (r.status !== "success") throw new Error(`${kind} reverted in ${hash}`);
+    if (r.status !== "success") {
+      const sent = await publicClient.getTransaction({ hash });
+      throw new Error(`${kind} reverted in ${hash} (gas used ${r.gasUsed} of limit ${sent.gas})`);
+    }
     run.sent.push({ kind, units, hash, block: r.blockNumber, gasUsed: r.gasUsed });
   };
 
@@ -142,9 +155,11 @@ export async function runScenario(ctx: RunnerContext, spec: ScenarioSpec, snapsh
   }
 
   for (const [i, tx] of plan.txs.entries()) {
-    await send(tx.kind, tx.units, () =>
-      wallet.writeContract({ address: adapter, abi: adapterAbi, functionName: tx.kind, args: [tx.units] }),
-    );
+    await send(tx.kind, tx.units, async () => {
+      const req = { address: adapter, abi: adapterAbi, functionName: tx.kind, args: [tx.units], account: wallet.account } as const;
+      const gas = await publicClient.estimateContractGas(req);
+      return wallet.writeContract({ ...req, gas: tx.kind === "reportBadDebt" ? gas + BAD_DEBT_GAS_HEADROOM : gas });
+    });
     if ((i + 1) % 50 === 0) log(`runner: ${i + 1}/${plan.txs.length} transactions`);
   }
   log(`runner: all ${plan.txs.length} transactions mined`);
