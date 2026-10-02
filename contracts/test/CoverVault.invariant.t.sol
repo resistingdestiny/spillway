@@ -56,6 +56,11 @@ contract CoverVaultInvariantTest is StdInvariant, VaultFixture {
         assertEq(adapter.layerPaid(), vault.paidOut(), "adapter and vault disagree");
     }
 
+    /// @dev Nobody joins a layer that already owes money.
+    function invariant_noDepositWhileShortfallPending() public view {
+        assertFalse(handler.depositedWhilePending(), "deposit accepted during a shortfall");
+    }
+
     /// @dev There is never idle principal beyond what the layer can still lose.
     function invariant_principalWithinRemainingLimit() public view {
         assertLe(vault.totalPrincipal(), vault.remainingLimit());
