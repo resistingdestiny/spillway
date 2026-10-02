@@ -166,6 +166,71 @@ contract CoverVaultDepositTest is VaultFixture {
         vm.stopPrank();
     }
 
+    function _tryDeposit(address who, uint256 amount, bytes memory expectedRevert) internal {
+        _mint(who, amount);
+        vm.startPrank(who);
+        usd.approve(address(vault), amount);
+        vm.expectRevert(expectedRevert);
+        vault.deposit(amount);
+        vm.stopPrank();
+    }
+
+    function test_depositRevertsWhileShortfallPending() public {
+        _deposit(alice, 100_000e6);
+        _badDebt(FUND + 30_000e6);
+        assertEq(adapter.pendingShortfall(), 30_000e6);
+        assertEq(vault.availableCapacity(), 0);
+
+        _tryDeposit(
+            bob, 10_000e6, abi.encodeWithSelector(CoverVault.ShortfallPending.selector, 30_000e6)
+        );
+        assertEq(vault.sharesOf(bob), 0);
+    }
+
+    function test_depositWorksAgainAfterSettle() public {
+        _deposit(alice, 100_000e6);
+        _badDebt(FUND + 30_000e6);
+        _tryDeposit(
+            bob, 10_000e6, abi.encodeWithSelector(CoverVault.ShortfallPending.selector, 30_000e6)
+        );
+
+        // Settle clears the shortfall and the layer reopens at the new share price.
+        vault.settle();
+        assertEq(adapter.pendingShortfall(), 0);
+        assertEq(vault.availableCapacity(), 150_000e6);
+
+        vm.startPrank(bob);
+        vault.deposit(10_000e6);
+        vm.stopPrank();
+        assertApproxEqAbs(vault.principalOf(bob), 10_000e6, 1);
+        assertEq(vault.principalOf(alice), 70_000e6);
+        assertEq(vault.totalPrincipal(), 80_000e6);
+    }
+
+    function test_depositWorksAgainAfterFinalize() public {
+        // An empty vault cannot pay, so the shortfall waits for the runner.
+        _badDebt(FUND + 10_000e6);
+        assertEq(vault.settle(), 0);
+        _tryDeposit(
+            alice, 1_000e6, abi.encodeWithSelector(CoverVault.ShortfallPending.selector, 10_000e6)
+        );
+
+        vm.prank(runner);
+        adapter.finalizeShortfall();
+        assertEq(adapter.adlLoss(), 10_000e6);
+
+        vm.prank(alice);
+        vault.deposit(1_000e6);
+        assertEq(vault.totalPrincipal(), 1_000e6);
+    }
+
+    function test_lossInsideFundDoesNotBlockDeposits() public {
+        _badDebt(FUND / 2);
+        assertEq(adapter.pendingShortfall(), 0);
+        _deposit(alice, 10_000e6);
+        assertEq(vault.totalPrincipal(), 10_000e6);
+    }
+
     function test_withdrawAfterEndReturnsPrincipal() public {
         _deposit(alice, 40_000e6);
         _deposit(bob, 60_000e6);
