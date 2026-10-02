@@ -2,6 +2,7 @@
 //! Rust SDK and writes a `spillway.snapshot/1` JSON file.
 
 mod book;
+mod context;
 mod market;
 mod network;
 mod onchain;
@@ -44,6 +45,10 @@ struct Args {
     /// Output file. Writes to stdout when omitted.
     #[arg(long)]
     out: Option<PathBuf>,
+
+    /// Perpl REST API base. Defaults to the public API of the network.
+    #[arg(long)]
+    api: Option<String>,
 
     /// Maximum RPC requests per second.
     #[arg(long, default_value_t = 15)]
@@ -98,13 +103,46 @@ async fn run(args: Args) -> anyhow::Result<()> {
         .into_header();
     let block_number = block.number;
 
-    let perp_id = market::resolve_onchain(
-        &chain,
-        &provider,
-        BlockId::number(block_number),
-        &args.market,
-    )
-    .await?;
+    let mut notes = Vec::new();
+
+    // Perpl's public REST context names every market. Use it to resolve the
+    // market, but never depend on it: the chain is the source of truth.
+    let api = args
+        .api
+        .clone()
+        .unwrap_or_else(|| args.network.api_base().to_string());
+    let api_context = match context::fetch(&api).await {
+        Ok(ctx) if ctx.chain.chain_id == chain_id => Some(ctx),
+        Ok(ctx) => {
+            notes.push(format!(
+                "REST context at {api} is for chain {}, not {chain_id}; ignored it",
+                ctx.chain.chain_id
+            ));
+            None
+        }
+        Err(err) => {
+            notes.push(format!(
+                "REST context unavailable ({err:#}); market resolved on-chain"
+            ));
+            None
+        }
+    };
+    let api_market = api_context
+        .as_ref()
+        .and_then(|ctx| match ctx.find_market(&args.market) {
+            Ok(m) => Some(m),
+            Err(err) => {
+                notes.push(format!("{err:#}; market resolved on-chain"));
+                None
+            }
+        });
+
+    // Either way the perpetual must be listed on-chain at the snapshot block.
+    let wanted = api_market
+        .map(|m| m.perpetual_id.to_string())
+        .unwrap_or_else(|| args.market.clone());
+    let perp_id =
+        market::resolve_onchain(&chain, &provider, BlockId::number(block_number), &wanted).await?;
     eprintln!(
         "reading {} perp {perp_id} at block {block_number}",
         args.network.name()
@@ -145,6 +183,45 @@ async fn run(args: Args) -> anyhow::Result<()> {
             perp.open_interest(),
             extras.long_open_interest
         );
+    }
+
+    // Cross-check the REST market configuration against the chain.
+    if let Some(cfg) = api_market.and_then(|m| m.config.as_ref()) {
+        let hundredths = |v: UD64| (num(v) * 100.0).round() as u64;
+        let checks = [
+            (
+                "price decimals",
+                cfg.price_decimals.map(u64::from),
+                u64::from(perp.price_converter().decimals()),
+            ),
+            (
+                "lot decimals",
+                cfg.size_decimals.map(u64::from),
+                u64::from(perp.size_converter().decimals()),
+            ),
+            (
+                "initial margin",
+                cfg.initial_margin,
+                hundredths(perp.initial_margin()),
+            ),
+            (
+                "maintenance margin",
+                cfg.maintenance_margin,
+                hundredths(perp.maintenance_margin()),
+            ),
+        ];
+        for (what, rest, chain_value) in checks {
+            if let Some(rest) = rest
+                && rest != chain_value
+            {
+                notes.push(format!(
+                    "REST {what} is {rest}, chain says {chain_value}; used the chain"
+                ));
+            }
+        }
+        if cfg.is_open == Some(false) {
+            notes.push("REST context reports the market as not open".to_string());
+        }
     }
 
     // Every open position on this perpetual, in account order.
@@ -231,8 +308,8 @@ async fn run(args: Args) -> anyhow::Result<()> {
             sdk: format!("perpl-sdk {}", env!("PERPL_SDK_VERSION")),
             dex_revision: perpl_sdk::abi::DEX_REVISION.trim().to_string(),
             contract_version: exchange.contract_version().map(|v| v.to_string()),
-            api: String::new(),
-            notes: Vec::new(),
+            api,
+            notes,
         },
         market,
         positions,

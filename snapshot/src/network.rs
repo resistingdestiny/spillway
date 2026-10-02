@@ -32,4 +32,12 @@ impl Network {
             Network::Testnet => "https://testnet-rpc.monad.xyz",
         }
     }
+
+    /// Base URL of Perpl's public REST API.
+    pub fn api_base(self) -> &'static str {
+        match self {
+            Network::Mainnet => "https://app.perpl.xyz/api",
+            Network::Testnet => "https://testnet.perpl.xyz/api",
+        }
+    }
 }
