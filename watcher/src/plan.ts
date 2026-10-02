@@ -15,12 +15,20 @@
 // that came between two bad debts still lands between them. Merging two bad debts gives the
 // same fund path as sending them one after the other: the fund pays min(fund, a + b), which
 // equals min(fund, a) plus min(what is left, b). Merging two incomes is a plain sum.
+//
+// "compact" is for a real network, where every transaction costs time and gas. It folds a run
+// of events into at most two calls, all bad debt then all income or the other way round, as
+// long as the fund ends the run at the same balance as it does in the engine's order. Within a
+// run the fund only moves by income in and draws out, so the same end balance means the same
+// fund paid and the same shortfall, and the layer and ADL split the running shortfall the same
+// way. Totals match the step plan to the unit (the tests check it). What is lost is the path
+// inside each run: the chain shows the cascade in a few large steps instead of second by second.
 
 import type { TimelineEvent } from "@spillway/engine";
 import { toUnits } from "./money.js";
 
 export type TxKind = "fundInsurance" | "reportBadDebt";
-export type Batching = "event" | "step";
+export type Batching = "event" | "step" | "compact";
 
 export interface MoneyEvent {
   /** Index in the engine's event list. */
@@ -66,17 +74,27 @@ export function moneyEvents(timeline: readonly TimelineEvent[]): MoneyEvent[] {
   return out;
 }
 
-/** Turns the engine's timeline into the ordered list of adapter calls. */
-export function planTransactions(timeline: readonly TimelineEvent[], batching: Batching = "step"): Plan {
+/**
+ * Turns the engine's timeline into the ordered list of adapter calls. "compact" needs the
+ * insurance fund the chain starts from, in base units.
+ */
+export function planTransactions(timeline: readonly TimelineEvent[], batching: Batching = "step", fundStart?: bigint): Plan {
   const events = moneyEvents(timeline);
-  const txs: PlannedTx[] = [];
   const dust = { count: 0, dollars: 0 };
+  const live: MoneyEvent[] = [];
   for (const e of events) {
-    if (e.units === 0n) {
+    if (e.units > 0n) live.push(e);
+    else {
       dust.count++;
       dust.dollars += e.dollars;
-      continue;
     }
+  }
+  if (batching === "compact") {
+    if (fundStart === undefined) throw new Error("compact batching needs the starting insurance fund");
+    return { batching, events, txs: compactTxs(live, fundStart), dust };
+  }
+  const txs: PlannedTx[] = [];
+  for (const e of live) {
     const last = txs[txs.length - 1];
     if (batching === "step" && last && last.kind === e.kind && last.t === e.t) {
       last.units += e.units;
@@ -87,6 +105,77 @@ export function planTransactions(timeline: readonly TimelineEvent[], batching: B
     }
   }
   return { batching, events, txs, dust };
+}
+
+const sub0 = (a: bigint, b: bigint) => (a > b ? a - b : 0n);
+
+/** Fund balance after one event, as the adapter computes it. */
+const fundAfter = (fund: bigint, e: MoneyEvent) => (e.kind === "fundInsurance" ? fund + e.units : sub0(fund, e.units));
+
+interface Run {
+  /** Fund before the run. */
+  from: bigint;
+  /** Fund after the run, in the engine's order. */
+  end: bigint;
+  bad: bigint;
+  income: bigint;
+  badEvents: number;
+  incomeEvents: number;
+  badDollars: number;
+  incomeDollars: number;
+  t: number;
+}
+
+/** Fund after the run if all bad debt goes first. */
+const endBadFirst = (r: Pick<Run, "from" | "bad" | "income">) => sub0(r.from, r.bad) + r.income;
+/** Fund after the run if all income goes first. */
+const endIncomeFirst = (r: Pick<Run, "from" | "bad" | "income">) => sub0(r.from + r.income, r.bad);
+
+function compactTxs(events: readonly MoneyEvent[], fundStart: bigint): PlannedTx[] {
+  const txs: PlannedTx[] = [];
+  const emit = (r: Run) => {
+    const bad: PlannedTx = { kind: "reportBadDebt", t: r.t, units: r.bad, events: r.badEvents, dollars: r.badDollars };
+    const income: PlannedTx = { kind: "fundInsurance", t: r.t, units: r.income, events: r.incomeEvents, dollars: r.incomeDollars };
+    const order = endBadFirst(r) === r.end ? [bad, income] : [income, bad];
+    for (const tx of order) if (tx.units > 0n) txs.push(tx);
+  };
+  let run: Run | null = null;
+  let fund = fundStart;
+  for (const e of events) {
+    const isBad = e.kind === "reportBadDebt";
+    if (run) {
+      const next: Run = {
+        ...run,
+        end: fundAfter(run.end, e),
+        bad: run.bad + (isBad ? e.units : 0n),
+        income: run.income + (isBad ? 0n : e.units),
+        badEvents: run.badEvents + (isBad ? 1 : 0),
+        incomeEvents: run.incomeEvents + (isBad ? 0 : 1),
+        badDollars: run.badDollars + (isBad ? e.dollars : 0),
+        incomeDollars: run.incomeDollars + (isBad ? 0 : e.dollars),
+        t: e.t,
+      };
+      if (endBadFirst(next) === next.end || endIncomeFirst(next) === next.end) {
+        run = next;
+        continue;
+      }
+      emit(run);
+      fund = run.end;
+    }
+    run = {
+      from: fund,
+      end: fundAfter(fund, e),
+      bad: isBad ? e.units : 0n,
+      income: isBad ? 0n : e.units,
+      badEvents: isBad ? 1 : 0,
+      incomeEvents: isBad ? 0 : 1,
+      badDollars: isBad ? e.dollars : 0,
+      incomeDollars: isBad ? 0 : e.dollars,
+      t: e.t,
+    };
+  }
+  if (run) emit(run);
+  return txs;
 }
 
 export interface WaterfallTotals {

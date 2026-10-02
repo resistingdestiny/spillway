@@ -121,3 +121,59 @@ describe("replayWaterfall", () => {
     }
   });
 });
+
+describe("compact batching", () => {
+  const bd = (t: number, d: number) => fill(t, d);
+  const inc = (t: number, d: number) => income(t, d);
+  const kinds = (timeline: TimelineEvent[], fund: bigint) =>
+    planTransactions(timeline, "compact", fund).txs.map((x) => [x.kind, x.units / 1_000_000n]);
+
+  it("puts bad debt first while the fund covers it", () => {
+    expect(kinds([bd(1, 10), inc(2, 5), bd(3, 10)], 100_000_000n)).toEqual([
+      ["reportBadDebt", 20n],
+      ["fundInsurance", 5n],
+    ]);
+  });
+
+  it("puts income first when the fund ends the run empty", () => {
+    // 12 - 10 + 5 - 10: the fund pays 17 and ends at 0, as with income first.
+    expect(kinds([bd(1, 10), inc(2, 5), bd(3, 10)], 12_000_000n)).toEqual([
+      ["fundInsurance", 5n],
+      ["reportBadDebt", 20n],
+    ]);
+  });
+
+  it("splits a run when neither order gives the engine's end balance", () => {
+    // From 0: +5, -10 (fund pays 5), +3. Ends at 3. Neither fold ends at 3.
+    expect(kinds([inc(1, 5), bd(2, 10), inc(3, 3)], 0n)).toEqual([
+      ["fundInsurance", 5n],
+      ["reportBadDebt", 10n],
+      ["fundInsurance", 3n],
+    ]);
+  });
+
+  it("needs the starting fund", () => {
+    expect(() => planTransactions([bd(1, 1)], "compact")).toThrow(/starting insurance fund/);
+  });
+
+  it("matches the step plan to the unit through fund exhaustion, the layer and ADL", () => {
+    let seed = 11;
+    const rand = () => ((seed = (seed * 1103515245 + 12345) % 2 ** 31) / 2 ** 31);
+    for (let trial = 0; trial < 40; trial++) {
+      const timeline: TimelineEvent[] = [];
+      for (let t = 0; t < 150; t++) {
+        const n = 1 + Math.floor(rand() * 4);
+        for (let k = 0; k < n; k++) timeline.push(rand() < 0.4 ? bd(t, rand() * 2000) : inc(t, rand() * 300));
+      }
+      const fund = BigInt(Math.floor(rand() * 60_000)) * 1_000_000n;
+      const cap = BigInt(Math.floor(rand() * 40_000)) * 1_000_000n;
+      const step = planTransactions(timeline, "step");
+      const compact = planTransactions(timeline, "compact", fund);
+      expect(compact.txs.length).toBeLessThanOrEqual(step.txs.length);
+      expect(replayWaterfall(compact.txs, fund, cap)).toEqual(replayWaterfall(step.txs, fund, cap));
+      const sum = (p: typeof step, k: string) => p.txs.filter((x) => x.kind === k).reduce((s, x) => s + x.units, 0n);
+      expect(sum(compact, "reportBadDebt")).toBe(sum(step, "reportBadDebt"));
+      expect(sum(compact, "fundInsurance")).toBe(sum(step, "fundInsurance"));
+    }
+  });
+});
