@@ -153,25 +153,6 @@ export function buildReport(run: ScenarioRun, cmp: Comparison, extra: ReportExtr
   return {
     schema: "spillway.watcher-report/1",
     scenario: run.spec,
-    ...extra,
-    engine: {
-      config: "DEFAULT_CONFIG",
-      ms: run.engineMs,
-      start: { fund: formatUnits(run.start.fund), layerCapacity: formatUnits(run.start.layerCapacity) },
-      totals: t,
-      events: counts,
-    },
-    plan: {
-      batching: run.plan.batching,
-      moneyEvents: run.plan.events.length,
-      transactions: run.plan.txs.length,
-      byKind: txCounts,
-      dust: run.plan.dust,
-      rounding: {
-        rule: "shortest decimal of each engine amount, rounded half up to 6 decimals, per event",
-        ...cmp.rounding,
-      },
-    },
     tolerance: {
       rule: "|on-chain - engine| <= money events x $0.000001, for every row",
       perEvent: TOLERANCE_PER_EVENT,
@@ -193,6 +174,24 @@ export function buildReport(run: ScenarioRun, cmp: Comparison, extra: ReportExtr
       band: { engine: cmp.bandEngine, chain: cmp.bandChain, expected: cmp.bandExpected, ok: cmp.bandOk },
       pass: cmp.pass,
     },
+    engine: {
+      config: "DEFAULT_CONFIG",
+      ms: run.engineMs,
+      start: { fund: formatUnits(run.start.fund), layerCapacity: formatUnits(run.start.layerCapacity) },
+      totals: t,
+      events: counts,
+    },
+    plan: {
+      batching: run.plan.batching,
+      moneyEvents: run.plan.events.length,
+      transactions: run.plan.txs.length,
+      byKind: txCounts,
+      dust: run.plan.dust,
+      rounding: {
+        rule: "shortest decimal of each engine amount, rounded half up to 6 decimals, per event",
+        ...cmp.rounding,
+      },
+    },
     chain: {
       before: run.before,
       after: run.after,
@@ -200,5 +199,6 @@ export function buildReport(run: ScenarioRun, cmp: Comparison, extra: ReportExtr
       blocks: run.after ? Number(run.after.block - run.before.block) : 0,
       ms: run.chainMs,
     },
+    ...extra,
   };
 }
