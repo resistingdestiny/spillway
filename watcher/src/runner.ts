@@ -13,9 +13,11 @@
 //   RUNNER_KEY_FILE=~/.secrets/spillway-deployer.env \
 //   pnpm --filter @spillway/watcher runner --scenario oi10x-drop20 [--dry-run]
 //
-// Options: --scenario <name> | --oi <multiple> [--drop <fraction>] (no --drop replays 10 Oct 2025),
-// --deployment <file>, --rpc <url>, --batch step|event, --snapshot <file>, --report <file>,
-// --settle-timeout <seconds>, --dry-run (plan and forecast only, sends nothing).
+// Options:
+//   --scenario <name> | --oi <multiple> [--drop <fraction>]   no --drop replays 10 Oct 2025
+//   --deployment <file>   --rpc <url>   --snapshot <file>   --report <file>
+//   --batch step|event|compact   compact folds the plan into a few transactions for a real network
+//   --settle-timeout <seconds>   --dry-run (forecast and plan only, sends nothing)
 
 import { writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
@@ -116,7 +118,7 @@ export async function runScenario(ctx: RunnerContext, spec: ScenarioSpec, snapsh
   const t0 = Date.now();
   const engine = runEngine(snapshot, spec, cfg, { fundUsd: toDollars(start.fund), layerUsd: toDollars(start.layerCapacity) });
   const engineMs = Date.now() - t0;
-  const plan = planTransactions(engine.events, opts.batching ?? "step");
+  const plan = planTransactions(engine.events, opts.batching ?? "step", start.fund);
   const expected = replayWaterfall(plan.txs, start.fund, start.layerCapacity);
   log(`engine: ${spec.label}, band ${engine.totals.band}, ${plan.events.length} money events, ${plan.txs.length} transactions (${plan.batching})`);
 

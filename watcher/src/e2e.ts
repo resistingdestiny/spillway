@@ -1,6 +1,6 @@
 // End to end on a local anvil: deploy, run each scenario, let the keeper settle, compare.
 //
-//   pnpm --filter @spillway/watcher e2e [--scenario <name>]... [--batch step|event]
+//   pnpm --filter @spillway/watcher e2e [--scenario <name>[,<name>]] [--batch step|event|compact]
 //
 // For each scenario, on one anvil started here on a free port:
 //   1. Deploy MockUSD, MockBackstopAdapter (fund seeded with the snapshot's insurance fund) and
@@ -275,7 +275,7 @@ async function runOne(url: string, version: string, spec: ScenarioSpec, snapshot
     keeper: { process: "separate (src/watcher.ts)", payouts, shortfallEvents: keeper.lines.filter((l) => l.type === "shortfall").length },
   });
   mkdirSync(REPORTS_DIR, { recursive: true });
-  const out = join(REPORTS_DIR, `${spec.name}.json`);
+  const out = join(REPORTS_DIR, batching === "step" ? `${spec.name}.json` : `${spec.name}.${batching}.json`);
   writeFileSync(out, `${JSON.stringify(report, bigintReplacer, 2)}\n`);
   console.log(`report: ${relative(REPO_DIR, out)}`);
   return {
