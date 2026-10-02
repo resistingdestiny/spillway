@@ -1,0 +1,15 @@
+{
+  "schema": "spillway.deployment/1",
+  "network": "monad-testnet",
+  "chainId": 10143,
+  "rpcUrl": "https://testnet-rpc.monad.xyz",
+  "deployBlock": 0,
+  "contracts": {
+    "MockUSD": "0x0000000000000000000000000000000000000000",
+    "MockBackstopAdapter": "0x0000000000000000000000000000000000000000",
+    "CoverVault": "0x0000000000000000000000000000000000000000"
+  },
+  "roles": {
+    "owner": "0x0000000000000000000000000000000000000000"
+  }
+}
