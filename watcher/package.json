@@ -8,7 +8,8 @@
     "typecheck": "tsc --noEmit",
     "e2e": "tsx src/e2e.ts",
     "runner": "tsx src/runner.ts",
-    "watcher": "tsx src/watcher.ts"
+    "watcher": "tsx src/watcher.ts",
+    "abi": "tsx scripts/extract-abi.ts"
   },
   "dependencies": {
     "@spillway/engine": "workspace:*",
