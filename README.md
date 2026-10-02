@@ -15,6 +15,21 @@ Built for the Monad Metropolis hackathon on [Perpl](https://perpl.xyz).
 | `contracts/` | Cover vault, mock backstop adapter and trigger (Foundry) |
 | `web/` | The flood picture: stress slider, replay and deposit flow |
 
+## Run it
+
+Needs Node 22, pnpm 9, Foundry and Rust 1.85 or newer.
+
+```bash
+pnpm install
+pnpm -r test                                   # engine tests
+(cd contracts && forge test)                   # vault tests
+pnpm --filter @spillway/engine cli stress fixtures/snapshots/btc-mainnet.json --move 0.1
+pnpm --filter @spillway/web data               # bundle the engine output for the app
+pnpm --filter @spillway/web dev
+```
+
+Every modelling assumption lives in `engine/src/config.ts`, with a comment saying where it comes from.
+
 ## Status
 
 Work in progress. Started 2 October 2026.
