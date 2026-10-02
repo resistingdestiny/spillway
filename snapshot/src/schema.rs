@@ -88,7 +88,7 @@ pub struct Position {
 }
 
 /// Price levels as `[price, size, orders]`, best first.
-#[derive(Debug, Default, Serialize)]
+#[derive(Debug, Serialize)]
 pub struct Book {
     pub bids: Vec<(f64, f64, u32)>,
     pub asks: Vec<(f64, f64, u32)>,

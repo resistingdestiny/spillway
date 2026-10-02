@@ -1,6 +1,7 @@
 //! `spillway-snapshot`: reads one Perpl market at one block through the Perpl
 //! Rust SDK and writes a `spillway.snapshot/1` JSON file.
 
+mod book;
 mod market;
 mod network;
 mod onchain;
@@ -193,6 +194,15 @@ async fn run(args: Args) -> anyhow::Result<()> {
         funding_rate: num(perp.funding_rate()),
     };
 
+    // Full L3 book aggregated to price levels, expired orders left out.
+    let levels = book::aggregate(perp.l3_book());
+    let side = |side: &[book::Level]| {
+        side.iter()
+            .map(|l| (num(l.price), num(l.size), l.orders))
+            .collect::<Vec<_>>()
+    };
+    let book = schema::Book { bids: side(&levels.bids), asks: side(&levels.asks) };
+
     let instant = exchange.instant();
     let snapshot = schema::Snapshot {
         schema: schema::SCHEMA,
@@ -211,7 +221,7 @@ async fn run(args: Args) -> anyhow::Result<()> {
         },
         market,
         positions,
-        book: schema::Book::default(),
+        book,
     };
 
     let mut json = serde_json::to_string_pretty(&snapshot)?;
@@ -222,10 +232,16 @@ async fn run(args: Args) -> anyhow::Result<()> {
         None => std::io::stdout().write_all(json.as_bytes())?,
     }
     eprintln!(
-        "block {} positions {} mark {}",
+        "block {} positions {} mark {} best bid {:?} best ask {:?} levels {}/{} expired {} l2 mismatches {}",
         snapshot.block,
         snapshot.positions.len(),
-        snapshot.market.mark_price
+        snapshot.market.mark_price,
+        levels.best_bid().map(num),
+        levels.best_ask().map(num),
+        snapshot.book.bids.len(),
+        snapshot.book.asks.len(),
+        levels.expired_orders,
+        levels.l2_mismatches,
     );
     Ok(())
 }
