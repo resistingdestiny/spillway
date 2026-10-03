@@ -1,6 +1,6 @@
-import { type Bundle, type Ledge, type RunResult, type Snapshot, ledges as groupLedges, scaleOpenInterest, stress } from "@spillway/engine";
+import { type Bundle, type Ledge, type RunResult, type Snapshot, gap, ledges as groupLedges, scaleOpenInterest } from "@spillway/engine";
 import { MAX_MOVE, layout } from "./layout.js";
-import { renderOverlay, usd } from "./overlay.js";
+import { renderOverlay, usd, usdShort } from "./overlay.js";
 import { Picture, type Scene } from "./picture.js";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -65,10 +65,21 @@ function scene(): Scene {
   };
 }
 
+function headline(): string {
+  const longOi = today.positions.filter((p) => p.side === "long").reduce((a, p) => a + p.entryPrice * p.size, 0);
+  if (move <= 0) return `Today Perpl's ${m.symbol} market holds <b>${usdShort(longOi)}</b> of open interest behind a <b>${usdShort(m.insuranceFund)}</b> insurance fund.`;
+  const rows = bundle.capacity ?? [];
+  const row = rows.reduce<(typeof rows)[number] | undefined>((best, r) => (!best || Math.abs(r.gap - move) < Math.abs(best.gap - move) ? r : best), undefined);
+  const g = `${(move * 100).toFixed(1).replace(/\.0$/, "")}%`;
+  if (!row || move < (rows[0]?.gap ?? 0) - 0.005) return `A ${g} gap is too small to empty the fund at any size Perpl allows.`;
+  const amount = (c: typeof row.fundOnly) => (c.atSearchLimit ? `more than ${usdShort(c.openInterest)}` : usdShort(c.openInterest));
+  return `Through a ${g} gap, the fund alone can carry <b>${amount(row.fundOnly)}</b> of open interest. With Spillway, <b>${amount(row.withSpillway)}</b>.`;
+}
+
 function sentence(): string {
   if (!run) return "Each ledge is traders' money that gets sold if the price falls that far. The basin is dry.";
   const t = run.totals;
-  const d = `A ${(move * 100).toFixed(1).replace(/\.0$/, "")}% drop`;
+  const d = `A ${(move * 100).toFixed(1).replace(/\.0$/, "")}% gap`;
   if (t.liquidations === 0) return `${d} reaches no ledge, so nothing is sold.`;
   if (t.badDebt <= 0) return `${d} breaks ${t.liquidations} positions, and their own margin covers every loss.`;
   if (t.band === 1) return `${d} leaves ${usd(t.badDebt)} of losses beyond traders' margin, and the insurance fund pays all of it.`;
@@ -83,12 +94,13 @@ function draw(): void {
   picture.draw(geo, s);
   renderOverlay($("overlay"), geo, s, run?.totals ?? { fundPaid: 0, layerPaid: 0, tradersLose: 0 }, m.symbol);
   $("sentence").textContent = sentence();
+  $("headline").innerHTML = headline();
   $("drop-value").textContent = `${(move * 100).toFixed(1)}%`;
 }
 
 $<HTMLInputElement>("drop").addEventListener("input", (e) => {
   move = Number((e.target as HTMLInputElement).value) / 100;
-  run = move > 0 ? stress(snapshot, move, cfg) : null;
+  run = move > 0 ? gap(snapshot, move, cfg) : null;
   draw();
 });
 
@@ -96,7 +108,7 @@ $("scenario").addEventListener("click", (e) => {
   const b = (e.target as HTMLElement).closest("button");
   if (!b) return;
   useScale(Number(b.dataset.k));
-  run = move > 0 ? stress(snapshot, move, cfg) : null;
+  run = move > 0 ? gap(snapshot, move, cfg) : null;
   draw();
 });
 
