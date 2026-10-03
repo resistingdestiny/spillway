@@ -42,7 +42,7 @@ Transactions and gas for each scenario: every runner and keeper transaction, inc
 | `oi10x-gap18` | 573 txs, 28,712,757 gas | 7 txs, 447,457 gas |
 | `oi10x-gap25` | 6 txs, 402,752 gas | 6 txs, 402,752 gas |
 
-Each keeper payout landed 2 to 4 blocks after the shortfall that triggered it (anvil mines one block per transaction).
+Each keeper payout landed 2 to 7 blocks after the shortfall that triggered it, across runs (anvil mines one block per transaction, and the runner keeps sending meanwhile).
 
 ## Batching
 
