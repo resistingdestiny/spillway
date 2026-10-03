@@ -1,0 +1,25 @@
+{
+  "name": "@spillway/watcher",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "e2e": "tsx src/e2e.ts",
+    "runner": "tsx src/runner.ts",
+    "watcher": "tsx src/watcher.ts",
+    "abi": "tsx scripts/extract-abi.ts",
+    "deployment": "tsx scripts/deployment-from-broadcast.ts"
+  },
+  "dependencies": {
+    "@spillway/engine": "workspace:*",
+    "viem": "^2.57.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
+  }
+}
