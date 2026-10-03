@@ -11,6 +11,8 @@
 //     stress run over config.stress.shockSeconds. Whole-day moves (dailyMoves) are kept for
 //     comparison; they treat a slow day-long slide as a crash and overstate the risk.
 //   - The layer's limit is aggregate over the year: once used up, it is gone.
+//   - Optionally, liquidation pauses (see Pauses): the gaps they leave are where Perpl's losses come
+//     from, because an orderly fall barely gets past traders' margin under Perpl's rules.
 
 import type { EngineConfig } from "./config.js";
 import { mulberry32, randInt } from "./rng.js";
@@ -119,6 +121,9 @@ export interface MonteCarloResult {
   seed: number;
   daysPerYear: number;
   history: { source: string; from: string; to: string; days: number };
+  /** Mean liquidation pauses a year, and where their gaps come from. 0 when pauses are left out. */
+  pausesPerYear: number;
+  pauseSource: string;
   fund: number;
   layerLimit: number;
   /** Chance in a year that at least one day leaves bad debt the fund pays. */
@@ -135,6 +140,31 @@ export interface MonteCarloResult {
   plaques: Plaque[];
 }
 
+/**
+ * Liquidation pauses: on top of the orderly days, each year has a Poisson number of pauses (mean
+ * cfg.pause.perYear). Each lands on a random stressed day and leaves a gap the size of that day's
+ * worst minute, priced on the gap curve.
+ */
+export interface Pauses {
+  curve: StressPoint[];
+  /** One gap per stressed day in history, as fractions. */
+  gaps: number[];
+  source: string;
+}
+
+/** Number of events in a year, Poisson with the given mean (Knuth's method; fine for small means). */
+function poisson(rng: () => number, mean: number): number {
+  if (mean <= 0) return 0;
+  const limit = Math.exp(-mean);
+  let k = 0;
+  let p = 1;
+  for (;;) {
+    p *= rng();
+    if (p <= limit) return k;
+    k++;
+  }
+}
+
 export function monteCarlo(
   curve: StressPoint[],
   moves: number[],
@@ -142,6 +172,7 @@ export function monteCarlo(
   fund: number,
   layerLimit: number,
   history: { source: string; from: string; to: string } = { source: "", from: "", to: "" },
+  pauses?: Pauses,
 ): MonteCarloResult {
   const { years, seed, daysPerYear } = cfg.monteCarlo;
   const rng = mulberry32(seed);
@@ -149,6 +180,8 @@ export function monteCarlo(
 
   // Every day's loss depends only on its move, so look each historical day up once.
   const dayLoss = moves.map((m) => lossAt(curve, m));
+  const gapLoss = pauses ? pauses.gaps.map((g) => lossAt(pauses.curve, g)) : [];
+  const pausesPerYear = pauses && gapLoss.length ? cfg.pause.perYear : 0;
 
   const worst = new Float64Array(years);
   let hitFund = 0;
@@ -161,9 +194,8 @@ export function monteCarlo(
     let layerUsed = 0;
     let fundHit = false;
     let tradersHit = false;
-    for (let d = 0; d < daysPerYear; d++) {
-      const l = dayLoss[randInt(rng, n)] as Loss;
-      if (l.badDebt <= 0) continue;
+    const take = (l: Loss) => {
+      if (l.badDebt <= 0) return;
       if (l.badDebt > worstDay) worstDay = l.badDebt;
       if (l.fundPaid > 0) fundHit = true;
       // Aggregate limit: what the layer can no longer pay falls on traders.
@@ -175,7 +207,10 @@ export function monteCarlo(
       sum.fundPaid += l.fundPaid;
       sum.layerPaid += layerPays;
       sum.tradersLose += traders;
-    }
+    };
+    for (let d = 0; d < daysPerYear; d++) take(dayLoss[randInt(rng, n)] as Loss);
+    const k = poisson(rng, pausesPerYear);
+    for (let i = 0; i < k; i++) take(gapLoss[randInt(rng, gapLoss.length)] as Loss);
     worst[y] = worstDay;
     if (fundHit) hitFund++;
     if (layerUsed > 0) hitLayer++;
@@ -206,6 +241,8 @@ export function monteCarlo(
     seed,
     daysPerYear,
     history: { ...history, days: n },
+    pausesPerYear,
+    pauseSource: pauses?.source ?? "",
     fund,
     layerLimit,
     pFund: hitFund / years,
