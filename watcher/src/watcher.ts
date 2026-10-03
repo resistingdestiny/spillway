@@ -73,7 +73,7 @@ export async function startWatcher(o: WatcherOptions): Promise<WatcherHandle> {
   let stopped = false;
   let exhaustedLogged = false;
   // Shortfalls after this block are not paid yet. Used to measure how fast payouts land.
-  let lastPayoutBlock = await publicClient.getBlockNumber();
+  let lastPayoutBlock = await publicClient.getBlockNumber({ cacheTime: 0 });
 
   const trySettle = async (trigger: "event" | "poll") => {
     const pending = await publicClient.readContract({ address: adapter, abi: adapterAbi, functionName: "pendingShortfall" });
@@ -85,7 +85,7 @@ export async function startWatcher(o: WatcherOptions): Promise<WatcherHandle> {
     ]);
     if (!active || remaining === 0n || principal === 0n) {
       // Nothing the layer can pay. The runner books the rest as ADL.
-      if (!exhaustedLogged) log({ type: "exhausted", pendingShortfall: pending, block: await publicClient.getBlockNumber() });
+      if (!exhaustedLogged) log({ type: "exhausted", pendingShortfall: pending, block: await publicClient.getBlockNumber({ cacheTime: 0 }) });
       exhaustedLogged = true;
       return;
     }
@@ -169,7 +169,7 @@ export async function startWatcher(o: WatcherOptions): Promise<WatcherHandle> {
     adapter,
     vault,
     chainId: await publicClient.getChainId(),
-    block: await publicClient.getBlockNumber(),
+    block: await publicClient.getBlockNumber({ cacheTime: 0 }),
   });
   kick("poll"); // a shortfall left from before the watcher started
 

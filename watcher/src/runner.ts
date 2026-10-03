@@ -186,6 +186,8 @@ export async function runScenario(ctx: RunnerContext, spec: ScenarioSpec, snapsh
   }
 
   run.after = await readState(publicClient, d);
+  const lastSent = run.sent[run.sent.length - 1]?.block ?? 0n;
+  if (run.after.block < lastSent) throw new Error(`state read at block ${run.after.block}, before the last transaction (${lastSent})`);
   run.chainMs = Date.now() - t1;
   return run;
 }

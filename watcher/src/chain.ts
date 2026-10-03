@@ -152,7 +152,9 @@ export interface ChainState {
 }
 
 export async function readState(client: Public, d: Deployment, block?: bigint): Promise<ChainState> {
-  const blockNumber = block ?? (await client.getBlockNumber());
+  // cacheTime 0: viem caches the block number for one polling interval, and a state read at a
+  // stale block misses the last transactions. The e2e caught this as a wrong "after" state.
+  const blockNumber = block ?? (await client.getBlockNumber({ cacheTime: 0 }));
   const a = { address: d.contracts.MockBackstopAdapter, abi: adapterAbi, blockNumber } as const;
   const v = { address: d.contracts.CoverVault, abi: vaultAbi, blockNumber } as const;
   const [insuranceFund, pendingShortfall, badDebtTotal, fundPaid, layerPaid, adlLoss, limit, paidOut, remainingLimit, totalPrincipal, coverActive] =
