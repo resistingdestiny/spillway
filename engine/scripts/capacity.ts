@@ -1,15 +1,18 @@
 // How far can open interest grow before the insurance fund alone stops being enough?
 // For each multiple of today's open interest: the yearly chance that losses beyond traders' margin
-// empty the fund, with no layer and with the Spillway layer, and the layer's price.
+// empty the fund, with no layer and with the Spillway layer, and the layer's price. Orderly days and
+// liquidation pauses (config.pause) both count.
 //
 //   tsx scripts/capacity.ts <snapshot.json> [--out capacity.json]
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   type WorstHourHistory,
+  type WorstMinuteHistory,
   type Snapshot,
+  gapCurve,
   worstHourMoves,
   monteCarlo,
   priceLayer,
@@ -27,6 +30,8 @@ const out = outIdx >= 0 ? rest[outIdx + 1] : undefined;
 const today = JSON.parse(readFileSync(snapshotPath, "utf8")) as Snapshot;
 const history = JSON.parse(readFileSync(join(here, "..", "data", "btc-usd-worst-hour.json"), "utf8")) as WorstHourHistory;
 const moves = worstHourMoves(history);
+const minutesFile = join(here, "..", "data", "btc-usd-worst-minute.json");
+const minutes = existsSync(minutesFile) ? (JSON.parse(readFileSync(minutesFile, "utf8")) as WorstMinuteHistory) : undefined;
 const cfg = withConfig();
 const fund = today.market.insuranceFund;
 const limit = cfg.layer.limitUsd;
@@ -35,7 +40,10 @@ const oiToday = today.positions.filter((p) => p.side === "long").reduce((a, p) =
 const rows = [1, 2, 3, 5, 10, 20, 30].map((k) => {
   const snap = scaleOpenInterest(today, k);
   const curve = stressCurve(snap, cfg);
-  const mc = monteCarlo(curve, moves.down, cfg, fund, limit, moves);
+  const pauses = minutes
+    ? { curve: gapCurve(snap, cfg), gaps: minutes.rows.filter(([d]) => d >= cfg.pause.since).map(([, down]) => down), source: minutes.source }
+    : undefined;
+  const mc = monteCarlo(curve, moves.down, cfg, fund, limit, moves, pauses);
   const price = priceLayer(mc, cfg);
   // Without a layer, everything past the fund lands on traders: that is the chance the fund runs dry.
   const firstPastFund = curve.find((p) => p.totals.badDebt > p.totals.fundStart + p.totals.fundIncome);
