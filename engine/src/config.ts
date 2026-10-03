@@ -95,6 +95,34 @@ export interface EngineConfig {
     limitUsd: number;
   };
 
+  gap: {
+    /**
+     * Seconds over which a gap's fall happens. A gap is a fall that takes place while liquidations are
+     * paused, so nothing can be sold on the way down and the mark jumps when they resume. One second
+     * stands for "all at once".
+     */
+    seconds: number;
+  };
+
+  pause: {
+    /**
+     * Perpl contract: liquidation and settlement are refused while the on-chain spot price is older than
+     * refPriceMaxAgeSec, 60 seconds on BTC. A stall in the oracle or the chain longer than this pauses
+     * liquidations. We take the move in the worst minute of a stressed day as the gap it leaves.
+     */
+    seconds: number;
+    /**
+     * Pauses a year that land on a stressed day. Assumption, and the biggest lever on the price of the
+     * layer: Perpl does not publish its oracle or chain stall history. Shown next to every price.
+     */
+    perYear: number;
+  };
+
+  capacity: {
+    /** Largest multiple of today's open interest searched. Perpl caps BTC at 300 BTC, about 31x 2 Oct 2026. */
+    maxFactor: number;
+  };
+
   monteCarlo: {
     years: number;
     seed: number;
@@ -130,6 +158,9 @@ export const DEFAULT_CONFIG: EngineConfig = {
   backstop: { discount: 0.05, capacityUsd: 250_000 },
   liquidation: { delaySteps: 1, maxSlippage: 0.05, bankruptPolicy: "adl", split: { trader: 0.8, insurance: 0.1, protocol: 0.1 } },
   layer: { limitUsd: 250_000 },
+  gap: { seconds: 1 },
+  pause: { seconds: 60, perYear: 2 },
+  capacity: { maxFactor: 40 },
   monteCarlo: { years: 20_000, seed: 20251010, daysPerYear: 365 },
   pricing: { riskLoad: 1.0, capitalCharge: 0.04 },
   stressGrid: grid(0.005, 0.4, 0.005),

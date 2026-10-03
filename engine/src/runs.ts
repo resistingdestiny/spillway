@@ -29,6 +29,25 @@ export function stress(snapshot: Snapshot, move: number, cfg: EngineConfig, opts
   });
 }
 
+/** A gap: the price falls while liquidations are paused, then holds. */
+export function gapPath(move: number, cfg: EngineConfig, direction: "down" | "up" = "down"): PricePath {
+  const target = direction === "down" ? 1 - move : 1 + move;
+  const { seconds } = cfg.gap;
+  return { t: [0, seconds, seconds + cfg.stress.holdSeconds], ratio: [1, target, target] };
+}
+
+export function gap(snapshot: Snapshot, move: number, cfg: EngineConfig, opts: StressOptions = {}): RunResult {
+  const direction = opts.direction ?? "down";
+  return simulate(snapshot, cfg, {
+    kind: "gap",
+    label: `Gap of ${(move * 100).toFixed(1)}% while liquidations are paused`,
+    direction,
+    path: gapPath(move, cfg, direction),
+    totalsOnly: opts.totalsOnly,
+    layerLimitUsd: opts.layerLimitUsd,
+  });
+}
+
 export interface StressPoint {
   move: number;
   totals: RunTotals;
@@ -39,6 +58,14 @@ export function stressCurve(snapshot: Snapshot, cfg: EngineConfig, direction: "d
   return cfg.stressGrid.map((move) => ({
     move,
     totals: stress(snapshot, move, cfg, { direction, totalsOnly: true }).totals,
+  }));
+}
+
+/** Totals for a gap of every size on the stress grid. */
+export function gapCurve(snapshot: Snapshot, cfg: EngineConfig, direction: "down" | "up" = "down"): StressPoint[] {
+  return cfg.stressGrid.map((move) => ({
+    move,
+    totals: gap(snapshot, move, cfg, { direction, totalsOnly: true }).totals,
   }));
 }
 

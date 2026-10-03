@@ -32,7 +32,7 @@ import type {
 } from "./types.js";
 
 export interface SimulateOptions {
-  kind: "stress" | "replay";
+  kind: "stress" | "gap" | "replay";
   label: string;
   direction: "down" | "up";
   path: PricePath;

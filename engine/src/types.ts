@@ -149,7 +149,7 @@ export interface RunTotals {
 }
 
 export interface RunResult {
-  kind: "stress" | "replay";
+  kind: "stress" | "gap" | "replay";
   label: string;
   direction: "down" | "up";
   frames: Frame[];
