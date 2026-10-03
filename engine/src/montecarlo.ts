@@ -7,7 +7,9 @@
 // Assumptions, stated here because they drive the answer:
 //   - Today's positions, book, fund and layer are what the market looks like on every day of the year.
 //   - Each bad day is independent and starts with the fund at today's balance.
-//   - A day's move is its open-to-low fall (open-to-high rise for shorts), applied as a stress run.
+//   - A day's move is its worst one-hour fall (rise for shorts), from hourly candles, applied as a
+//     stress run over config.stress.shockSeconds. Whole-day moves (dailyMoves) are kept for
+//     comparison; they treat a slow day-long slide as a crash and overstate the risk.
 //   - The layer's limit is aggregate over the year: once used up, it is gone.
 
 import type { EngineConfig } from "./config.js";
@@ -42,6 +44,23 @@ export function dailyMoves(history: DailyHistory): DailyMoves {
     to: day(rows[rows.length - 1]?.[0] ?? 0),
     down: rows.map(([, open, , low]) => Math.max(0, 1 - low / open)),
     up: rows.map(([, open, high]) => Math.max(0, high / open - 1)),
+  };
+}
+
+/** Each day's worst one-hour fall and rise: rows of [day, down, up, hours]. */
+export interface WorstHourHistory {
+  source: string;
+  rows: [string, number, number, number][];
+}
+
+export function worstHourMoves(history: WorstHourHistory): DailyMoves {
+  const rows = history.rows.filter(([day]) => !BAD_PRINTS.has(day));
+  return {
+    source: history.source,
+    from: rows[0]?.[0] ?? "",
+    to: rows[rows.length - 1]?.[0] ?? "",
+    down: rows.map(([, down]) => down),
+    up: rows.map(([, , up]) => up),
   };
 }
 

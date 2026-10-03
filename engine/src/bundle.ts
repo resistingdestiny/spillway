@@ -4,7 +4,7 @@ import { depthWithin } from "./book.js";
 import type { EngineConfig } from "./config.js";
 import { ledges } from "./ledges.js";
 import { leverage } from "./margin.js";
-import { type DailyHistory, dailyMoves, monteCarlo } from "./montecarlo.js";
+import { type WorstHourHistory, monteCarlo, worstHourMoves } from "./montecarlo.js";
 import { priceLayer } from "./pricing.js";
 import { type PriceSeries, replay, smallestMoveReaching, stressCurve } from "./runs.js";
 import type { Snapshot } from "./types.js";
@@ -28,9 +28,9 @@ export function marketSummary(snapshot: Snapshot) {
   };
 }
 
-export function buildBundle(snapshot: Snapshot, cfg: EngineConfig, history: DailyHistory, crash: PriceSeries) {
+export function buildBundle(snapshot: Snapshot, cfg: EngineConfig, history: WorstHourHistory, crash: PriceSeries) {
   const curve = stressCurve(snapshot, cfg, "down");
-  const moves = dailyMoves(history);
+  const moves = worstHourMoves(history);
   const mc = monteCarlo(curve, moves.down, cfg, snapshot.market.insuranceFund, cfg.layer.limitUsd, moves);
   const replayRun = replay(snapshot, crash, cfg, { totalsOnly: true });
   return {

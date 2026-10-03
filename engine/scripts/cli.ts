@@ -12,7 +12,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   type ConfigOverrides,
-  type DailyHistory,
+  type WorstHourHistory,
   type PriceSeries,
   type RunTotals,
   type Snapshot,
@@ -58,7 +58,7 @@ const row = (t: RunTotals) => ({
   band: t.band,
 });
 
-const history = JSON.parse(readFileSync(dataFile("btc-usd-daily.json"), "utf8")) as DailyHistory;
+const history = JSON.parse(readFileSync(dataFile("btc-usd-worst-hour.json"), "utf8")) as WorstHourHistory;
 const crash = JSON.parse(readFileSync(dataFile("replay-2025-10-10.json"), "utf8")) as PriceSeries;
 
 const summary = () => marketSummary(snapshot);
