@@ -46,7 +46,7 @@ import {
 } from "./chain.js";
 import { toDollars } from "./money.js";
 import { type Batching, type Plan, type TxKind, type WaterfallTotals, planTransactions, replayWaterfall } from "./plan.js";
-import { buildReport, compare, formatTable } from "./report.js";
+import { buildReport, compare, formatTable, gasSummary } from "./report.js";
 import { type ScenarioSpec, adhocScenario, findScenario, loadSnapshot, runEngine, scenarioConfig } from "./scenario.js";
 
 /**
@@ -245,7 +245,13 @@ async function main() {
   const cmp = compare(run);
   console.log(formatTable(run, cmp));
   const reportPath = arg(args, "report");
-  if (reportPath) writeFileSync(reportPath, `${JSON.stringify(buildReport(run, cmp, { network: d.network, chainId: d.chainId }), bigintReplacer, 2)}\n`);
+  // The keeper pays for its own settle() calls; this process only knows the runner's gas.
+  const gas = gasSummary(run, { txs: 0, gas: 0n });
+  console.log(`runner gas: ${gas.runnerTotal} over ${run.sent.length} transactions (keeper gas not included)`);
+  if (reportPath) {
+    const report = buildReport(run, cmp, { network: d.network, chainId: d.chainId, deployment: d, runnerGas: { byKind: gas.runner, total: gas.runnerTotal } });
+    writeFileSync(reportPath, `${JSON.stringify(report, bigintReplacer, 2)}\n`);
+  }
   if (!cmp.pass) process.exitCode = 1;
 }
 
