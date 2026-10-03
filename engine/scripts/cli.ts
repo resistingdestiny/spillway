@@ -7,7 +7,7 @@
 //
 // `bundle` writes everything the web app needs that is too slow to compute in the browser.
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -16,6 +16,7 @@ import {
   type PriceSeries,
   type RunTotals,
   type Snapshot,
+  type WorstMinuteHistory,
   buildBundle,
   marketSummary,
   replay,
@@ -60,6 +61,8 @@ const row = (t: RunTotals) => ({
 
 const history = JSON.parse(readFileSync(dataFile("btc-usd-worst-hour.json"), "utf8")) as WorstHourHistory;
 const crash = JSON.parse(readFileSync(dataFile("replay-2025-10-10.json"), "utf8")) as PriceSeries;
+const minutesFile = dataFile("btc-usd-worst-minute.json");
+const minutes = existsSync(minutesFile) ? (JSON.parse(readFileSync(minutesFile, "utf8")) as WorstMinuteHistory) : undefined;
 
 const summary = () => marketSummary(snapshot);
 
@@ -85,7 +88,7 @@ switch (command) {
     const out = flag("out");
     if (!out) throw new Error("--out is required");
     const t0 = Date.now();
-    const bundle = buildBundle(snapshot, cfg, history, crash);
+    const bundle = buildBundle(snapshot, cfg, history, crash, minutes);
     const mc = bundle.monteCarlo;
     writeFileSync(out, JSON.stringify(bundle) + "\n");
     console.error(`bundle written to ${out} in ${Date.now() - t0} ms`);
