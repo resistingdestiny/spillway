@@ -50,5 +50,6 @@ export function formatUnits(units: bigint): string {
 
 /** A dollar float as a fixed 6-decimal string, for tables. */
 export function formatDollars(dollars: number): string {
-  return dollars.toFixed(DECIMALS);
+  const out = dollars.toFixed(DECIMALS);
+  return out === "-0.000000" ? "0.000000" : out;
 }
