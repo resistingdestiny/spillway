@@ -109,6 +109,8 @@ export function simulate(snapshot: Snapshot, cfg: EngineConfig, opts: SimulateOp
   let fund = m.insuranceFund;
   let layerRemaining = layerLimit;
   let firstOpen = 0;
+  // The mark at the end of the latest step, kept whether or not frames are recorded.
+  let lastMark = spot0;
 
   const totals: RunTotals = {
     badDebt: 0,
@@ -287,6 +289,7 @@ export function simulate(snapshot: Snapshot, cfg: EngineConfig, opts: SimulateOp
       });
     }
     totals.spotEnd = spot;
+    lastMark = mark;
     totals.duration = t;
     step++;
     if (t >= pathEnd && (pending === 0 || t >= maxT)) break;
@@ -294,7 +297,6 @@ export function simulate(snapshot: Snapshot, cfg: EngineConfig, opts: SimulateOp
 
   // Whatever the fund took on and could not sell before the run ended is valued at the last mark.
   if (cfg.liquidation.bankruptPolicy === "fund") {
-    const lastMark = frames.length ? (frames[frames.length - 1] as Frame).mark : totals.spotEnd;
     for (const pos of positions) {
       if (pos.done || !pos.triggered || s * (lastMark - pos.bank) > 0) continue;
       fill(pos, pos.remaining, lastMark, "system", totals.duration, totals.spotEnd);

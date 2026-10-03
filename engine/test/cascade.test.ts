@@ -65,6 +65,18 @@ describe("fund first", () => {
   });
 });
 
+describe("totals only", () => {
+  it("gives the same totals as a full run, with either bankrupt-position policy", () => {
+    const snap = syntheticSnapshot({ randomPositions: 200, usdPerLevel: 5_000, insuranceFund: 20_000 });
+    for (const bankruptPolicy of ["adl", "fund"] as const) {
+      const c = withConfig({ backstop: { capacityUsd: 0 }, liquidation: { bankruptPolicy } });
+      for (const move of [0.1, 0.25]) {
+        expect(stress(snap, move, c, { totalsOnly: true }).totals).toEqual(stress(snap, move, c).totals);
+      }
+    }
+  });
+});
+
 describe("a crowded market", () => {
   const snap = syntheticSnapshot({ randomPositions: 400, usdPerLevel: 5_000, insuranceFund: 20_000 });
   const thin = withConfig({ backstop: { capacityUsd: 0 } });
