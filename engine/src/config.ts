@@ -116,6 +116,13 @@ export interface EngineConfig {
      * layer: Perpl does not publish its oracle or chain stall history. Shown next to every price.
      */
     perYear: number;
+    /**
+     * First day of history the pause gaps are drawn from. Assumption: before 2020, Coinbase's book was
+     * thin enough for one-minute wicks of up to 17.5% on one venue that a multi-venue oracle such as
+     * Chainlink would not have shown. Since 2020 the worst minute is 16.3% (13 March 2020) and every
+     * other stressed day stayed under 6%.
+     */
+    since: string;
   };
 
   capacity: {
@@ -159,7 +166,7 @@ export const DEFAULT_CONFIG: EngineConfig = {
   liquidation: { delaySteps: 1, maxSlippage: 0.05, bankruptPolicy: "adl", split: { trader: 0.8, insurance: 0.1, protocol: 0.1 } },
   layer: { limitUsd: 250_000 },
   gap: { seconds: 1 },
-  pause: { seconds: 60, perYear: 2 },
+  pause: { seconds: 60, perYear: 2, since: "2020-01-01" },
   capacity: { maxFactor: 40 },
   monteCarlo: { years: 20_000, seed: 20251010, daysPerYear: 365 },
   pricing: { riskLoad: 1.0, capitalCharge: 0.04 },

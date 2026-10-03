@@ -48,7 +48,8 @@ export function buildBundle(
   const curve = stressCurve(snapshot, cfg, "down");
   const gaps = gapCurve(snapshot, cfg, "down");
   const moves = worstHourMoves(history);
-  const pauses = minutes ? { curve: gaps, gaps: minutes.rows.map(([, down]) => down), source: minutes.source } : undefined;
+  const pauseRows = minutes ? minutes.rows.filter(([day]) => day >= cfg.pause.since) : [];
+  const pauses = minutes ? { curve: gaps, gaps: pauseRows.map(([, down]) => down), source: `${minutes.source}, from ${cfg.pause.since}` } : undefined;
   const mc = monteCarlo(curve, moves.down, cfg, snapshot.market.insuranceFund, cfg.layer.limitUsd, moves, pauses);
   const replayRun = replay(snapshot, crash, cfg, { totalsOnly: true });
   return {

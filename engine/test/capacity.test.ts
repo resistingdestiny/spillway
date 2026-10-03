@@ -48,7 +48,7 @@ describe("Monte Carlo with liquidation pauses", () => {
     { move: 0.1, totals: { ...zero, badDebt: 5_000, fundPaid: 1_000, layerPaid: 4_000 } },
     { move: 0.4, totals: { ...zero, badDebt: 5_000, fundPaid: 1_000, layerPaid: 4_000 } },
   ];
-  const c = withConfig({ monteCarlo: { years: 20_000, seed: 3, daysPerYear: 365 }, pause: { seconds: 60, perYear: 0.5 } });
+  const c = withConfig({ monteCarlo: { years: 20_000, seed: 3, daysPerYear: 365 }, pause: { seconds: 60, perYear: 0.5, since: "2020-01-01" } });
 
   it("hits the layer as often as a Poisson year has at least one pause", () => {
     const mc = monteCarlo(quiet, [0.01], c, 1_000, 10_000, undefined, { curve: gaps, gaps: [0.2], source: "test" });
