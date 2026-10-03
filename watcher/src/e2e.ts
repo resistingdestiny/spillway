@@ -13,7 +13,7 @@
 // Fresh contracts per scenario, so every run starts from the snapshot.
 
 import { type ChildProcess, execFileSync, spawn } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { homedir, tmpdir } from "node:os";
 import { join, relative } from "node:path";
@@ -311,6 +311,7 @@ async function main() {
     for (const spec of specs) outcomes.push(await runOne(anvil.url, anvil.version, spec, snapshot, batching, work));
   } finally {
     anvil.stop();
+    rmSync(work, { recursive: true, force: true }); // deployment files and the anvil keeper key
   }
 
   console.log("\nsummary");
