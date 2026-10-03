@@ -10,7 +10,7 @@
 // As a command it prints one JSON line per thing it sees or does (ready, shortfall, payout,
 // exhausted, error):
 //
-//   KEEPER_KEY_FILE=~/.secrets/spillway-keeper.env \
+//   KEEPER_KEY_FILE=/path/to/keeper.env \
 //   pnpm --filter @spillway/watcher watcher [--deployment <file>] [--rpc <url>] [--poll-ms 1000]
 
 import { pathToFileURL } from "node:url";

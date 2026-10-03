@@ -10,7 +10,7 @@
 //
 // As a command, against a deployment file (Monad testnet by default):
 //
-//   RUNNER_KEY_FILE=~/.secrets/spillway-deployer.env \
+//   RUNNER_KEY_FILE=/path/to/deployer.env \
 //   pnpm --filter @spillway/watcher runner --scenario oi10x-drop20 [--dry-run]
 //
 // Options:
