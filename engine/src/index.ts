@@ -10,3 +10,4 @@ export * from "./ledges.js";
 export * from "./rng.js";
 export * from "./bundle.js";
 export * from "./scenario.js";
+export * from "./capacity.js";
