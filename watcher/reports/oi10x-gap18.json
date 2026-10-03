@@ -1,0 +1,280 @@
+{
+  "schema": "spillway.watcher-report/1",
+  "scenario": {
+    "name": "oi10x-gap18",
+    "label": "10x open interest, instant 18% gap",
+    "oiMultiple": 10,
+    "drop": 0.18,
+    "config": {
+      "stress": {
+        "shockSeconds": 1
+      }
+    },
+    "expectBand": 2
+  },
+  "tolerance": {
+    "rule": "|on-chain - engine| <= money events x $0.000001, for every row",
+    "perEvent": 0.000001,
+    "events": 677,
+    "total": 0.000677
+  },
+  "comparison": [
+    {
+      "metric": "bad debt reported",
+      "engine": 325768.40028191113,
+      "onChain": "325768.400281",
+      "integerReplay": "325768.400281",
+      "diff": -9e-7,
+      "withinTolerance": true,
+      "matchesIntegerReplay": true
+    },
+    {
+      "metric": "paid by insurance fund",
+      "engine": 178389.7566070876,
+      "onChain": "178389.756608",
+      "integerReplay": "178389.756608",
+      "diff": 9e-7,
+      "withinTolerance": true,
+      "matchesIntegerReplay": true
+    },
+    {
+      "metric": "paid by layer (adapter)",
+      "engine": 147378.6436748235,
+      "onChain": "147378.643673",
+      "integerReplay": "147378.643673",
+      "diff": -0.0000018,
+      "withinTolerance": true,
+      "matchesIntegerReplay": true
+    },
+    {
+      "metric": "paid by layer (vault paidOut)",
+      "engine": 147378.6436748235,
+      "onChain": "147378.643673",
+      "integerReplay": "147378.643673",
+      "diff": -0.0000018,
+      "withinTolerance": true,
+      "matchesIntegerReplay": true
+    },
+    {
+      "metric": "left to traders (ADL)",
+      "engine": 0,
+      "onChain": "0.000000",
+      "integerReplay": "0.000000",
+      "diff": 0,
+      "withinTolerance": true,
+      "matchesIntegerReplay": true
+    },
+    {
+      "metric": "fund income",
+      "engine": 791.5805952775967,
+      "onChain": "791.580716",
+      "integerReplay": "791.580716",
+      "diff": 0.0001207,
+      "withinTolerance": true,
+      "matchesIntegerReplay": true
+    },
+    {
+      "metric": "insurance fund at end",
+      "engine": 789.66944018999,
+      "onChain": "789.669560",
+      "integerReplay": "789.669560",
+      "diff": 0.0001198,
+      "withinTolerance": true,
+      "matchesIntegerReplay": true
+    },
+    {
+      "metric": "layer remaining limit",
+      "engine": 102621.35632517649,
+      "onChain": "102621.356327",
+      "integerReplay": "102621.356327",
+      "diff": 0.0000018,
+      "withinTolerance": true,
+      "matchesIntegerReplay": true
+    }
+  ],
+  "checks": {
+    "withinTolerance": true,
+    "matchesIntegerReplay": true,
+    "band": {
+      "engine": 2,
+      "chain": 2,
+      "expected": 2,
+      "ok": true
+    },
+    "pass": true
+  },
+  "engine": {
+    "config": {
+      "label": "default + stress.shockSeconds=1",
+      "base": "DEFAULT_CONFIG",
+      "overrides": {
+        "stress": {
+          "shockSeconds": 1
+        }
+      },
+      "used": {
+        "stress": {
+          "shockSeconds": 1,
+          "holdSeconds": 300
+        },
+        "bankruptPolicy": "adl",
+        "backstop": {
+          "discount": 0.05,
+          "capacityUsd": 250000
+        },
+        "layerLimitUsd": 250000
+      }
+    },
+    "ms": 101,
+    "start": {
+      "fund": "178387.845452",
+      "layerCapacity": "250000.000000"
+    },
+    "totals": {
+      "badDebt": 325768.40028191113,
+      "fundPaid": 178389.7566070876,
+      "layerPaid": 147378.6436748235,
+      "tradersLose": 0,
+      "fundIncome": 791.5805952775967,
+      "liquidatedNotional": 5567232.72499385,
+      "liquidations": 110,
+      "bankruptcies": 101,
+      "fundStart": 178387.845452,
+      "fundEnd": 789.66944018999,
+      "layerLimit": 250000,
+      "spotStart": 84248.8,
+      "spotEnd": 69084.016,
+      "bookLow": 61288.53783084485,
+      "duration": 567,
+      "band": 2
+    },
+    "events": {
+      "trigger": 110,
+      "fill": 677,
+      "fund_draw": 71,
+      "layer_draw": 37,
+      "fund_income": 571,
+      "settle": 1
+    }
+  },
+  "plan": {
+    "batching": "step",
+    "moneyEvents": 677,
+    "transactions": 570,
+    "byKind": {
+      "reportBadDebt": 4,
+      "fundInsurance": 566
+    },
+    "dust": {
+      "count": 0,
+      "dollars": 0
+    },
+    "rounding": {
+      "rule": "shortest decimal of each engine amount, rounded half up to 6 decimals, per event",
+      "maxAbs": 4.98034667284486e-7,
+      "sumAbs": 0.00021394020306142458,
+      "net": 0.00011981129568022775
+    }
+  },
+  "chain": {
+    "before": {
+      "block": "117",
+      "insuranceFund": "178387845452",
+      "pendingShortfall": "0",
+      "badDebtTotal": "0",
+      "fundPaid": "0",
+      "layerPaid": "0",
+      "adlLoss": "0",
+      "limit": "250000000000",
+      "paidOut": "0",
+      "remainingLimit": "250000000000",
+      "totalPrincipal": "250000000000",
+      "coverActive": true
+    },
+    "after": {
+      "block": "690",
+      "insuranceFund": "789669560",
+      "pendingShortfall": "0",
+      "badDebtTotal": "325768400281",
+      "fundPaid": "178389756608",
+      "layerPaid": "147378643673",
+      "adlLoss": "0",
+      "limit": "250000000000",
+      "paidOut": "147378643673",
+      "remainingLimit": "102621356327",
+      "totalPrincipal": "102621356327",
+      "coverActive": true
+    },
+    "finalizedAsAdl": "0.000000",
+    "blocks": 573,
+    "ms": 19009
+  },
+  "network": "anvil",
+  "chainId": 31337,
+  "anvil": "anvil Version: 1.7.1",
+  "snapshot": {
+    "path": "fixtures/snapshots/btc-mainnet.json",
+    "block": 109992422,
+    "takenAt": "2026-10-02T20:43:35Z"
+  },
+  "deployment": {
+    "schema": "spillway.deployment/1",
+    "network": "anvil",
+    "chainId": 31337,
+    "deployBlock": 102,
+    "contracts": {
+      "MockUSD": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+      "MockBackstopAdapter": "0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0",
+      "CoverVault": "0x9A676e781A523b5d0C0e43731313A708CB607508"
+    },
+    "roles": {
+      "owner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+      "runner": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "sponsor": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+    }
+  },
+  "gas": {
+    "setup": "3420007",
+    "runner": {
+      "mint": {
+        "txs": 1,
+        "gas": "51317"
+      },
+      "approve": {
+        "txs": 1,
+        "gas": "46342"
+      },
+      "reportBadDebt": {
+        "txs": 4,
+        "gas": "223300"
+      },
+      "fundInsurance": {
+        "txs": 566,
+        "gas": "28286678"
+      }
+    },
+    "runnerTotal": "28607637",
+    "keeper": {
+      "txs": 1,
+      "gas": "105120"
+    },
+    "scenarioTotal": "28712757"
+  },
+  "keeper": {
+    "process": "separate (src/watcher.ts)",
+    "payouts": [
+      {
+        "type": "payout",
+        "shortfall": "147378643673",
+        "paid": "147378643673",
+        "remainingLimit": "102621356327",
+        "tx": "0x4f74e7aba12b6f48d052328d80cb3e241548fa6c2638a9cf704b1d8a6c41adcf",
+        "block": "124",
+        "gasUsed": "105120",
+        "trigger": "event",
+        "blocksAfterShortfall": 4
+      }
+    ],
+    "shortfallEvents": 2
+  }
+}
