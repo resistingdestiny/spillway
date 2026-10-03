@@ -67,7 +67,16 @@ export interface WatcherHandle {
 }
 
 export async function startWatcher(o: WatcherOptions): Promise<WatcherHandle> {
-  const { publicClient, wallet, adapter, vault, log } = o;
+  const { publicClient, wallet, adapter, vault } = o;
+  // The same error on every poll (an RPC that is down) is logged once until something changes.
+  let lastError = "";
+  const log = (entry: WatcherLog) => {
+    if (entry.type === "error") {
+      if (entry.message === lastError) return;
+      lastError = entry.message;
+    } else lastError = "";
+    o.log(entry);
+  };
   let busy: Promise<void> | null = null;
   let queued: "event" | "poll" | null = null;
   let stopped = false;
@@ -211,8 +220,9 @@ async function main() {
     pollMs,
     log: print,
   });
+  // A settle already sent is mined whether or not we wait for it, so do not hang on a dead RPC.
   const shutdown = () => {
-    void handle.stop().then(() => process.exit(0));
+    void Promise.race([handle.stop(), new Promise((r) => setTimeout(r, 3000))]).then(() => process.exit(0));
   };
   process.on("SIGTERM", shutdown);
   process.on("SIGINT", shutdown);
