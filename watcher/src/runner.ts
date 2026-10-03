@@ -14,7 +14,7 @@
 //   pnpm --filter @spillway/watcher runner --scenario oi10x-drop20 [--dry-run]
 //
 // Options:
-//   --scenario <name> | --oi <multiple> [--drop <fraction>]   no --drop replays 10 Oct 2025
+//   --scenario <name> | --oi <multiple> [--drop <fraction> [--gap]]   no --drop replays 10 Oct 2025
 //   --deployment <file>   --rpc <url>   --snapshot <file>   --report <file>
 //   --batch step|event|compact   compact folds the plan into a few transactions for a real network
 //   --settle-timeout <seconds>   --dry-run (forecast and plan only, sends nothing)
@@ -47,7 +47,7 @@ import {
 import { toDollars } from "./money.js";
 import { type Batching, type Plan, type TxKind, type WaterfallTotals, planTransactions, replayWaterfall } from "./plan.js";
 import { buildReport, compare, formatTable } from "./report.js";
-import { type ScenarioSpec, adhocScenario, findScenario, loadSnapshot, runEngine } from "./scenario.js";
+import { type ScenarioSpec, adhocScenario, findScenario, loadSnapshot, runEngine, scenarioConfig } from "./scenario.js";
 
 /**
  * Extra gas on top of the estimate for reportBadDebt. The keeper's settle() can land between
@@ -69,6 +69,7 @@ export interface RunnerContext {
 
 export interface RunOptions {
   batching?: Batching;
+  /** Base engine config. The scenario's own overrides go on top. Default DEFAULT_CONFIG. */
   cfg?: EngineConfig;
   /** How long to wait for the keeper after the last transaction. */
   settleTimeoutMs?: number;
@@ -88,6 +89,8 @@ export interface SentTx {
 
 export interface ScenarioRun {
   spec: ScenarioSpec;
+  /** The engine config the forecast used: the base plus the scenario's overrides. */
+  cfg: EngineConfig;
   engine: RunResult;
   engineMs: number;
   /** Where the engine started: the chain's fund and the vault's capacity, in base units. */
@@ -105,7 +108,7 @@ export interface ScenarioRun {
 export async function runScenario(ctx: RunnerContext, spec: ScenarioSpec, snapshot: Snapshot, opts: RunOptions = {}): Promise<ScenarioRun> {
   const { publicClient, wallet, deployment: d } = ctx;
   const log = ctx.log ?? (() => {});
-  const cfg = opts.cfg ?? DEFAULT_CONFIG;
+  const base = opts.cfg ?? DEFAULT_CONFIG;
   const pollMs = opts.pollMs ?? 500;
   const adapter = d.contracts.MockBackstopAdapter;
   const usd = d.contracts.MockUSD;
@@ -117,13 +120,13 @@ export async function runScenario(ctx: RunnerContext, spec: ScenarioSpec, snapsh
   const start = { fund: before.insuranceFund, layerCapacity: layerCapacity(before) };
 
   const t0 = Date.now();
-  const engine = runEngine(snapshot, spec, cfg, { fundUsd: toDollars(start.fund), layerUsd: toDollars(start.layerCapacity) });
+  const engine = runEngine(snapshot, spec, base, { fundUsd: toDollars(start.fund), layerUsd: toDollars(start.layerCapacity) });
   const engineMs = Date.now() - t0;
   const plan = planTransactions(engine.events, opts.batching ?? "step", start.fund);
   const expected = replayWaterfall(plan.txs, start.fund, start.layerCapacity);
   log(`engine: ${spec.label}, band ${engine.totals.band}, ${plan.events.length} money events, ${plan.txs.length} transactions (${plan.batching})`);
 
-  const run: ScenarioRun = { spec, engine, engineMs, start, plan, expected, before, sent: [], finalized: 0n, chainMs: 0 };
+  const run: ScenarioRun = { spec, cfg: scenarioConfig(spec, base), engine, engineMs, start, plan, expected, before, sent: [], finalized: 0n, chainMs: 0 };
   if (opts.dryRun) return run;
 
   const t1 = Date.now();
@@ -209,8 +212,9 @@ async function main() {
   const name = arg(args, "scenario");
   const oi = arg(args, "oi");
   const drop = arg(args, "drop");
-  const spec = name ? findScenario(name) : oi ? adhocScenario(Number(oi), drop === undefined ? undefined : Number(drop)) : undefined;
-  if (!spec) throw new Error("pass --scenario <name> or --oi <multiple> [--drop <fraction>]");
+  const gap = args.includes("--gap");
+  const spec = name ? findScenario(name) : oi ? adhocScenario(Number(oi), drop === undefined ? undefined : Number(drop), gap) : undefined;
+  if (!spec) throw new Error("pass --scenario <name> or --oi <multiple> [--drop <fraction> [--gap]]");
   const dryRun = args.includes("--dry-run");
 
   const snapshot = loadSnapshot(arg(args, "snapshot"));
