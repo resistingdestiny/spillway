@@ -10,6 +10,7 @@
 
 import type { ScenarioRun, SentKind } from "./runner.js";
 import { formatDollars, formatUnits, toDollars } from "./money.js";
+import { configLabel } from "./scenario.js";
 
 export const TOLERANCE_PER_EVENT = 0.000001;
 
@@ -102,7 +103,7 @@ export function formatTable(run: ScenarioRun, cmp: Comparison): string {
   const widths = head.map((h, i) => Math.max(h.length, ...body.map((row) => (row[i] as string).length)));
   const line = (cells: string[]) => cells.map((c, i) => (i === 0 ? c.padEnd(widths[i] as number) : c.padStart(widths[i] as number))).join("  ");
   const out = [
-    `${run.spec.name}: ${run.spec.label}`,
+    `${run.spec.name}: ${run.spec.label} (engine config: ${configLabel(run.spec)})`,
     line(head),
     line(widths.map((w) => "-".repeat(w))),
     ...body.map(line),
@@ -175,7 +176,12 @@ export function buildReport(run: ScenarioRun, cmp: Comparison, extra: ReportExtr
       pass: cmp.pass,
     },
     engine: {
-      config: "DEFAULT_CONFIG",
+      config: {
+        label: configLabel(run.spec),
+        base: "DEFAULT_CONFIG",
+        overrides: run.spec.config ?? {},
+        used: { stress: run.cfg.stress, bankruptPolicy: run.cfg.liquidation.bankruptPolicy, backstop: run.cfg.backstop, layerLimitUsd: run.cfg.layer.limitUsd },
+      },
       ms: run.engineMs,
       start: { fund: formatUnits(run.start.fund), layerCapacity: formatUnits(run.start.layerCapacity) },
       totals: t,

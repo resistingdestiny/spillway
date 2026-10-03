@@ -39,7 +39,7 @@ import { formatUnits, toUnits } from "./money.js";
 import type { Batching } from "./plan.js";
 import { type GasSummary, buildReport, compare, formatTable, gasSummary } from "./report.js";
 import { type ScenarioRun, runScenario } from "./runner.js";
-import { DEFAULT_SNAPSHOT, SCENARIOS, type ScenarioSpec, findScenario, loadSnapshot } from "./scenario.js";
+import { DEFAULT_SNAPSHOT, SCENARIOS, type ScenarioSpec, configLabel, findScenario, loadSnapshot } from "./scenario.js";
 
 const FOUNDRY_BIN = process.env.FOUNDRY_BIN ?? join(homedir(), ".foundry", "bin");
 const CONTRACTS_DIR = join(REPO_DIR, "contracts");
@@ -314,11 +314,12 @@ async function main() {
   }
 
   console.log("\nsummary");
-  const head = ["scenario", "band", "bad debt", "fund", "layer", "ADL", "max |diff|", "tolerance", "txs", "gas", "result"];
+  const head = ["scenario", "engine config", "band", "bad debt", "fund", "layer", "ADL", "max |diff|", "tolerance", "txs", "gas", "result"];
   const rows = outcomes.map((o) => {
     const a = o.run.after!;
     return [
       o.spec.name,
+      configLabel(o.spec),
       String(o.run.engine.totals.band),
       formatUnits(a.badDebtTotal),
       formatUnits(a.fundPaid),
