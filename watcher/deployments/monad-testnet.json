@@ -1,0 +1,15 @@
+{
+  "schema": "spillway.deployment/1",
+  "network": "monad-testnet",
+  "chainId": 10143,
+  "rpcUrl": "https://testnet-rpc.monad.xyz",
+  "deployBlock": 68369879,
+  "contracts": {
+    "MockUSD": "0x2cBc5292f1fE0500a90723dbd98a51F274C778c7",
+    "MockBackstopAdapter": "0x66A7B7780f7DD61c253Aa1702f49E951d093D0d0",
+    "CoverVault": "0xcD8ba1eE2c958fed2Ef738040EDE0F06230d82D8"
+  },
+  "roles": {
+    "owner": "0x4f521155D6786469583C1ED5F40Cb0Ec02DEe402"
+  }
+}
