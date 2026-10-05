@@ -15,6 +15,16 @@ Built for the Monad Metropolis hackathon on [Perpl](https://perpl.xyz).
 | `contracts/` | Cover vault, mock backstop adapter and trigger (Foundry) |
 | `web/` | The flood picture: stress slider, replay and deposit flow |
 
+## On Monad testnet
+
+| Contract | Address |
+| --- | --- |
+| CoverVault | `0xcD8ba1eE2c958fed2Ef738040EDE0F06230d82D8` |
+| MockBackstopAdapter | `0x66A7B7780f7DD61c253Aa1702f49E951d093D0d0` |
+| MockUSD (tUSD) | `0x2cBc5292f1fE0500a90723dbd98a51F274C778c7` |
+
+All three are verified on Sourcify. The first payout, from a simulated 18% gap at 10x today's BTC open interest, is transaction `0x9d033418e9f67bc6faaadd095dcfc3aefc1cf48f83ce8c8c36e1a07fdffbbe82`: the fund paid $178,389.91 and Spillway paid $147,378.49, exactly as the engine forecast. Details in `watcher/reports/testnet-oi10x-gap18.json`.
+
 ## Run it
 
 Needs Node 22, pnpm 9, Foundry and Rust 1.85 or newer.

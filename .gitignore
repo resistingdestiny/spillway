@@ -11,3 +11,4 @@ broadcast/*/31337/
 .DS_Store
 data/live/
 web/public/data/
+contracts/broadcast/**/run-[0-9]*.json
