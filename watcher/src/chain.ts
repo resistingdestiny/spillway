@@ -114,7 +114,10 @@ export type Public = PublicClient<Transport, Chain>;
 export type Wallet = WalletClient<Transport, Chain, Account>;
 
 // A loaded machine can take a while to answer, even on anvil. viem's default is 10 seconds.
-const transportFor = (chain: Chain) => http(chain.rpcUrls.default.http[0], { timeout: 60_000 });
+// Monad's public testnet RPC allows 15 requests a second. Batch reads into one request where viem can,
+// and back off and retry when the limit is hit.
+const transportFor = (chain: Chain) =>
+  http(chain.rpcUrls.default.http[0], { timeout: 60_000, batch: { wait: 20 }, retryCount: 8, retryDelay: 400 });
 
 export function publicClientFor(chain: Chain, pollingInterval: number): Public {
   return createPublicClient({ chain, transport: transportFor(chain), pollingInterval }) as Public;
