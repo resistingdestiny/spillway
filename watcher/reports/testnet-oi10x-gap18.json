@@ -1,0 +1,42 @@
+{
+  "network": "monad-testnet",
+  "chainId": 10143,
+  "scenario": "oi10x-gap18",
+  "description": "Mainnet BTC snapshot at block 109992422, 10x today's open interest, an instant 18% gap (liquidations paused). Engine default config plus stress.shockSeconds 1. Compact batching.",
+  "deployment": {
+    "MockUSD": "0x2cBc5292f1fE0500a90723dbd98a51F274C778c7",
+    "MockBackstopAdapter": "0x66A7B7780f7DD61c253Aa1702f49E951d093D0d0",
+    "CoverVault": "0xcD8ba1eE2c958fed2Ef738040EDE0F06230d82D8"
+  },
+  "before": { "insuranceFund": "178388000000", "remainingLimit": "250000000000", "totalPrincipal": "250000000000" },
+  "transactions": {
+    "runner": [
+      "0xa0d818e80c10da1227ddbc2c1a5197c52b152ddad28cac64c7847d2fecd01bf1",
+      "0xbe11269a7eededa5c0e794063a5b8814f106e3cef18401ef375c76949e962d85",
+      "0x9161b6bc9e910b618eb51ac4914360b503665d7f94a1a0fef32aa451298bd618",
+      "0x4a1154be085115da6b75b6c760589567b1d62db219311ec564008c19c7c1f5e8"
+    ],
+    "keeperPayout": "0x9d033418e9f67bc6faaadd095dcfc3aefc1cf48f83ce8c8c36e1a07fdffbbe82"
+  },
+  "keeper": { "shortfallBlock": 68370253, "payoutBlock": 68370256, "payoutGasUsed": 127001 },
+  "units": "6-decimal tUSD integers",
+  "engineForecast": {
+    "badDebtTotal": "325768400281",
+    "fundPaid": "178389911156",
+    "layerPaid": "147378489125",
+    "adlLoss": "0",
+    "insuranceFundEnd": "789669560"
+  },
+  "onChain": {
+    "badDebtTotal": "325768400281",
+    "fundPaid": "178389911156",
+    "layerPaid": "147378489125",
+    "vaultPaidOut": "147378489125",
+    "adlLoss": "0",
+    "insuranceFundEnd": "789669560",
+    "remainingLimit": "102621510875",
+    "pendingShortfall": "0"
+  },
+  "match": "exact, to the unit",
+  "note": "The runner mined all four transactions, then its closing read hit the public RPC's 15 requests a second limit before it could write this report. The figures above were read from the contracts afterwards and compared with the runner's dry-run forecast for the same starting state."
+}
