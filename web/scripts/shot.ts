@@ -12,9 +12,10 @@ page.on("console", (m) => m.type() === "error" && console.error("console:", m.te
 page.on("pageerror", (e) => console.error("pageerror:", e.message));
 await page.goto(url, { waitUntil: "networkidle", timeout: 120_000 });
 await page.waitForSelector("canvas", { timeout: 120_000 });
+await page.waitForTimeout(1500);
 for (const d of drops.length ? drops : ["0"]) {
   await page.evaluate((v) => {
-    const el = document.getElementById("drop") as HTMLInputElement;
+    const el = document.querySelector("input[type=range]") as HTMLInputElement;
     el.value = v;
     el.dispatchEvent(new Event("input"));
   }, d);

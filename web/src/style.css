@@ -118,3 +118,20 @@ html, body {
 .manifest { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; font-size: 14px; }
 .manifest dt { color: var(--muted); }
 .manifest dd { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+
+.chips { display: flex; flex-wrap: nowrap; gap: 6px; margin: 0 -16px 6px; padding: 0 16px; overflow-x: auto; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chips button { flex: 0 0 auto; }
+#lend-stage { height: clamp(440px, 60svh, 820px); }
+#lend-headline { font-size: 16px; min-height: 3.9em; }
+.chips button {
+  font: inherit;
+  font-size: 12px;
+  border: 1px solid var(--hair);
+  background: #fff;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.chips button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }

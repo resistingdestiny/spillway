@@ -10,8 +10,8 @@ let unmount: (() => void) | null = null;
 let current = "";
 
 async function route(): Promise<void> {
-  const name = location.hash.replace(/^#\/?/, "").split(/[/?]/)[0] || "perpl";
-  const view = VIEWS[name] ? name : "perpl";
+  const name = location.hash.replace(/^#\/?/, "").split(/[/?]/)[0] || "lending";
+  const view = VIEWS[name] ? name : "lending";
   if (view === current) return;
   current = view;
   unmount?.();

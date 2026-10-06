@@ -23,5 +23,11 @@ mkdirSync(out, { recursive: true });
 const bundle = buildBundle(snapshot, withConfig(), history, crash, minutes);
 writeFileSync(join(out, "snapshot.json"), JSON.stringify(snapshot));
 writeFileSync(join(out, "bundle.json"), JSON.stringify(bundle));
+// The lending snapshot and its vault map, served as published so the browser can rerun the engine.
+const lendingOut = join(out, "lending");
+mkdirSync(lendingOut, { recursive: true });
+for (const f of ["monad-2026-10-06.json", "monad-2026-10-06.adapters.json"]) {
+  writeFileSync(join(lendingOut, f), readFileSync(join(root, "fixtures", "morpho", f)));
+}
 console.log(`wrote ${out} from ${input}`);
 console.table(bundle.summary);
