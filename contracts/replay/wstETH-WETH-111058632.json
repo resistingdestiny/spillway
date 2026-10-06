@@ -1,0 +1,165 @@
+{
+  "schema": "spillway.morpho-replay/1",
+  "source": {
+    "chainId": 143,
+    "block": 111058632,
+    "marketId": "0x8bdb7d2c5024d349772884afb3c5c409bc8de58ed63d79618bf48fb57b595060",
+    "pair": "wstETH/WETH",
+    "scale": 0.01,
+    "loanUsd": 2716.9356447538626,
+    "note": "The 17 largest borrowers and every supplier of wstETH/WETH on Monad, at block 111058632, in testnet units. Dollar values times 0.01.",
+    "borrowers": [
+      "0xa024063b630d554078bbf985718b22f3c6870ee0",
+      "0x9ca1d6e730eb9fbfd45c9ff5f0ac4e3d172d8f4d",
+      "0x53cc1b407b9cb27efec629b35dbda04d05b4fa27",
+      "0x933a7c11cc5f034300370016b2ed1e83f2017b0f",
+      "0xd1da09bdde013b59003e8e023e1df315a6d31052",
+      "0xc20e318fe1830de929bb8ee57f6209a89f0ab00f",
+      "0x0fb06bdfdd8bae9eca1b647e657a9522c8c0e906",
+      "0x90f497ec9b3118498bf49b68d20ed2da9dd746f7",
+      "0xeeaee01cdfcae33c4accbfe240e43f23cd05551a",
+      "0xfe9e81d3d42a3513ecf1c9636e64461b2ee010b8",
+      "0x177dc0e11dac15b448a620ac7bbf32f085a0e1f3",
+      "0x40534e513df8277870b81e97b5107b3f39de4f15",
+      "0x2e9fc681840e8b8332445cb0049ba26b615f18a4",
+      "0x166f7e2853b169424a8578fd414e9e6127ad5925",
+      "0x27ed158b23029cb5b21e2584459735a2f46331c3",
+      "0x5e55ef642fdad9c95fc4f9a8922532b6204e9f01",
+      "0xfeed46c11f57b7126a773eec6ae9ca7ae1c03c9a"
+    ],
+    "suppliers": [
+      "0xa6b6155b214e1b378344987b6de5e79eae828e35",
+      "0x3c11b946820c1f9c9b86ccd740b9986041155241",
+      "0x0eba5721065f961bced568527bfa03ea9ed61a00",
+      "0x9b6f53be2af3cd989f82134deb1963532d3ec50e",
+      "0xb8b1be69a221ce7b747ce71f262c0b18bc60df19",
+      "0x70b4f1a272f439e88a88ca7beefd81f307c13a0e",
+      "0xba8424ebbed6c51bea6d6d903b8815838e6a0322",
+      "0x067b275b8181ec6538fe8c2d04f5a0227a7eee17",
+      "0x777777f7447c10c1360926d282ff218100ca279a",
+      "0xbada9c382165b31419f4cc0edf0fa84f80a3c8e5",
+      "0x4f28cc08305e8585f8dd2a329ba41e77a9a54f97",
+      "0xfeed46c11f57b7126a773eec6ae9ca7ae1c03c9a",
+      "0xae5fbbc166453d94885f332d882effed24b6a155"
+    ]
+  },
+  "collateral": {
+    "name": "Test wstETH",
+    "symbol": "twstETH",
+    "decimals": 18
+  },
+  "lltv": "945000000000000000",
+  "oraclePrice": "3384503610498851000000000000",
+  "holderIndex": 0,
+  "suppliers": [
+    {
+      "assets": "387429699019"
+    },
+    {
+      "assets": "6091816274"
+    },
+    {
+      "assets": "2318237205"
+    },
+    {
+      "assets": "819282305"
+    },
+    {
+      "assets": "245770791"
+    },
+    {
+      "assets": "60302542"
+    },
+    {
+      "assets": "3168452"
+    },
+    {
+      "assets": "1533332"
+    },
+    {
+      "assets": "135883"
+    },
+    {
+      "assets": "32508"
+    },
+    {
+      "assets": "17596"
+    },
+    {
+      "assets": "8139"
+    },
+    {
+      "assets": "4025"
+    }
+  ],
+  "borrowers": [
+    {
+      "collateral": "59621000000000000000",
+      "borrowAssets": "185025381756"
+    },
+    {
+      "collateral": "26425689357000000000",
+      "borrowAssets": "73838778230"
+    },
+    {
+      "collateral": "9259987471000000000",
+      "borrowAssets": "29296854653"
+    },
+    {
+      "collateral": "7190095876000000000",
+      "borrowAssets": "22909164966"
+    },
+    {
+      "collateral": "3675000000000000000",
+      "borrowAssets": "11688996559"
+    },
+    {
+      "collateral": "2590001368000000000",
+      "borrowAssets": "8237202857"
+    },
+    {
+      "collateral": "2368902990000000000",
+      "borrowAssets": "7535693702"
+    },
+    {
+      "collateral": "2331652060000000000",
+      "borrowAssets": "7057249905"
+    },
+    {
+      "collateral": "1136497644000000000",
+      "borrowAssets": "3614708325"
+    },
+    {
+      "collateral": "972018164000000000",
+      "borrowAssets": "2872476698"
+    },
+    {
+      "collateral": "368735539000000000",
+      "borrowAssets": "1122847938"
+    },
+    {
+      "collateral": "188833058000000000",
+      "borrowAssets": "572633443"
+    },
+    {
+      "collateral": "67550130000000000",
+      "borrowAssets": "200770161"
+    },
+    {
+      "collateral": "51014123000000000",
+      "borrowAssets": "151136825"
+    },
+    {
+      "collateral": "17453568000000000",
+      "borrowAssets": "53025129"
+    },
+    {
+      "collateral": "18653000000000",
+      "borrowAssets": "50504"
+    },
+    {
+      "collateral": "9695000000000",
+      "borrowAssets": "7255"
+    }
+  ]
+}
