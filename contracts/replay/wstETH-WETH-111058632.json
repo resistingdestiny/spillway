@@ -51,6 +51,7 @@
   "lltv": "945000000000000000",
   "oraclePrice": "3384503610498851000000000000",
   "holderIndex": 0,
+  "premiumBps": 710,
   "suppliers": [
     {
       "assets": "387429699019"

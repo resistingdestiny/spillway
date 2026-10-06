@@ -2,7 +2,7 @@
 // snapshot at its block, in the units of the testnet tokens (tUSD for the loan, a test token for the
 // collateral). Dollar values and health factors are kept; amounts are multiplied by `scale`.
 //
-//   tsx scripts/replay-json.ts <snapshot.json> --market wstETH/WETH [--borrowers 20] [--scale 0.01] [--out file]
+//   tsx scripts/replay-json.ts <snapshot.json> --market wstETH/WETH [--borrowers 20] [--scale 0.01] [--premium-bps 710] [--out file]
 //
 // Output shape: spillway.morpho-replay/1 (contracts/README.md).
 
@@ -20,6 +20,9 @@ const input = resolve(cwd, args[0] ?? "");
 const pair = flag("market", "wstETH/WETH");
 const nBorrowers = Number(flag("borrowers", "20"));
 const scale = Number(flag("scale", "0.01"));
+// Annual premium for the market's cover, in bps of the limit. Take it from the lending bundle's
+// price for the market's main vault.
+const premiumBps = flag("premium-bps", "");
 
 const raw = JSON.parse(readFileSync(input, "utf8")) as RawSnapshot;
 const adaptersPath = join(dirname(input), basename(input).replace(/\.json$/, ".adapters.json"));
@@ -84,6 +87,7 @@ const replay = {
   lltv: market.lltvWad.toString(),
   oraclePrice: oraclePrice.toString(),
   holderIndex: 0,
+  ...(premiumBps ? { premiumBps: Number(premiumBps) } : {}),
   suppliers: seededSuppliers.map((p) => ({ assets: toTusd(Number(p.supplyAssets) / 10 ** loanDec).toString() })),
   borrowers: seededBorrowers.map((p) => ({
     collateral: toColl(Number(p.collateral) / 10 ** collDec).toString(),
