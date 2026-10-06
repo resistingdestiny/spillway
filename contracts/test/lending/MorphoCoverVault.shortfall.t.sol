@@ -112,4 +112,70 @@ contract MorphoCoverVaultShortfallTest is MorphoFixture {
         vm.expectRevert(abi.encodeWithSelector(MorphoCoverVault.NoLoss.selector, policyId));
         vault.claimShortfall(policyId, _list(B1));
     }
+
+    function test_realisingThePaidShortfallPaysOnlyTheIncrease() public {
+        uint256 policyId = _buy(holder, holderShares, 1_000_000e6, 0);
+        _drop(2500);
+        uint256 first = vault.claimShortfall(policyId, _list(B1));
+        assertEq(first, 59_999_999_999);
+
+        // A liquidator now seizes B1's collateral. Morpho books more than the 120k
+        // shortfall, because it pays the liquidator the incentive: 1.02M less 900k / 1.0438.
+        (, uint256 badDebt) = _liquidate(B1);
+        assertGt(badDebt, 120_000e6);
+        assertApproxEqRel(badDebt, 157_766e6, 0.001e18);
+        assertEq(morpho.position(id, B1).borrowShares, 0);
+
+        // The realised loss already includes what was paid as unrealised, so `claim` pays
+        // only the increase, and the total is the realised loss, once.
+        uint256 loss = _lossSince(policyId, holderShares);
+        assertEq(vault.claimable(policyId), loss - first);
+        uint256 second = vault.claim(policyId);
+        assertEq(second, loss - first);
+        assertEq(first + second, loss);
+        assertEq(vault.policy(policyId).paid, loss);
+        assertEq(usd.balanceOf(holder), loss);
+
+        // B1 now has no debt, so listing it again adds nothing, and neither path pays more.
+        assertEq(vault.marketShortfall(id, _list(B1)), 0);
+        vm.expectRevert(abi.encodeWithSelector(MorphoCoverVault.NoLoss.selector, policyId));
+        vault.claimShortfall(policyId, _list(B1));
+        vm.expectRevert(abi.encodeWithSelector(MorphoCoverVault.NoLoss.selector, policyId));
+        vault.claim(policyId);
+        _assertSolvent();
+    }
+
+    function test_realisedFirstThenTheSameShortfallPaysNothingMore() public {
+        uint256 policyId = _buy(holder, holderShares, 1_000_000e6, 0);
+        _drop(2500);
+        _liquidate(B1);
+        uint256 paid = vault.claim(policyId);
+        assertEq(paid, _lossSince(policyId, holderShares));
+
+        // Listing the liquidated borrower and the others: nothing is left unrealised.
+        vm.expectRevert(abi.encodeWithSelector(MorphoCoverVault.NoLoss.selector, policyId));
+        vault.claimShortfall(policyId, _list(B1, B2, B3));
+        assertEq(vault.policy(policyId).paid, paid);
+    }
+
+    function test_aShortfallThatRecoversIsNotClawedBack() public {
+        uint256 policyId = _buy(holder, holderShares, 1_000_000e6, 0);
+        _drop(2500);
+        uint256 paid = vault.claimShortfall(policyId, _list(B1));
+
+        // The issuer reverses the markdown. B1 is healthy again and nothing is due, but
+        // the policy keeps what it was paid: it is paid the most it was ever due.
+        oracle.setPrice(PRICE);
+        assertTrue(MorphoReplay.isHealthy(morpho, params, B1));
+        assertEq(vault.claimableShortfall(policyId, _list(B1)), 0);
+        vm.expectRevert(abi.encodeWithSelector(MorphoCoverVault.NoLoss.selector, policyId));
+        vault.claimShortfall(policyId, _list(B1));
+        assertEq(vault.policy(policyId).paid, paid);
+        assertEq(usd.balanceOf(holder), paid);
+
+        // A deeper markdown later pays only past what was paid.
+        _drop(3000);
+        uint256 more = vault.claimShortfall(policyId, _list(B1));
+        assertEq(paid + more, _expected(policyId, _list(B1)));
+    }
 }
