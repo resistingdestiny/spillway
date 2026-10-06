@@ -7,7 +7,9 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import {IMorpho, Id, MarketParams, Market} from "morpho-blue/src/interfaces/IMorpho.sol";
+import {IMorpho, Id, MarketParams, Market, Position} from "morpho-blue/src/interfaces/IMorpho.sol";
+import {IOracle} from "morpho-blue/src/interfaces/IOracle.sol";
+import {ORACLE_PRICE_SCALE} from "morpho-blue/src/libraries/ConstantsLib.sol";
 import {MarketParamsLib} from "morpho-blue/src/libraries/MarketParamsLib.sol";
 import {SharesMathLib} from "morpho-blue/src/libraries/SharesMathLib.sol";
 import {MorphoBalancesLib} from "morpho-blue/src/libraries/periphery/MorphoBalancesLib.sol";
@@ -220,6 +222,7 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
     error NoWithdrawalRequest();
     error NoticePending(uint256 readyAt);
     error WithdrawalExpired(uint256 expiredAt);
+    error BorrowersNotSorted(uint256 index);
 
     constructor(
         IERC20 asset_,
@@ -515,6 +518,16 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
         return due > p.paid ? due - p.paid : 0;
     }
 
+    /// @notice Market `id`'s unrealised shortfall over `borrowers` now, with interest
+    /// accrued in the view: each borrower's debt less its collateral at the oracle
+    /// price, where positive, summed. `borrowers` must be strictly increasing.
+    function marketShortfall(Id id, address[] calldata borrowers) external view returns (uint256) {
+        MarketParams memory mp = _marketParams[id];
+        if (mp.loanToken == address(0)) revert MarketNotListed(id);
+        (,, uint256 borrowAssets, uint256 borrowShares) = morpho.expectedMarketBalances(mp);
+        return _shortfall(id, mp.oracle, borrowers, borrowAssets, borrowShares);
+    }
+
     /// @notice Premium for a policy with `limit` on market `id`, rounded up.
     function premiumFor(Id id, uint256 limit) public view returns (uint256) {
         return Math.mulDiv(limit, premiumBps[id] * policyTerm, BPS * YEAR, Math.Rounding.Ceil);
@@ -636,6 +649,37 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
         loss = atStart - atNow;
         if (loss <= p.deductible) return (loss, 0);
         due = Math.min(loss - p.deductible, p.limit);
+    }
+
+    /// @dev Market `id`'s unrealised shortfall over `borrowers`: the sum, over each
+    /// borrower, of its debt less its collateral at the oracle price, where that is
+    /// positive. This is the bad debt Morpho would book if the collateral were sold at the
+    /// oracle price, and a lower bound on what `liquidate` books, since a liquidator
+    /// seizes collateral worth the repaid debt times the incentive. Both sides round
+    /// against the claimant: the debt is `toAssetsDown` of the borrow shares (Morpho's
+    /// health check rounds it up, against the borrower) and the collateral value is
+    /// rounded up. `borrowers` must be strictly increasing, so no position counts twice.
+    function _shortfall(
+        Id id,
+        address oracle,
+        address[] calldata borrowers,
+        uint256 totalBorrowAssets,
+        uint256 totalBorrowShares
+    ) internal view returns (uint256 shortfall) {
+        if (borrowers.length == 0) return 0;
+        uint256 price = IOracle(oracle).price();
+        address prev;
+        for (uint256 i; i < borrowers.length; ++i) {
+            address b = borrowers[i];
+            if (b <= prev) revert BorrowersNotSorted(i);
+            prev = b;
+            Position memory pos = morpho.position(id, b);
+            uint256 debt =
+                SharesMathLib.toAssetsDown(pos.borrowShares, totalBorrowAssets, totalBorrowShares);
+            uint256 value =
+                Math.mulDiv(pos.collateral, price, ORACLE_PRICE_SCALE, Math.Rounding.Ceil);
+            if (debt > value) shortfall += debt - value;
+        }
     }
 
     /// @dev Moves every premium stream forward to now, retiring streams as they end.
