@@ -32,8 +32,8 @@ describe("decode", () => {
     // Withdraw and Borrow index (id, onBehalf, receiver) and keep the caller in data; Supply indexes (id, caller, onBehalf).
     const withdraw = logs.find((l) => l.topics[0] === TOPIC0.Withdraw) as RawLog;
     const supply = logs.find((l) => l.topics[0] === TOPIC0.Supply) as RawLog;
-    const w = decode(withdraw) as Extract<MorphoEvent, { kind: "Withdraw" }>;
-    const s = decode(supply) as Extract<MorphoEvent, { kind: "Supply" }>;
+    const w = decode(withdraw) as Extract<MorphoEvent, { onBehalf: string; shares: bigint }>;
+    const s = decode(supply) as Extract<MorphoEvent, { onBehalf: string; shares: bigint }>;
     expect(w.onBehalf).toBe(`0x${(withdraw.topics[2] as string).slice(-40)}`);
     expect(w.assets).toBe(BigInt(`0x${withdraw.data.slice(66, 130)}`));
     expect(s.onBehalf).toBe(`0x${(supply.topics[3] as string).slice(-40)}`);
