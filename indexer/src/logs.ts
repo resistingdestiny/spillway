@@ -10,7 +10,7 @@ import { join } from "node:path";
 import { gunzipSync, gzipSync } from "node:zlib";
 import { indexerConfig } from "./config.js";
 import { byChainOrder, type RawLog } from "./events.js";
-import { fetchLogsHypersync } from "./hypersync.js";
+import { fetchLogsHypersync, hypersyncToken } from "./hypersync.js";
 import { fetchLogsRpc } from "./rpc.js";
 
 export type Source = { kind: "hypersync"; token: string } | { kind: "rpc" };
@@ -81,4 +81,12 @@ export async function* logsUpTo(to: number, dir: string, source: Source, log: (m
     const { header, logs } = readRange(file);
     yield { logs, source: header.source };
   }
+}
+
+/** HyperSync when a token is set, else the public RPC. `want` forces one. */
+export function pickSource(want?: string): Source {
+  const token = hypersyncToken();
+  if (want === "rpc" || (!want && !token)) return { kind: "rpc" };
+  if (!token) throw new Error(`HyperSync needs an API token in ${indexerConfig.hypersync.tokenEnv}`);
+  return { kind: "hypersync", token };
 }
