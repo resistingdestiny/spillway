@@ -1,17 +1,10 @@
 // Geometry of the picture. Pure numbers, no drawing, so every renderer and the text overlay agree.
 //
-// Top: a cliff. Price runs down the cliff face, from today's price to MAX_MOVE below it.
-// Ledges stick out from the face at the price where their positions liquidate.
-// Bottom: a basin with three bands on its wall, drawn at a fixed dollars-per-pixel scale.
+// Top: a cliff. The shock runs down the cliff face, from none to MAX_MOVE.
+// Ledges stick out from the face at the shock that breaks them.
+// Bottom: a basin with bands on its wall, drawn at a fixed dollars-per-pixel scale, lowest band first.
 
 export const MAX_MOVE = 0.4;
-
-export interface Bands {
-  fund: number;
-  layer: number;
-  /** Height given to the winning traders band, in dollars. It has no natural size. */
-  traders: number;
-}
 
 export interface Geometry {
   W: number;
@@ -26,18 +19,21 @@ export interface Geometry {
   basinBottom: number;
   /** Pixels per dollar in the basin. */
   basinScale: number;
-  /** Pixels per dollar of position on a ledge. */
+  /** Pixels per dollar on a ledge. */
   ledgeScale: number;
-  bands: Bands;
-  /** y of a price given as a ratio to today's price. */
+  /** Size of each band in dollars, lowest first. */
+  bands: number[];
+  /** Largest move shown on the cliff. */
+  maxMove: number;
+  /** y of a level given as a ratio to today's (1 is today, 1 - maxMove is the bottom of the cliff). */
   priceY(ratio: number): number;
-  /** y of the water surface for a given amount of bad debt. */
+  /** y of the water surface for a given amount of loss. */
   waterY(dollars: number): number;
-  /** y range of each band, top and bottom. */
-  band(name: keyof Bands): { top: number; bottom: number };
+  /** y range of band i, top and bottom. */
+  band(i: number): { top: number; bottom: number };
 }
 
-export function layout(W: number, H: number, fund: number, layerLimit: number, biggestLedge: number): Geometry {
+export function layout(W: number, H: number, bands: number[], biggestLedge: number, maxMove = MAX_MOVE): Geometry {
   const wallX = Math.round(Math.min(64, W * 0.15));
   const rightX = W - 2;
   const cliffTop = 34;
@@ -45,18 +41,16 @@ export function layout(W: number, H: number, fund: number, layerLimit: number, b
   const basinTop = Math.round(H * 0.56);
   const basinBottom = H - 2;
 
-  const traders = Math.max((fund + layerLimit) * 0.35, 1);
-  const bands: Bands = { fund, layer: layerLimit, traders };
-  const capacity = fund + layerLimit + traders;
+  const capacity = Math.max(1, bands.reduce((a, b) => a + b, 0));
   const basinScale = (basinBottom - basinTop) / capacity;
   const ledgeScale = biggestLedge > 0 ? ((rightX - wallX) * 0.86) / biggestLedge : 0;
 
-  const priceY = (ratio: number) => cliffTop + ((1 - ratio) / MAX_MOVE) * (cliffBottom - cliffTop);
+  const priceY = (ratio: number) => cliffTop + ((1 - ratio) / maxMove) * (cliffBottom - cliffTop);
   const waterY = (dollars: number) => basinBottom - Math.max(0, dollars) * basinScale;
-  const band = (name: keyof Bands) => {
-    const below = name === "fund" ? 0 : name === "layer" ? fund : fund + layerLimit;
-    return { bottom: waterY(below), top: waterY(below + bands[name]) };
+  const band = (i: number) => {
+    const below = bands.slice(0, i).reduce((a, b) => a + b, 0);
+    return { bottom: waterY(below), top: waterY(below + (bands[i] ?? 0)) };
   };
 
-  return { W, H, wallX, rightX, cliffTop, cliffBottom, basinTop, basinBottom, basinScale, ledgeScale, bands, priceY, waterY, band };
+  return { W, H, wallX, rightX, cliffTop, cliffBottom, basinTop, basinBottom, basinScale, ledgeScale, bands, maxMove, priceY, waterY, band };
 }

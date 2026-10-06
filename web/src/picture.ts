@@ -16,20 +16,40 @@ export const COLORS = {
   fundBand: 0xb9bec6,
 };
 
-export interface Scene {
-  mark: number;
-  ledges: Ledge[];
-  /** Per ledge: was it broken, and how much bad debt poured off it. */
-  broken: boolean[];
-  ledgeBadDebt: number[];
-  /** Outside price after the move, as a ratio to today's price. Null when nothing has moved. */
-  ghostRatio: number | null;
-  /** Lowest price Perpl's book traded at, as a ratio. */
-  realRatio: number | null;
-  /** Total bad debt: the water in the basin. */
+/** One band on the basin wall, lowest first. */
+export interface BandSpec {
+  /** Counter text, e.g. "Insurance fund ($178k) pays". */
+  label: string;
+  /** Size of the band in dollars. */
+  dollars: number;
+  /** What this band has paid in the current run. */
+  paid: number;
+  /** Colour of its strip on the wall. */
+  color: number;
+  /** Only coloured once water reaches it (the people who lose when everything else is used up). */
+  wetOnly?: boolean;
+}
+
+/** A ledge: positions that break at one level of the shock. */
+export interface PictureLedge {
+  /** Level as a ratio to today: 1 is today, 0.9 is a 10% move. */
+  ratio: number;
+  /** Width in dollars. */
+  dollars: number;
+  broken: boolean;
+  /** Loss that poured off it. */
   water: number;
-  /** Whether the Spillway band exists in this run. */
-  layerOn: boolean;
+}
+
+export interface Scene {
+  ledges: PictureLedge[];
+  /** Where the shock took the outside price, as a ratio. Null when nothing has moved. */
+  ghostRatio: number | null;
+  /** Where the market actually traded, as a ratio, if it went further. */
+  realRatio: number | null;
+  /** Total loss: the water in the basin. */
+  water: number;
+  bands: BandSpec[];
 }
 
 export class Picture {
@@ -97,9 +117,6 @@ export class Picture {
     const g = this.g;
     const { wallX, rightX, basinTop, basinBottom } = geo;
     const level = geo.waterY(scene.water);
-    const fund = geo.band("fund");
-    const layer = geo.band("layer");
-    const traders = geo.band("traders");
 
     // Water.
     if (scene.water > 0) {
@@ -107,16 +124,21 @@ export class Picture {
       g.rect(wallX, top, rightX - wallX, basinBottom - top).fill({ color: COLORS.water });
     }
 
-    // Gauge strip on the wall: one band each.
+    // Gauge strip on the wall: one colour per band.
     const strip = 8;
-    g.rect(wallX + 2, fund.top, strip, fund.bottom - fund.top).fill({ color: COLORS.fundBand });
-    if (scene.layerOn) g.rect(wallX + 2, layer.top, strip, layer.bottom - layer.top).fill({ color: COLORS.accent });
-    const tradersWet = scene.water > geo.bands.fund + (scene.layerOn ? geo.bands.layer : 0) + 1e-6;
-    if (tradersWet) g.rect(wallX + 2, traders.top, strip, traders.bottom - traders.top).fill({ color: COLORS.danger });
+    let below = 0;
+    scene.bands.forEach((b, i) => {
+      const { top, bottom } = geo.band(i);
+      const wet = scene.water > below + 1e-6;
+      if (!b.wetOnly || wet) g.rect(wallX + 2, top, strip, bottom - top).fill({ color: b.color });
+      below += b.dollars;
+    });
 
     // Band edges across the basin, dashed.
-    const edges = scene.layerOn ? [fund.top, layer.top] : [fund.top];
-    for (const y of edges) dashed(g, wallX, y, rightX, y, 6, 5);
+    for (let i = 0; i < scene.bands.length - 1; i++) {
+      const y = geo.band(i).top;
+      dashed(g, wallX, y, rightX, y, 6, 5);
+    }
     g.stroke({ width: 1, color: scene.water > 0 ? 0xffffff : COLORS.muted, alpha: 0.9 });
 
     // The vessel.
@@ -127,11 +149,11 @@ export class Picture {
   private falls(geo: Geometry, scene: Scene): void {
     const g = this.g;
     const surface = scene.water > 0 ? Math.max(geo.basinTop - 6, geo.waterY(scene.water)) : geo.basinBottom;
-    scene.ledges.forEach((l, i) => {
-      const bd = scene.ledgeBadDebt[i] ?? 0;
-      if (!scene.broken[i] || bd <= 0) return;
-      const y = geo.priceY(l.price / scene.mark);
-      const tip = geo.wallX + Math.max(14, l.notional * geo.ledgeScale);
+    scene.ledges.forEach((l) => {
+      const bd = l.water;
+      if (!l.broken || bd <= 0) return;
+      const y = geo.priceY(l.ratio);
+      const tip = geo.wallX + Math.max(14, l.dollars * geo.ledgeScale);
       const w = Math.min(10, Math.max(1.5, Math.sqrt(bd) / 15));
       g.rect(tip - w, y + 3, w, surface - y - 3).fill({ color: COLORS.water, alpha: 0.45 });
     });
@@ -140,12 +162,11 @@ export class Picture {
   private ledges(geo: Geometry, scene: Scene): void {
     const g = this.g;
     const h = 5;
-    scene.ledges.forEach((l, i) => {
-      const ratio = l.price / scene.mark;
-      if (ratio < 0.6) return;
-      const y = geo.priceY(ratio) - h / 2;
-      const w = Math.max(14, l.notional * geo.ledgeScale);
-      if (!scene.broken[i]) {
+    scene.ledges.forEach((l) => {
+      if (l.ratio < 1 - geo.maxMove) return;
+      const y = geo.priceY(l.ratio) - h / 2;
+      const w = Math.max(14, l.dollars * geo.ledgeScale);
+      if (!l.broken) {
         g.rect(geo.wallX, y, w, h).fill({ color: COLORS.ink });
         return;
       }

@@ -1,7 +1,7 @@
 import { type Bundle, type Ledge, type RunResult, type Snapshot, gap, ledges as groupLedges, scaleOpenInterest } from "@spillway/engine";
 import { MAX_MOVE, layout } from "./layout.js";
 import { renderOverlay, usd, usdShort } from "./overlay.js";
-import { Picture, type Scene } from "./picture.js";
+import { COLORS, Picture, type Scene } from "./picture.js";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -42,26 +42,31 @@ let run: RunResult | null = null;
 
 function scene(): Scene {
   const broken = ledges.map(() => false);
-  const ledgeBadDebt = ledges.map(() => 0);
+  const water = ledges.map(() => 0);
   if (run) {
     for (const e of run.events) {
       if (e.kind !== "fill") continue;
       const i = ledgeOf.get(e.accountId);
       if (i === undefined) continue;
       broken[i] = true;
-      ledgeBadDebt[i] = (ledgeBadDebt[i] ?? 0) + e.badDebt;
+      water[i] = (water[i] ?? 0) + e.badDebt;
     }
   }
+  const t = run?.totals;
+  const fund = m.insuranceFund;
+  const limit = cfg.layer.limitUsd;
+  const bands = [
+    { label: `Insurance fund (${usdShort(fund)}) pays`, dollars: fund, paid: t?.fundPaid ?? 0, color: COLORS.fundBand },
+    ...(limit > 0 ? [{ label: `Spillway (${usdShort(limit)}) pays`, dollars: limit, paid: t?.layerPaid ?? 0, color: COLORS.accent }] : []),
+    { label: "Winning traders lose", dollars: Math.max((fund + limit) * 0.35, 1), paid: t?.tradersLose ?? 0, color: COLORS.danger, wetOnly: true },
+  ];
   return {
-    mark: m.markPrice,
-    ledges,
-    broken,
-    ledgeBadDebt,
+    ledges: ledges.map((l, i) => ({ ratio: l.price / m.markPrice, dollars: l.notional, broken: broken[i] ?? false, water: water[i] ?? 0 })),
     ghostRatio: run ? run.totals.spotEnd / m.markPrice : null,
     // Below the bottom of the cliff, the marker rests on the last tick.
     realRatio: run ? Math.max(1 - MAX_MOVE, run.totals.bookLow / m.markPrice) : null,
-    water: run ? run.totals.badDebt : 0,
-    layerOn: cfg.layer.limitUsd > 0,
+    water: t?.badDebt ?? 0,
+    bands,
   };
 }
 
@@ -89,10 +94,15 @@ function sentence(): string {
 
 function draw(): void {
   const { W, H } = picture.fit();
-  const geo = layout(W, H, m.insuranceFund, cfg.layer.limitUsd, biggest);
   const s = scene();
+  const geo = layout(W, H, s.bands.map((b) => b.dollars), biggest);
   picture.draw(geo, s);
-  renderOverlay($("overlay"), geo, s, run?.totals ?? { fundPaid: 0, layerPaid: 0, tradersLose: 0 }, m.symbol);
+  renderOverlay($("overlay"), geo, s, {
+    now: `${m.symbol} now ${usd(m.markPrice)}`,
+    ghost: (r) => `Outside price −${((1 - r) * 100).toFixed(1)}%  ${usd(m.markPrice * r)}`,
+    real: (r) => (r <= 1 - MAX_MOVE + 1e-9 ? "Perpl's book went below the last tick" : `Perpl's book went to ${usd(m.markPrice * r)}`),
+    tick: (mv) => `−${Math.round(mv * 100)}%`,
+  });
   $("sentence").textContent = sentence();
   $("headline").innerHTML = headline();
   $("drop-value").textContent = `${(move * 100).toFixed(1)}%`;
