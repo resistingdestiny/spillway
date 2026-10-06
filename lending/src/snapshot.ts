@@ -153,11 +153,13 @@ export interface RawSnapshot {
   positions: RawPosition[];
 }
 
-/** An adapters file: supplier address to parent vault, read on chain at one block. */
+/** An adapters file (scripts/resolve-adapters.ts): supplier address to parent vault, read on chain at one block. */
 export interface AdaptersFile {
   schema: "spillway.morpho-adapters/1";
   block: number;
   adapters: Record<string, string>;
+  /** Each parent vault's on-chain `name()`. Names a vault the API does not list on any market. */
+  names: Record<string, string>;
 }
 
 const asset = (a: RawAsset): Asset => ({ address: lower(a.address), symbol: a.symbol, decimals: a.decimals, priceUsd: a.priceUsd });
@@ -223,6 +225,9 @@ export function loadBook(raw: RawSnapshot, adapters?: AdaptersFile): LendingBook
   for (const m of markets) for (const v of m.vaults) vaults.set(v.address, v);
   const adapterMap = new Map<string, string>();
   for (const [a, v] of Object.entries(adapters?.adapters ?? {}).sort()) adapterMap.set(lower(a), lower(v));
+  for (const [v, name] of Object.entries(adapters?.names ?? {}).sort()) {
+    if (!vaults.has(lower(v))) vaults.set(lower(v), { address: lower(v), name, curators: [] });
+  }
   return {
     chainId: raw.chainId,
     takenAt: raw.takenAt,
