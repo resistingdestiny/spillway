@@ -8,17 +8,26 @@ const hex = (n: number | bigint) => `0x${n.toString(16)}`;
 
 export async function rpc<T>(method: string, params: unknown[], url: string = indexerConfig.rpc.url): Promise<T> {
   for (let attempt = 0; ; attempt++) {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
-    });
-    const body = (await res.json().catch(() => ({}))) as { result?: T; error?: { code: number; message: string } };
-    if (body.result !== undefined) return body.result;
-    // A response over the size cap is the caller's to split; anything else is retried a few times.
-    if (body.error && /size exceeded|too large|limited/i.test(body.error.message)) throw new RangeError(body.error.message);
-    if (body.error && /revert/i.test(body.error.message)) throw new Error(`${method}: ${body.error.message}`);
-    if (attempt >= 4) throw new Error(`${method}: ${body.error?.message ?? `HTTP ${res.status}`}`);
+    let failure: string;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+      });
+      const body = (await res.json().catch(() => ({}))) as { result?: T; error?: { code: number; message: string } };
+      if (body.result !== undefined) return body.result;
+      const message = body.error?.message ?? `HTTP ${res.status}`;
+      // A response over the size cap is the caller's to split, and a revert is an answer. Anything
+      // else (rate limits, timeouts) is retried.
+      if (/size exceeded|too large|limited to|exceeded max allowed range/i.test(message)) throw new RangeError(message);
+      if (/revert/i.test(message)) throw new Error(`${method}: ${message}`);
+      failure = message;
+    } catch (e) {
+      if (e instanceof RangeError || (e instanceof Error && e.message.startsWith(`${method}: `))) throw e;
+      failure = String(e);
+    }
+    if (attempt >= 6) throw new Error(`${method} failed ${attempt + 1} times: ${failure}`);
     await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
   }
 }
@@ -82,7 +91,8 @@ export async function fetchLogsRpc(from: number, to: number, progress?: (block: 
 export async function call(to: string, data: string, block: number): Promise<string | null> {
   try {
     return await rpc<string>("eth_call", [{ to, data }, hex(block)]);
-  } catch {
-    return null;
+  } catch (e) {
+    if (e instanceof Error && /revert/i.test(e.message)) return null;
+    throw e;
   }
 }

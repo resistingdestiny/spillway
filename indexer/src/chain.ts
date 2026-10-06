@@ -46,7 +46,7 @@ async function price(oracle: string, block: number): Promise<bigint | null> {
 }
 
 /** Run `fn` over `items`, a few at a time, so the public RPC is not flooded. */
-export async function pool<T, R>(items: T[], fn: (t: T) => Promise<R>, width = 6): Promise<R[]> {
+export async function pool<T, R>(items: T[], fn: (t: T) => Promise<R>, width = 4): Promise<R[]> {
   const out: R[] = new Array(items.length);
   let next = 0;
   await Promise.all(
