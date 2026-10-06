@@ -172,6 +172,23 @@ abstract contract MorphoFixture is Test {
         return p.supplyShares.toAssetsDown(m.totalSupplyAssets, m.totalSupplyShares);
     }
 
+    /// @dev What `shares` have lost in redeemable value since policy `policyId` began,
+    /// computed with Morpho's own SharesMathLib rather than the vault.
+    function _lossSince(uint256 policyId, uint256 shares) internal returns (uint256) {
+        MorphoCoverVault.Policy memory p = vault.policy(policyId);
+        morpho.accrueInterest(params);
+        Market memory m = morpho.market(id);
+        uint256 atStart = shares.toAssetsDown(p.startSupplyAssets, p.startSupplyShares);
+        uint256 atNow = shares.toAssetsDown(m.totalSupplyAssets, m.totalSupplyShares);
+        return atStart > atNow ? atStart - atNow : 0;
+    }
+
+    /// @dev Policy `policyId`'s start share price, scaled by 1e36.
+    function _startPrice(uint256 policyId) internal view returns (uint256) {
+        MorphoCoverVault.Policy memory p = vault.policy(policyId);
+        return vault.sharePriceOf(p.startSupplyAssets, p.startSupplyShares);
+    }
+
     function _sharesOf(address who) internal view returns (uint256) {
         return morpho.position(id, who).supplyShares;
     }

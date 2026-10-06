@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.24;
 
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {Market} from "morpho-blue/src/interfaces/IMorpho.sol";
 import {MorphoFixture} from "../utils/MorphoFixture.sol";
 import {MorphoCoverVault} from "../../src/lending/MorphoCoverVault.sol";
@@ -32,7 +31,6 @@ contract MorphoCoverVaultFlowTest is MorphoFixture {
         // 25k deductible.
         _deposit(bob, 1_000_000e6);
         uint256 policyId = _buy(holder, holderShares, 1_000_000e6, 25_000e6);
-        uint256 startPrice = vault.policy(policyId).startPrice;
         uint256 valueBefore = _assetsOf(holder);
 
         // A day of interest, then wstETH depegs 25%.
@@ -69,11 +67,10 @@ contract MorphoCoverVaultFlowTest is MorphoFixture {
         assertApproxEqRel(badDebt, 238_000e6, 0.01e18);
 
         // The claim pays the holder's half of the bad debt less the deductible.
-        uint256 price = vault.sharePriceOf(m.totalSupplyAssets, m.totalSupplyShares);
-        uint256 loss = Math.mulDiv(holderShares, startPrice - price, 1e36);
+        uint256 loss = _lossSince(policyId, holderShares);
+        assertEq(loss, valueBefore - _assetsOf(holder), "loss in Morpho's terms");
         uint256 paid = vault.claim(policyId);
         assertEq(paid, loss - 25_000e6);
-        assertApproxEqAbs(loss, valueBefore - _assetsOf(holder), 2, "loss in Morpho's terms");
         // A day of interest on 2.58M of debt at 5% offsets a little of the loss.
         assertApproxEqRel(loss, badDebt / 2, 0.005e18);
         assertEq(usd.balanceOf(holder), paid);

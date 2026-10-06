@@ -28,15 +28,11 @@ contract MorphoCoverVaultClaimTest is MorphoFixture {
     }
 
     /// @dev The payout rule, computed independently of the vault.
-    function _expected(
-        uint256 shares,
-        uint256 startPrice,
-        uint256 price,
-        uint256 deductible,
-        uint256 limit
-    ) internal pure returns (uint256) {
-        if (price >= startPrice) return 0;
-        uint256 loss = Math.mulDiv(shares, startPrice - price, 1e36);
+    function _expected(uint256 policyId, uint256 shares, uint256 deductible, uint256 limit)
+        internal
+        returns (uint256)
+    {
+        uint256 loss = _lossSince(policyId, shares);
         if (loss <= deductible) return 0;
         return Math.min(loss - deductible, limit);
     }
@@ -45,7 +41,7 @@ contract MorphoCoverVaultClaimTest is MorphoFixture {
 
     function test_claimPaysShareLossTimesCoveredShares() public {
         uint256 policyId = _buy(holder, holderShares, 500_000e6, 0);
-        uint256 startPrice = vault.policy(policyId).startPrice;
+        uint256 startPrice = _startPrice(policyId);
         assertEq(startPrice, _price());
         uint256 valueBefore = _assetsOf(holder);
 
@@ -54,14 +50,14 @@ contract MorphoCoverVaultClaimTest is MorphoFixture {
         uint256 price = _price();
         assertLt(price, startPrice);
 
-        uint256 expected = _expected(holderShares, startPrice, price, 0, 500_000e6);
+        uint256 expected = _expected(policyId, holderShares, 0, 500_000e6);
         uint256 before = usd.balanceOf(holder);
         uint256 paid = vault.claim(policyId);
 
         assertEq(paid, expected);
         assertEq(usd.balanceOf(holder) - before, paid);
-        // The payout is the holder's loss in Morpho's own accounting, to the unit.
-        assertApproxEqAbs(paid, valueBefore - _assetsOf(holder), 2);
+        // The payout is the fall in what the holder can withdraw from Morpho, exactly.
+        assertEq(paid, valueBefore - _assetsOf(holder));
         // The holder supplied 1M of the 2M the bad debt was spread over (plus the bad
         // borrower's own borrow, which is the same pool), so it bears about half.
         assertApproxEqRel(paid, badDebt / 2, 0.001e18);
@@ -73,19 +69,16 @@ contract MorphoCoverVaultClaimTest is MorphoFixture {
 
     function test_deductibleIsSubtracted() public {
         uint256 policyId = _buy(holder, holderShares, 500_000e6, 10_000e6);
-        uint256 startPrice = vault.policy(policyId).startPrice;
         _badDebtOf(100_000e6);
-        uint256 price = _price();
-        uint256 loss = Math.mulDiv(holderShares, startPrice - price, 1e36);
+        uint256 loss = _lossSince(policyId, holderShares);
 
         assertEq(vault.claim(policyId), loss - 10_000e6);
     }
 
     function test_partialCoverPaysOnCoveredSharesOnly() public {
         uint256 policyId = _buy(holder, holderShares / 4, 500_000e6, 0);
-        uint256 startPrice = vault.policy(policyId).startPrice;
         _badDebtOf(100_000e6);
-        uint256 expected = _expected(holderShares / 4, startPrice, _price(), 0, 500_000e6);
+        uint256 expected = _expected(policyId, holderShares / 4, 0, 500_000e6);
         assertEq(vault.claim(policyId), expected);
     }
 
@@ -127,15 +120,13 @@ contract MorphoCoverVaultClaimTest is MorphoFixture {
 
     function test_claimsRepeatAsTheLossGrows() public {
         uint256 policyId = _buy(holder, holderShares, 500_000e6, 5_000e6);
-        uint256 startPrice = vault.policy(policyId).startPrice;
-
         _badDebtOf(40_000e6);
         uint256 first = vault.claim(policyId);
-        assertEq(first, _expected(holderShares, startPrice, _price(), 5_000e6, 500_000e6));
+        assertEq(first, _expected(policyId, holderShares, 5_000e6, 500_000e6));
 
         _badDebtOf(60_000e6);
         uint256 second = vault.claim(policyId);
-        uint256 total = _expected(holderShares, startPrice, _price(), 5_000e6, 500_000e6);
+        uint256 total = _expected(policyId, holderShares, 5_000e6, 500_000e6);
         assertEq(first + second, total);
         assertEq(vault.policy(policyId).paid, total);
     }
@@ -178,7 +169,7 @@ contract MorphoCoverVaultClaimTest is MorphoFixture {
     function test_interestAccrualAloneNeverPays() public {
         _borrow(borrower, 500e18, 1_500_000e6);
         uint256 policyId = _buy(holder, holderShares, 500_000e6, 0);
-        uint256 startPrice = vault.policy(policyId).startPrice;
+        uint256 startPrice = _startPrice(policyId);
         for (uint256 i; i < 6; ++i) {
             vm.warp(block.timestamp + 5 days);
             assertGt(_price(), startPrice);
@@ -365,8 +356,10 @@ contract MorphoCoverVaultClaimTest is MorphoFixture {
         assertEq(p.deductible, 1_000e6);
         assertEq(p.start, block.timestamp);
         assertEq(p.end, block.timestamp + LendingConfig.POLICY_TERM);
+        assertEq(p.startSupplyAssets, morpho.market(id).totalSupplyAssets);
+        assertEq(p.startSupplyShares, morpho.market(id).totalSupplyShares);
         // A fresh market prices one share at 1e-6 of a base unit: 1e30 at 1e36 scale.
-        assertApproxEqRel(p.startPrice, 1e30, 1e12);
+        assertApproxEqRel(_startPrice(policyId), 1e30, 1e12);
         assertEq(vault.policyCount(), 1);
 
         Vm.Log[] memory logs = vm.getRecordedLogs();

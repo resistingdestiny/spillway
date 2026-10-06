@@ -35,8 +35,9 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
 
     /// @notice Fixed-point scale for premium rates and `premiumPerShare`.
     uint256 public constant PRECISION = 1e18;
-    /// @notice Scale of a recorded share price: loan token base units per supply share
-    /// times 1e36. Supply shares start at 1e6 per base unit, so a fresh market reads 1e30.
+    /// @notice Scale of `sharePriceOf`: loan token base units per supply share times
+    /// 1e36. Supply shares start at 1e6 per base unit, so a fresh market reads 1e30.
+    /// For display only. Claims value shares with Morpho's own `toAssetsDown`.
     uint256 public constant PRICE_SCALE = 1e36;
     /// @notice Basis points in one.
     uint256 public constant BPS = 10_000;
@@ -85,10 +86,13 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
         uint64 end;
         bool released; // capacity and covered shares handed back after the claim window
         Id marketId;
+        // The market's supply totals at inception. Their ratio, with Morpho's virtual
+        // shares and assets, is the start share price, kept exact rather than rounded.
+        uint128 startSupplyAssets;
+        uint128 startSupplyShares;
         uint256 coveredShares; // Morpho supply shares
         uint256 limit; // most the policy ever pays, in loan token units
         uint256 deductible; // loss the holder keeps before cover pays
-        uint256 startPrice; // supply share price at inception, scaled by PRICE_SCALE
         uint256 paid; // paid so far. Claims pay the increase over this.
     }
 
@@ -384,7 +388,7 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
         if (holder == address(0)) revert ZeroAddress();
         if (coveredShares == 0 || limit == 0) revert ZeroAmount();
 
-        uint256 startPrice = _underwrite(id, holder, coveredShares, limit);
+        (uint128 startAssets, uint128 startShares) = _underwrite(id, holder, coveredShares, limit);
         uint256 premium = _startStream(id, limit);
 
         policyId = ++policyCount;
@@ -397,7 +401,8 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
             coveredShares: coveredShares,
             limit: limit,
             deductible: deductible,
-            startPrice: startPrice,
+            startSupplyAssets: startAssets,
+            startSupplyShares: startShares,
             paid: 0
         });
         coveredSharesOf[id][holder] += coveredShares;
@@ -412,7 +417,7 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
             coveredShares,
             limit,
             deductible,
-            startPrice,
+            sharePriceOf(startAssets, startShares),
             block.timestamp + policyTerm,
             premium
         );
@@ -422,7 +427,8 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
     /// the policy's start until `claimWindow` after its end. Accrues interest on Morpho,
     /// reads the supply share price and pays `coveredShares * (startPrice - price)`, less
     /// the deductible, capped by the limit, minus what the policy has already been paid.
-    /// The payment is capped again by the vault's free capital.
+    /// The payment is capped again by the vault's free capital. Both prices are applied
+    /// as Morpho's `toAssetsDown`, so the loss is the fall in what the shares redeem for.
     /// @dev Covered shares are capped at what the holder still supplies, so a holder who
     /// withdrew before the loss is not paid for it. Claims can repeat as losses grow.
     function claim(uint256 policyId) external nonReentrant returns (uint256 amount) {
@@ -433,9 +439,8 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
 
         morpho.accrueInterest(_marketParams[p.marketId]);
         Market memory m = morpho.market(p.marketId);
-        uint256 price = sharePriceOf(m.totalSupplyAssets, m.totalSupplyShares);
         uint256 held = morpho.position(p.marketId, p.holder).supplyShares;
-        (uint256 loss, uint256 due) = _due(p, price, held);
+        (uint256 loss, uint256 due) = _due(p, m.totalSupplyAssets, m.totalSupplyShares, held);
         if (due <= p.paid) revert NoLoss(policyId);
 
         amount = due - p.paid;
@@ -449,7 +454,14 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
         paidOut += amount;
 
         asset.safeTransfer(p.holder, amount);
-        emit Claimed(policyId, p.holder, price, loss, amount, p.paid);
+        emit Claimed(
+            policyId,
+            p.holder,
+            sharePriceOf(m.totalSupplyAssets, m.totalSupplyShares),
+            loss,
+            amount,
+            p.paid
+        );
     }
 
     /// @notice Once a policy's claim window has closed, hands its unused limit back to
@@ -471,8 +483,7 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
     // -------------------------------------------------------------------- views
 
     /// @notice Morpho's supply share price for the given totals, scaled by
-    /// `PRICE_SCALE`. Uses the same virtual shares and assets as `SharesMathLib`, so
-    /// `shares * price / PRICE_SCALE` is what `toAssetsDown` gives, to within one unit.
+    /// `PRICE_SCALE`, with the same virtual shares and assets as `SharesMathLib`.
     function sharePriceOf(uint256 totalSupplyAssets, uint256 totalSupplyShares)
         public
         pure
@@ -498,7 +509,9 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
         if (p.holder == address(0)) return 0;
         if (block.timestamp > uint256(p.end) + claimWindow) return 0;
         uint256 held = morpho.position(p.marketId, p.holder).supplyShares;
-        (, uint256 due) = _due(p, sharePrice(p.marketId), held);
+        (uint256 assets, uint256 shares,,) =
+            morpho.expectedMarketBalances(_marketParams[p.marketId]);
+        (, uint256 due) = _due(p, assets, shares, held);
         return due > p.paid ? due - p.paid : 0;
     }
 
@@ -569,10 +582,10 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
     // ----------------------------------------------------------------- internal
 
     /// @dev Checks a new policy against the holder's uncovered supply and the vault's
-    /// capacity, and returns the market's share price to record as its start price.
+    /// capacity, and returns the market's supply totals to record as its start price.
     function _underwrite(Id id, address holder, uint256 coveredShares, uint256 limit)
         internal
-        returns (uint256 startPrice)
+        returns (uint128 startAssets, uint128 startShares)
     {
         // Accrue first so the start price carries all interest earned so far, and so
         // the holder's supply shares are final.
@@ -588,7 +601,7 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
         if (limit > available) revert CapacityExceeded(limit, available);
 
         Market memory m = morpho.market(id);
-        startPrice = sharePriceOf(m.totalSupplyAssets, m.totalSupplyShares);
+        (startAssets, startShares) = (m.totalSupplyAssets, m.totalSupplyShares);
     }
 
     /// @dev Prices a policy with `limit` on market `id` and starts its premium stream
@@ -606,16 +619,21 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
         premiumUnallocated += premium * PRECISION - rate * policyTerm;
     }
 
-    /// @dev The policy's loss on the covered shares the holder still supplies at
-    /// `price`, and what the policy owes in total for it.
-    function _due(Policy storage p, uint256 price, uint256 held)
+    /// @dev The policy's loss on the covered shares the holder still supplies, at the
+    /// market's supply totals now, and what the policy owes in total for it. The loss is
+    /// what the shares redeemed for at inception less what they redeem for now, both
+    /// rounded down as Morpho rounds a withdrawal.
+    function _due(Policy storage p, uint256 totalAssets, uint256 totalShares, uint256 held)
         internal
         view
         returns (uint256 loss, uint256 due)
     {
-        if (price >= p.startPrice) return (0, 0);
         uint256 shares = Math.min(p.coveredShares, held);
-        loss = Math.mulDiv(shares, p.startPrice - price, PRICE_SCALE);
+        uint256 atStart =
+            SharesMathLib.toAssetsDown(shares, p.startSupplyAssets, p.startSupplyShares);
+        uint256 atNow = SharesMathLib.toAssetsDown(shares, totalAssets, totalShares);
+        if (atNow >= atStart) return (0, 0);
+        loss = atStart - atNow;
         if (loss <= p.deductible) return (loss, 0);
         due = Math.min(loss - p.deductible, p.limit);
     }
