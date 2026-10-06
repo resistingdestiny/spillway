@@ -53,10 +53,7 @@ contract MorphoCoverVaultShortfallTest is MorphoFixture {
     /// @dev The unrealised due, computed from Morpho's state without the vault: each
     /// borrower's debt (rounded down) less its collateral at the oracle (rounded up),
     /// the holder's pro rata part of the sum, plus the realised loss, less the deductible.
-    function _expected(uint256 policyId, address[] memory borrowers)
-        internal
-        returns (uint256)
-    {
+    function _expected(uint256 policyId, address[] memory borrowers) internal returns (uint256) {
         morpho.accrueInterest(params);
         Market memory m = morpho.market(id);
         uint256 shortfall;
@@ -64,8 +61,7 @@ contract MorphoCoverVaultShortfallTest is MorphoFixture {
             Position memory pos = morpho.position(id, borrowers[i]);
             uint256 debt =
                 uint256(pos.borrowShares).toAssetsDown(m.totalBorrowAssets, m.totalBorrowShares);
-            uint256 value =
-                Math.mulDiv(pos.collateral, oracle.price(), 1e36, Math.Rounding.Ceil);
+            uint256 value = Math.mulDiv(pos.collateral, oracle.price(), 1e36, Math.Rounding.Ceil);
             if (debt > value) shortfall += debt - value;
         }
         MorphoCoverVault.Policy memory p = vault.policy(policyId);
@@ -177,5 +173,91 @@ contract MorphoCoverVaultShortfallTest is MorphoFixture {
         _drop(3000);
         uint256 more = vault.claimShortfall(policyId, _list(B1));
         assertEq(paid + more, _expected(policyId, _list(B1)));
+    }
+
+    // ------------------------------------------------------------ the list
+
+    function test_unsortedOrDuplicateBorrowersAreRejected() public {
+        uint256 policyId = _buy(holder, holderShares, 1_000_000e6, 0);
+        _drop(2500);
+
+        vm.expectRevert(abi.encodeWithSelector(MorphoCoverVault.BorrowersNotSorted.selector, 1));
+        vault.claimShortfall(policyId, _list(B2, B1));
+        vm.expectRevert(abi.encodeWithSelector(MorphoCoverVault.BorrowersNotSorted.selector, 1));
+        vault.claimShortfall(policyId, _list(B1, B1));
+        vm.expectRevert(abi.encodeWithSelector(MorphoCoverVault.BorrowersNotSorted.selector, 2));
+        vault.claimShortfall(policyId, _list(B1, B3, B2));
+        vm.expectRevert(abi.encodeWithSelector(MorphoCoverVault.BorrowersNotSorted.selector, 0));
+        vault.claimShortfall(policyId, _list(address(0)));
+        vm.expectRevert(abi.encodeWithSelector(MorphoCoverVault.BorrowersNotSorted.selector, 1));
+        vault.marketShortfall(id, _list(B1, B1));
+    }
+
+    function test_healthyBorrowersAddNothing() public {
+        uint256 policyId = _buy(holder, holderShares, 1_000_000e6, 0);
+        _drop(2500);
+
+        // B3 (40% becomes 53%) stays healthy. B2 (70% becomes 93%) is unhealthy, but its
+        // collateral still covers its debt, so it has no shortfall either.
+        assertTrue(MorphoReplay.isHealthy(morpho, params, B3));
+        assertFalse(MorphoReplay.isHealthy(morpho, params, B2));
+        assertEq(vault.marketShortfall(id, _list(B2)), 0);
+        assertEq(vault.marketShortfall(id, _list(B3)), 0);
+        assertEq(vault.marketShortfall(id, _list(B1, B2, B3)), 120_000e6);
+        assertEq(
+            vault.claimableShortfall(policyId, _list(B1, B2, B3)),
+            vault.claimableShortfall(policyId, _list(B1))
+        );
+
+        vm.expectRevert(abi.encodeWithSelector(MorphoCoverVault.NoLoss.selector, policyId));
+        vault.claimShortfall(policyId, _list(B2, B3));
+        // An address with no position adds nothing either.
+        vm.expectRevert(abi.encodeWithSelector(MorphoCoverVault.NoLoss.selector, policyId));
+        vault.claimShortfall(policyId, _list(alice));
+    }
+
+    // ------------------------------------------------------------ the terms
+
+    function test_deductibleAndLimitApplyToTheUnrealisedLoss() public {
+        uint256 deductible = 10_000e6;
+        uint256 policyId = _buy(holder, holderShares, 1_000_000e6, deductible);
+        uint256 capped = _buy(otherSupplier, _sharesOf(otherSupplier), 25_000e6, 0);
+        _drop(2500);
+
+        assertEq(vault.claimShortfall(policyId, _list(B1)), 59_999_999_999 - deductible);
+        assertEq(vault.claimShortfall(capped, _list(B1)), 25_000e6);
+        _assertSolvent();
+    }
+
+    function test_realisedAndUnrealisedLossAdd() public {
+        uint256 policyId = _buy(holder, holderShares, 1_000_000e6, 0);
+        // A first borrower's bad debt is realised, then a markdown puts B1 under water.
+        _badDebtOf(50_000e6);
+        _drop(2500);
+        uint256 realised = _lossSince(policyId, holderShares);
+        assertGt(realised, 24_000e6);
+
+        uint256 expected = _expected(policyId, _list(B1));
+        assertGt(expected, realised + 59_000e6);
+        assertEq(vault.claimShortfall(policyId, _list(B1)), expected);
+    }
+
+    function test_interestSinceInceptionAbsorbsTheUnrealisedLossFirst() public {
+        uint256 policyId = _buy(holder, holderShares, 1_000_000e6, 0);
+        // 29 days at 5% on 1.46M of debt lifts the holder's supply by about 2,900. B1's
+        // debt grows too, so its shortfall is a little over 120k by then.
+        vm.warp(block.timestamp + 29 days);
+        _drop(2500);
+        uint256 gain = _assetsOf(holder) - SUPPLY;
+        assertGt(gain, 2_500e6);
+        Market memory m = morpho.market(id);
+        uint256 share =
+            vault.marketShortfall(id, _list(B1)) * holderShares / (m.totalSupplyShares + 1e6);
+
+        // The holder is paid its share of the shortfall less the interest it has earned,
+        // to a unit of rounding.
+        uint256 paid = vault.claimShortfall(policyId, _list(B1));
+        assertEq(paid, _expected(policyId, _list(B1)));
+        assertApproxEqAbs(paid, share - gain, 1);
     }
 }
