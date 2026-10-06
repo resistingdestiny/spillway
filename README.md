@@ -23,7 +23,15 @@ Sources and method are in `docs/RESEARCH.md`. Every number names its block and i
 3. **Price.** Expected loss to each vault's depositors from the failure rate and severity of each kind of collateral, plus a risk load and a capital charge.
 4. **Pay.** `contracts/src/lending/MorphoCoverVault.sol` pays a policyholder when the market's supply share price falls (bad debt written off), and on a shortfall anyone can prove from Morpho's positions and the market's own oracle (bad debt not yet written off). No keeper to trust and no vote.
 
-On a local Morpho Blue seeded with the real wstETH/WETH book from Monad block 111,058,632, a 10% markdown leaves 11,242.61 tUSD of bad debt at 1% scale, the engine's figure to the cent, and the cover pays the main depositor its share.
+On Monad testnet, our own Morpho Blue holds the real wstETH/WETH book from Monad block 111,058,632 at 1% scale. A 25% markdown leaves 16 of 17 borrowers underwater with nobody able to liquidate. Anyone can then prove the 59,053.92 tUSD shortfall from Morpho's positions, and the cover paid the main depositor its share, 57,634.68 tUSD, within 4 cents of the engine's forecast ([claim transaction](https://testnet.monadscan.com/tx/0x78d33f221e1a5512211d2bc830ca0ab1236cab0816ed7940fa5f0477580bba1a), details in `contracts/replay/testnet-wstETH-WETH-unrealised-25.json`). On a local chain, a 10% markdown with liquidations leaves 11,242.61 tUSD written off, the engine's figure to the cent.
+
+| Lending contract on Monad testnet | Address |
+| --- | --- |
+| MorphoCoverVault | `0x8af0Cc6D3bD243509F3c7cBaF4993456E9cd1653` |
+| Morpho Blue (official code, our deployment) | `0x2e1c18d61803ced2015ee56858c41584dE94b2BC` |
+| Market oracle (mock, for the replay) | `0x45fa522D318f599Fd5193566022Fec2C190ee082` |
+
+All verified on Sourcify.
 
 ## Perpl
 

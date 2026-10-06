@@ -1,0 +1,31 @@
+{
+  "network": "monad-testnet",
+  "chainId": 10143,
+  "what": "Monad's wstETH/WETH Morpho book at mainnet block 111058632 (17 borrowers, 13 suppliers, dollar values times 0.01), seeded into our own Morpho Blue on Monad testnet. The collateral is marked down 25% at once and nobody liquidates. The cover pays the main depositor its share of the shortfall proved from Morpho's positions.",
+  "contracts": {
+    "Morpho": "0x2e1c18d61803ced2015ee56858c41584dE94b2BC",
+    "FixedRateIrm": "0x4813811560dF6B3d037313a9f6cfF83Fa9cE5427",
+    "MorphoCoverVault": "0x8af0Cc6D3bD243509F3c7cBaF4993456E9cd1653",
+    "MockOracle": "0x45fa522D318f599Fd5193566022Fec2C190ee082",
+    "TestToken (twstETH)": "0xE6be38D64BDd348ce2d4779a845A902693E6EbdD",
+    "MockUSD (tUSD)": "0x2cBc5292f1fE0500a90723dbd98a51F274C778c7"
+  },
+  "verified": "Sourcify exact match for all five deployed here",
+  "marketId": "0x358fd5d917fc952f7fded4eb818aa8d9c44f5e954f7edc21805bb907f822cc71",
+  "policyId": 1,
+  "premiumBps": 710,
+  "transactions": {
+    "markdown": "0x29e207e26734c4666e87e504a7fd89cb51de833e253a44e681d1994363bd928e",
+    "claimShortfall": "0x78d33f221e1a5512211d2bc830ca0ab1236cab0816ed7940fa5f0477580bba1a"
+  },
+  "unhealthyBorrowers": "16 of 17",
+  "engineForecast": { "marketShortfall": 59053.88, "holderShare": 57634.65, "units": "tUSD" },
+  "onChain": {
+    "marketShortfall": 59053.920411,
+    "unrealisedLoss": 57634.688126,
+    "lossNetOfInterest": 57634.675522,
+    "paid": 57634.675522,
+    "units": "tUSD, from the ShortfallClaimed event"
+  },
+  "difference": "The chain figures are about 4 cents higher than the engine's on a 59,054 shortfall: interest accrued between the snapshot and the claim, and the engine works in floating point."
+}
