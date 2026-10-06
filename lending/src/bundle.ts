@@ -60,6 +60,8 @@ export function buildLendingBundle(book: LendingBook, cfg: LendingConfig, manife
         pair: `${m.collateral.symbol}/${m.loan.symbol}`,
         lltv: m.lltv,
         oracle: m.oracle?.type ?? null,
+        oracleKind: m.oracleKind?.kind ?? null,
+        shockMeans: m.shockMeans,
         debtUsd: m.debtUsd,
         firstLiquidation: m.firstLiquidation,
         exit: m.exit,

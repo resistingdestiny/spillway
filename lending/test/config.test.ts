@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { type CollateralClass, DEFAULT_CONFIG as cfg, severityQuantile, tokenRate } from "../src/config.js";
+import { type CollateralClass, DEFAULT_CONFIG as cfg, severityQuantile, shockMeaning, tokenRate } from "../src/config.js";
 import { monadBook } from "./fixture.js";
 
 const research = JSON.parse(readFileSync(new URL("../../research/research-config.json", import.meta.url), "utf8"));
@@ -84,5 +84,43 @@ describe("token classes", () => {
       expect(r.incidents).toEqual(base.incidents);
     }
     expect(tokenRate("wstETH", cfg).pt).toBe(false);
+  });
+});
+
+describe("oracle kinds", () => {
+  const kinds: Record<string, string> = {
+    exchange_rate: "exchange-rate",
+    exchange_rate_over_market_quote: "exchange-rate",
+    vault_share_price: "vault-share-price",
+    vault_share_price_operator_reported: "vault-share-price",
+    issuer_nav_push: "issuer-nav",
+    market_price_twap_pt_vs_underlying: "pt-twap",
+  };
+
+  it("cover the eight researched markets, as the research read them", () => {
+    expect(Object.keys(cfg.oracles)).toHaveLength(8);
+    for (const o of research.oracles as { marketId: string; market: string; kind: string; depeg_triggers_liquidation: boolean | string; assumed_fixed: string[] }[]) {
+      const ours = cfg.oracles[o.marketId.toLowerCase()];
+      expect(ours, o.market).toBeDefined();
+      expect(ours?.pair).toBe(o.market);
+      expect(ours?.kind).toBe(kinds[o.kind]);
+      expect(ours?.assumedFixed).toEqual(o.assumed_fixed);
+      // The research marks PTs as "PT selloff yes, underlying depeg no".
+      if (typeof o.depeg_triggers_liquidation === "boolean") expect(ours?.depegReachesOracle).toBe(o.depeg_triggers_liquidation);
+      else expect(ours).toMatchObject({ kind: "pt-twap", depegReachesOracle: true, underlyingDepegReachesOracle: false });
+      expect(book.markets.some((m) => m.id === o.marketId.toLowerCase())).toBe(true);
+    }
+  });
+
+  it("say what a market's shock means", () => {
+    const meaning = (pair: string) => {
+      const id = Object.entries(cfg.oracles).find(([, o]) => o.pair === pair)?.[0] as string;
+      return shockMeaning(id, cfg);
+    };
+    expect(meaning("wstETH/WETH")).toBe("issuer marks down");
+    expect(meaning("aHYPER/USDC")).toBe("issuer marks down");
+    expect(meaning("PT-USDat-14JAN2027/USDC")).toBe("market price falls");
+    expect(Object.values(cfg.oracles).filter((o) => !o.depegReachesOracle)).toHaveLength(6);
+    expect(shockMeaning("0xnot-read", cfg)).toBeNull();
   });
 });

@@ -50,6 +50,25 @@ export interface TokenClass {
   reason: string;
 }
 
+/** What an oracle reads, for the markets docs/RESEARCH.md section 2 read on chain. */
+export type OracleKindName = "exchange-rate" | "vault-share-price" | "issuer-nav" | "pt-twap";
+
+export interface OracleKind {
+  /** The market, as collateral/loan. */
+  pair: string;
+  kind: OracleKindName;
+  /**
+   * Whether a fall in the collateral's market price moves the oracle. For a PT, a fall against its own
+   * underlying, which the Pendle TWAP sees after 900 s.
+   */
+  depegReachesOracle: boolean;
+  /** For a PT: whether its underlying's depeg against the loan asset moves the oracle. */
+  underlyingDepegReachesOracle?: boolean;
+  /** Pegs the oracle hardcodes. */
+  assumedFixed: string[];
+  note: string;
+}
+
 export interface LendingConfig {
   morpho: {
     /** Morpho Blue: LIQUIDATION_CURSOR = 0.3e18. */
@@ -83,6 +102,12 @@ export interface LendingConfig {
      */
     exitDepthUsd: Record<string, number>;
   };
+
+  /**
+   * Research, docs/RESEARCH.md section 2: the oracle kind of the eight largest markets, by market id,
+   * read from Monad at block 111062289. A market not listed has an oracle we have not read.
+   */
+  oracles: Record<string, OracleKind>;
 
   pml: {
     /**
@@ -163,6 +188,66 @@ export const DEFAULT_CONFIG: LendingConfig = {
       savUSD: [[1_000, -0.7831], [100_000, -0.9506], [1_000_000, -0.9953], [10_000_000, -0.9997]],
     },
     exitDepthUsd: {},
+  },
+  oracles: {
+    "0x8bdb7d2c5024d349772884afb3c5c409bc8de58ed63d79618bf48fb57b595060": {
+      pair: "wstETH/WETH",
+      kind: "exchange-rate",
+      depegReachesOracle: false,
+      assumedFixed: ["stETH = ETH"],
+      note: "Chronicle WSTETH/STETH rate. A market discount of wstETH or stETH to ETH is invisible.",
+    },
+    "0x9e8441e7af65860feac831ebc117473e3033321abf528ebc8fbde1eeaaa3a626": {
+      pair: "aHYPER/USDC",
+      kind: "vault-share-price",
+      depegReachesOracle: false,
+      assumedFixed: ["USDC = 1"],
+      note: "convertToAssets of the Hyperithm Delta Neutral Vault, a vault-reported figure.",
+    },
+    "0x093bd94086b08a013c96dc0776ebf663e9300e742a2c14479211cc35da6c3439": {
+      pair: "PT-USDat-14JAN2027/USDC",
+      kind: "pt-twap",
+      depegReachesOracle: true,
+      underlyingDepegReachesOracle: false,
+      assumedFixed: ["USDat = USDC"],
+      note: "Pendle TWAP of the PT against USDat, 900 s, behind an owner-settable primary/backup meta-oracle.",
+    },
+    "0xc4504d2bf84ff1f6ff015afe00086226425dd5a626e096283504154a71821ec1": {
+      pair: "earnAUSD/USDC",
+      kind: "vault-share-price",
+      depegReachesOracle: false,
+      assumedFixed: ["AUSD = USDC"],
+      note: "Operator-reported share price. 98.7% of the vault's assets sit outside it.",
+    },
+    "0x58532a6ef16789d5e93f6728e1f53db9ee9a1e4163059c9515684d10b49af464": {
+      pair: "strUSD/AUSD",
+      kind: "exchange-rate",
+      depegReachesOracle: false,
+      assumedFixed: [],
+      note: "RedStone strUSD_FUNDAMENTAL over an AUSD/USD quote. An AUSD fall raises the collateral's value in AUSD.",
+    },
+    "0x02888f830660219ecdd6110cff429adbda165b69984cb5efd33eb1577a230244": {
+      pair: "mROX/AUSD",
+      kind: "issuer-nav",
+      depegReachesOracle: false,
+      assumedFixed: ["AUSD = 1 USD"],
+      note: "Midas custom aggregator, set by its admin. Last updated about 4 days before the read.",
+    },
+    "0x1456e298a2eb4a0cda636aedf75cb694e66748500bea6f664d2250c33edd3ead": {
+      pair: "mHyperBTC/cbBTC",
+      kind: "issuer-nav",
+      depegReachesOracle: false,
+      assumedFixed: ["cbBTC = BTC"],
+      note: "Midas custom aggregator, set by its admin. Updated about 6 h before the read.",
+    },
+    "0x93a7a013b5501cee5d9bee0d29bb3fca790196134c4c7058365e5bc6d2ad80a2": {
+      pair: "PT-AUSD-8OCT2026/USDC",
+      kind: "pt-twap",
+      depegReachesOracle: true,
+      underlyingDepegReachesOracle: false,
+      assumedFixed: ["AUSD = USDC"],
+      note: "Pendle TWAP of the PT against AUSD, 900 s. Matures 8 Oct 2026.",
+    },
   },
   pml: { rankShock: 1 },
   pricing: {
@@ -273,6 +358,15 @@ export const DEFAULT_CONFIG: LendingConfig = {
   },
   topPositions: 10,
 };
+
+/** What a market's shock means: "issuer marks down" when its oracle cannot see the market, else "market price falls". */
+export type ShockMeaning = "issuer marks down" | "market price falls";
+
+export function shockMeaning(marketId: string, cfg: LendingConfig): ShockMeaning | null {
+  const o = cfg.oracles[marketId];
+  if (!o) return null;
+  return o.depegReachesOracle ? "market price falls" : "issuer marks down";
+}
 
 /** The pricing class of a collateral token. */
 export function classOf(symbol: string, cfg: LendingConfig): CollateralClass {

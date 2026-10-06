@@ -15,7 +15,7 @@
 // collateral moves. Dollars are rounded to the cent and fractions to 1e-9 so the output is stable.
 
 import { lossByVault } from "./attribution.js";
-import { type CollateralClass, type LendingConfig, classOf } from "./config.js";
+import { type CollateralClass, type LendingConfig, classOf, shockMeaning } from "./config.js";
 import { exitDepth } from "./exit.js";
 import { thresholds } from "./model.js";
 import { type PreparedBook, type PreparedMarket, type ScenarioKind, runScenario } from "./scenarios.js";
@@ -99,6 +99,14 @@ export function marketCurves(prep: PreparedBook, cfg: LendingConfig, curves: Cur
         lltv: m.lltv,
         lif: frac(pm.lif),
         oracle: m.oracle,
+        /** The oracle's kind where the research read it, null where it did not. */
+        oracleKind: cfg.oracles[m.id] ?? null,
+        /**
+         * What a fall on this market's curves stands for. "issuer marks down": the oracle cannot see the
+         * market, so the oracle moves only when the issuer's figure does. "market price falls": the
+         * oracle follows the market. Null for an oracle not read.
+         */
+        shockMeans: shockMeaning(m.id, cfg),
         listed: m.listed,
         borrowers: pm.borrowers.length,
         suppliers: pm.suppliers.length,
