@@ -167,7 +167,8 @@ contract SeedMarket is Script {
         _mint(env.usd, env.me, premium);
         env.usd.approve(address(env.vault), premium);
         uint256 shares = env.morpho.position(id, env.holder).supplyShares;
-        s.policyId = env.vault.buyPolicy(id, env.holder, shares, limit, deductible);
+        // Every borrower in the book goes through the purchase-time health check.
+        s.policyId = env.vault.buyPolicy(id, env.holder, shares, limit, deductible, s.borrowers);
     }
 
     function _holderAssets(Env memory env, Seeded memory s) internal view returns (uint256) {

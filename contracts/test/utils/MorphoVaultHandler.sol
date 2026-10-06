@@ -186,7 +186,7 @@ contract MorphoVaultHandler is Test {
         _mint(buyer, premium);
         vm.startPrank(buyer);
         usd.approve(address(vault), premium);
-        policyIds.push(vault.buyPolicy(id, who, shares, limit, deductible));
+        policyIds.push(vault.buyPolicy(id, who, shares, limit, deductible, new address[](0)));
         vm.stopPrank();
     }
 

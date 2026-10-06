@@ -124,16 +124,32 @@ abstract contract MorphoFixture is Test {
         vm.stopPrank();
     }
 
+    /// @dev An empty borrower list, for purchases that skip the health check.
+    function _none() internal pure returns (address[] memory) {
+        return new address[](0);
+    }
+
     /// @dev `buyer` pays for a policy on `shares` of `who`'s supply.
     function _buy(address who, uint256 shares, uint256 limit, uint256 deductible)
         internal
         returns (uint256 policyId)
     {
+        return _buy(who, shares, limit, deductible, _none());
+    }
+
+    /// @dev As `_buy`, with `borrowers` passed to the purchase-time health check.
+    function _buy(
+        address who,
+        uint256 shares,
+        uint256 limit,
+        uint256 deductible,
+        address[] memory borrowers
+    ) internal returns (uint256 policyId) {
         uint256 premium = vault.premiumFor(id, limit);
         _mint(buyer, premium);
         vm.startPrank(buyer);
         usd.approve(address(vault), premium);
-        policyId = vault.buyPolicy(id, who, shares, limit, deductible);
+        policyId = vault.buyPolicy(id, who, shares, limit, deductible, borrowers);
         vm.stopPrank();
     }
 

@@ -162,7 +162,7 @@ contract MorphoCoverVaultUnderwritingTest is MorphoFixture {
                 MorphoCoverVault.CapacityExceeded.selector, 400_000e6 + 1, 400_000e6
             )
         );
-        vault.buyPolicy(id, holder, holderShares, 400_000e6 + 1, 0);
+        vault.buyPolicy(id, holder, holderShares, 400_000e6 + 1, 0, _none());
     }
 
     // ---------------------------------------------------------------- premium

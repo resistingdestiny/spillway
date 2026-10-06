@@ -245,6 +245,7 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
     error AttachWindowClosed(uint256 policyId, uint256 end);
     error AlreadyAttached(uint256 policyId);
     error NotAttached(uint256 policyId);
+    error UnhealthyBorrower(address borrower);
 
     constructor(
         IERC20 asset_,
@@ -406,19 +407,28 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
     /// @notice Buys a policy on `coveredShares` of `holder`'s supply in market `id`,
     /// for `policyTerm` from now. The caller pays the premium, `premiumFor(id, limit)`,
     /// which streams to underwriters over the term. The share price is read after
-    /// accruing interest and recorded as the policy's start price.
+    /// accruing interest and recorded as the policy's start price. Cover attaches after
+    /// `waitingPeriod` (see `attach`).
+    /// @dev The sale is refused if any of `borrowers` is unhealthy at the oracle now, by
+    /// Morpho's own rule, so cover cannot be bought on a loss already on chain. The
+    /// vault cannot list a market's borrowers itself, so the check is as complete as the
+    /// list: the app passes every borrower it indexes. A buyer calling the contract
+    /// directly can leave one out. The waiting period and `delistMarket` are the other
+    /// defences, and the residual risk is in the README.
     function buyPolicy(
         Id id,
         address holder,
         uint256 coveredShares,
         uint256 limit,
-        uint256 deductible
+        uint256 deductible,
+        address[] calldata borrowers
     ) external nonReentrant returns (uint256 policyId) {
         if (!isListed[id]) revert MarketNotListed(id);
         if (holder == address(0)) revert ZeroAddress();
         if (coveredShares == 0 || limit == 0) revert ZeroAmount();
 
-        (uint128 startAssets, uint128 startShares) = _underwrite(id, holder, coveredShares, limit);
+        (uint128 startAssets, uint128 startShares) =
+            _underwrite(id, holder, coveredShares, limit, borrowers);
         uint256 premium = _startStream(id, limit);
 
         policyId = ++policyCount;
@@ -682,15 +692,21 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
 
     // ----------------------------------------------------------------- internal
 
-    /// @dev Checks a new policy against the holder's uncovered supply and the vault's
-    /// capacity, and returns the market's supply totals to record as its start price.
-    function _underwrite(Id id, address holder, uint256 coveredShares, uint256 limit)
-        internal
-        returns (uint128 startAssets, uint128 startShares)
-    {
-        // Accrue first so the start price carries all interest earned so far, and so
-        // the holder's supply shares are final.
-        morpho.accrueInterest(_marketParams[id]);
+    /// @dev Checks a new policy against the holder's uncovered supply, the vault's
+    /// capacity and the health of `borrowers`, and returns the market's supply totals to
+    /// record as its start price.
+    function _underwrite(
+        Id id,
+        address holder,
+        uint256 coveredShares,
+        uint256 limit,
+        address[] calldata borrowers
+    ) internal returns (uint128 startAssets, uint128 startShares) {
+        // Accrue first so the start price carries all interest earned so far, so the
+        // holder's supply shares are final, and so debts are current for the health check.
+        MarketParams memory mp = _marketParams[id];
+        morpho.accrueInterest(mp);
+        _requireHealthy(id, mp, borrowers);
 
         // A holder who withdrew from Morpho after buying cover can hold fewer shares
         // than are covered. Nothing is uncovered then.
@@ -703,6 +719,29 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
 
         Market memory m = morpho.market(id);
         (startAssets, startShares) = (m.totalSupplyAssets, m.totalSupplyShares);
+    }
+
+    /// @dev Reverts if any of `borrowers` is unhealthy at the oracle price, by Morpho's
+    /// own rule: the debt, rounded up, must not exceed the collateral at the
+    /// oracle price, rounded down, times the LLTV, rounded down. Uses the stored totals,
+    /// so accrue interest first.
+    function _requireHealthy(Id id, MarketParams memory mp, address[] calldata borrowers)
+        internal
+        view
+    {
+        if (borrowers.length == 0) return;
+        uint256 price = IOracle(mp.oracle).price();
+        Market memory m = morpho.market(id);
+        for (uint256 i; i < borrowers.length; ++i) {
+            Position memory pos = morpho.position(id, borrowers[i]);
+            if (pos.borrowShares == 0) continue;
+            uint256 debt = SharesMathLib.toAssetsUp(
+                pos.borrowShares, m.totalBorrowAssets, m.totalBorrowShares
+            );
+            uint256 maxDebt =
+                Math.mulDiv(Math.mulDiv(pos.collateral, price, ORACLE_PRICE_SCALE), mp.lltv, 1e18);
+            if (debt > maxDebt) revert UnhealthyBorrower(borrowers[i]);
+        }
     }
 
     /// @dev Prices a policy with `limit` on market `id` and starts its premium stream
