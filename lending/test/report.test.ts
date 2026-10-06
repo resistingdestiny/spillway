@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
-import { configHash } from "../src/bundle.js";
+import { buildLendingBundle, configHash } from "../src/bundle.js";
 import { type CollateralClass, DEFAULT_CONFIG as cfg, severityQuantile, tokenRate } from "../src/config.js";
 import { priceVault } from "../src/pricing.js";
 import { allCurves, coverLimit, marketCurves, pmlTable, vaultExposure } from "../src/report.js";
@@ -45,6 +45,54 @@ describe("the report CLI", () => {
     expect(m.commit).toMatch(/^[0-9a-f]{40}$/);
     expect(m.configSha256).toBe(configHash(cfg));
     expect(m.command).toContain("pnpm --filter @spillway/lending run report fixtures/morpho/monad-2026-10-06.json");
+  });
+});
+
+describe("the bundle", () => {
+  const bundle = buildLendingBundle(monadBook(), cfg, {
+    fixture: { path: "f", sha256: "" },
+    adapters: null,
+    chainId: 143,
+    blocks: { from: 0, to: 0 },
+    takenAt: "",
+    commit: "",
+    dirty: false,
+    configSha256: "",
+    command: "",
+  });
+
+  it("states headline losses for the thin exit, with always act beside them", () => {
+    for (const h of bundle.headline.markets) {
+      const m = bundle.markets.find((x) => x.marketId === h.marketId) as (typeof bundle.markets)[number];
+      const i = bundle.shocks.indexOf(0.25);
+      expect(h.lossUsd.find((x) => x.shock === 0.25)?.lossUsd).toBeCloseTo((m.thin.realisedUsd[i] ?? 0) + (m.thin.unrealisedUsd[i] ?? 0), 2);
+      expect(h.alwaysActUsd.find((x) => x.shock === 0.25)?.lossUsd).toBeCloseTo((m.depeg.realisedUsd[i] ?? 0) + (m.depeg.unrealisedUsd[i] ?? 0), 2);
+    }
+    expect(bundle.summary.headlineScenario).toBe("thin exit");
+  });
+
+  it("marks what each researched market's shock means", () => {
+    const means = Object.fromEntries(bundle.markets.filter((m) => m.oracleKind).map((m) => [`${m.collateral.symbol}/${m.loan.symbol}`, m.shockMeans]));
+    expect(Object.keys(means)).toHaveLength(8);
+    expect(means["wstETH/WETH"]).toBe("issuer marks down");
+    expect(means["PT-AUSD-8OCT2026/USDC"]).toBe("market price falls");
+    for (const m of bundle.markets.filter((x) => !x.oracleKind)) expect(m.shockMeans).toBeNull();
+  });
+
+  it("carries a shortfall proof per market that adds up to every borrower's debt at a 100% markdown", () => {
+    expect(bundle.shortfalls).toHaveLength(bundle.markets.length);
+    for (const s of bundle.shortfalls) {
+      const m = bundle.markets.find((x) => x.marketId === s.marketId) as (typeof bundle.markets)[number];
+      const all = s.proofs.find((p) => p.shock === 1);
+      // Morpho rounds debt up, so a position with borrow shares worth under one base unit still owes one.
+      expect(all?.borrowers.length).toBeGreaterThanOrEqual(m.borrowers);
+      expect(all?.shortfallUsd).toBeCloseTo(m.debtUsd, -1);
+      for (const p of s.proofs) expect([...p.borrowers].sort()).toEqual(p.borrowers);
+    }
+  });
+
+  it("names its data sources", () => {
+    expect(bundle.config.sources.map((s) => s.name)).toEqual(expect.arrayContaining(["Morpho API", "Monad RPC", "DefiLlama protocols", "KyberSwap", "Pendle hosted SDK"]));
   });
 });
 

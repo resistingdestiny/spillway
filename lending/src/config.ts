@@ -144,6 +144,9 @@ export interface LendingConfig {
 
   /** How many single positions the report lists as the largest risks. */
   topPositions: number;
+
+  /** Where the inputs come from, named in every bundle. */
+  sources: { name: string; use: string; url: string }[];
 }
 
 const grid = (from: number, to: number, step: number): number[] => {
@@ -363,6 +366,18 @@ export const DEFAULT_CONFIG: LendingConfig = {
     capitalCharge: 0.04,
   },
   topPositions: 10,
+  sources: [
+    { name: "Morpho API", use: "markets, positions and vaults on Monad (chain 143), the snapshot", url: "https://blue-api.morpho.org/graphql" },
+    { name: "Monad RPC", use: "Vault V2 adapters' parentVault(), and the eight oracles read at block 111062289", url: "https://rpc.monad.xyz" },
+    { name: "DefiLlama protocols", use: "the universe of tokens and token-years behind each failure rate", url: "https://api.llama.fi/protocols" },
+    { name: "DefiLlama prices", use: "each incident's fall against its pre-incident price", url: "https://coins.llama.fi/chart" },
+    { name: "DefiLlama hacks", use: "incident dates and sizes", url: "https://api.llama.fi/hacks" },
+    { name: "KyberSwap", use: "exit quotes on Monad, 6 Oct 2026", url: "https://aggregator-api.kyberswap.com/monad/api/v1/routes" },
+    { name: "Kuru Flow", use: "exit quotes on Monad, 6 Oct 2026", url: "https://ws.kuru.io/api/quote" },
+    { name: "Monorail", use: "exit quotes on Monad, 6 Oct 2026", url: "https://pathfinder.monorail.xyz/v4/quote" },
+    { name: "LI.FI", use: "exit and bridge quotes, 6 Oct 2026", url: "https://li.quest/v1/quote" },
+    { name: "Pendle hosted SDK", use: "PT exit quotes through the Pendle AMM, 6 Oct 2026", url: "https://api-v2.pendle.finance/core/v2/sdk/143/convert" },
+  ],
 };
 
 /** What a market's shock means: "issuer marks down" when its oracle cannot see the market, else "market price falls". */
