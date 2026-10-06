@@ -28,7 +28,7 @@ const source = pickSource(arg("source"));
 interface End extends Reconciliation {
   storage: { markets: number; positions: number; diffs: StorageDiff[] };
   replay: { events: number; checksPassed: number; checksFailed: number };
-  interest: { markets: number; zeroGap: number; maxAbsResidual: number; within1e4: number };
+  interest: { zeroGap: number; gaps: number; toTheWei: number; within1e4: number; maxAbsResidual: number };
 }
 
 const ends: End[] = [];
@@ -39,13 +39,20 @@ const stats = await replayTo(
   async (block, book) => {
     const rec = reconcile(block, book, api, await borrowRates(book, block));
     const storage = await checkStorage(book, block);
-    // Markets that carry debt, where the API's asset gap should be interest.
-    const priced = rec.markets.rows.filter((r) => r.residual !== null && BigInt(r.borrowAssetsGap) > 1000n);
+    // Where the API's assets differ from storage, the gap should be the IRM's interest since lastUpdate.
+    const gaps = rec.markets.rows.filter((r) => r.borrowAssetsGap !== "0");
+    const off = (r: (typeof gaps)[number]) => (r.expectedInterest === null ? null : BigInt(r.borrowAssetsGap) - BigInt(r.expectedInterest));
+    const toTheWei = gaps.filter((r) => {
+      const d = off(r);
+      return d !== null && d >= -1n && d <= 1n;
+    });
+    const rest = gaps.filter((r) => !toTheWei.includes(r));
     const interest = {
-      markets: priced.length,
-      zeroGap: rec.markets.rows.filter((r) => r.borrowAssetsGap === "0").length,
-      maxAbsResidual: Math.max(0, ...priced.map((r) => Math.abs(r.residual as number))),
-      within1e4: priced.filter((r) => Math.abs(r.residual as number) < 1e-4).length,
+      zeroGap: rec.markets.rows.length - gaps.length,
+      gaps: gaps.length,
+      toTheWei: toTheWei.length,
+      within1e4: rest.filter((r) => r.residual !== null && Math.abs(r.residual) < 1e-4).length,
+      maxAbsResidual: Math.max(0, ...rest.map((r) => Math.abs(r.residual ?? 1))),
     };
     ends.push({ ...rec, storage, replay: { events: book.events, checksPassed: book.checks.passed, checksFailed: book.checks.failed.length }, interest });
     console.log(
@@ -53,7 +60,8 @@ const stats = await replayTo(
         `(${storage.diffs.filter((d) => !d.cause).length} unexplained); ` +
         `API positions ${rec.positions.exact}/${rec.positions.compared} exact, ${rec.positions.diffs.length} differences; ` +
         `API markets ${rec.markets.exact}/${rec.markets.compared} exact in shares and collateral; ` +
-        `asset gaps: ${interest.zeroGap} none, ${interest.markets} priced, ${interest.within1e4} within 0.01% of the IRM's interest, worst ${interest.maxAbsResidual.toExponential(2)}`,
+        `assets: ${interest.zeroGap} markets equal, ${interest.gaps} off by the IRM's interest since lastUpdate, ` +
+        `${interest.toTheWei} of them to the wei, ${interest.within1e4} more within 0.01%, worst of the rest ${interest.maxAbsResidual.toExponential(2)}`,
     );
   },
   (msg) => console.error(msg),
