@@ -6,8 +6,14 @@ import { TOPIC0, type RawLog } from "./events.js";
 
 const hex = (n: number | bigint) => `0x${n.toString(16)}`;
 
-export async function rpc<T>(method: string, params: unknown[], url: string = indexerConfig.rpc.url): Promise<T> {
+let turn = 0;
+
+/** One JSON-RPC request. Given several URLs, each attempt goes to the next one. */
+export async function rpc<T>(method: string, params: unknown[], urls: string | readonly string[] = indexerConfig.rpc.url): Promise<T> {
+  const list = typeof urls === "string" ? [urls] : urls;
+  const first = turn++;
   for (let attempt = 0; ; attempt++) {
+    const url = list[(first + attempt) % list.length] as string;
     let failure: string;
     try {
       const res = await fetch(url, {
@@ -27,8 +33,8 @@ export async function rpc<T>(method: string, params: unknown[], url: string = in
       if (e instanceof RangeError || (e instanceof Error && e.message.startsWith(`${method}: `))) throw e;
       failure = String(e);
     }
-    if (attempt >= 6) throw new Error(`${method} failed ${attempt + 1} times: ${failure}`);
-    await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+    if (attempt >= 7) throw new Error(`${method} failed ${attempt + 1} times: ${failure}`);
+    await new Promise((r) => setTimeout(r, Math.min(20_000, 500 * 2 ** attempt)));
   }
 }
 
@@ -90,7 +96,7 @@ export async function fetchLogsRpc(from: number, to: number, progress?: (block: 
 /** eth_call at a block, returning the raw result, or null if it reverts. */
 export async function call(to: string, data: string, block: number): Promise<string | null> {
   try {
-    return await rpc<string>("eth_call", [{ to, data }, hex(block)]);
+    return await rpc<string>("eth_call", [{ to, data }, hex(block)], indexerConfig.rpc.callUrls);
   } catch (e) {
     if (e instanceof Error && /revert/i.test(e.message)) return null;
     throw e;

@@ -27,10 +27,15 @@ export const indexerConfig = {
     /**
      * Monad's public RPC that answers eth_getLogs over any block range up to 10,000 logs per response
      * (its own error message). rpc.monad.xyz allows 100 blocks, rpc2 and rpc3 less than 100,000.
-     * Used when no HyperSync token is set, and for eth_call at the snapshot block.
+     * Used for logs when no HyperSync token is set, and for block headers.
      */
     url: "https://rpc1.monad.xyz",
     /** Blocks per eth_getLogs request to start from. Halved when a response would exceed the cap. */
     logSpan: 2_000_000,
+    /**
+     * Monad's public RPCs that answer eth_call at a past block (tested at 111058609). Calls rotate
+     * across them, since each limits the rate of one client. rpc2.monad.xyz rate-limits sooner.
+     */
+    callUrls: ["https://rpc1.monad.xyz", "https://rpc.monad.xyz", "https://rpc3.monad.xyz", "https://rpc-mainnet.monadinfra.com"],
   },
 } as const;
