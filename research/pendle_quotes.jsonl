@@ -1,0 +1,8 @@
+{"s":"PT-AUSD-8OCT2026","usd":"1000","amountIn":"1000248335","out":"999930352","impact":-0.00012002068222007819,"agg":"KYBERSWAP","err":null,"vs_oracle":-6.964734492176383e-05}
+{"s":"PT-AUSD-8OCT2026","usd":"100000","amountIn":"100024833565","out":"99985928937","impact":-0.0001910803820699544,"agg":"KYBERSWAP","err":null,"vs_oracle":-0.0001407106247155454}
+{"s":"PT-AUSD-8OCT2026","usd":"1000000","amountIn":"1000248335655","out":"999178331756","impact":-0.0008720036965710118,"agg":"KYBERSWAP","err":null,"vs_oracle":-0.000821668243713769}
+{"s":"PT-AUSD-8OCT2026","usd":"10000000","amountIn":"10002483356552","out":"3332582281334","impact":-0.6667585603649787,"agg":"KYBERSWAP","err":null,"vs_oracle":-0.6667417718665711}
+{"s":"PT-USDat-14JAN2027","usd":"1000","amountIn":"1024030556","out":"999447697","impact":-0.00039796338925659287,"agg":"KYBERSWAP","err":null,"vs_oracle":-0.000552302593572751}
+{"s":"PT-USDat-14JAN2027","usd":"100000","amountIn":"102403055641","out":"99892086895","impact":-0.0009248980582061066,"agg":"KYBERSWAP","err":null,"vs_oracle":-0.0010791310437335833}
+{"s":"PT-USDat-14JAN2027","usd":"1000000","amountIn":"1024030556416","out":"991683092463","impact":-0.008163792060878564,"agg":"KYBERSWAP","err":null,"vs_oracle":-0.008316907536589535}
+{"s":"PT-USDat-14JAN2027","usd":"10000000","amountIn":"10240305564164","out":null,"impact":null,"agg":null,"err":"Error: MarketProportionTooHigh. Market liquidity is likely insufficient, please consider placing limit order or try again later.","vs_oracle":null}

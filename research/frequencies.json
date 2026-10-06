@@ -1,0 +1,202 @@
+{
+ "synthetic_dollar": {
+  "tokens": 28,
+  "token_years": 58.2,
+  "failures": 6,
+  "failures_incl_borderline": 7,
+  "p_annual": 0.1031,
+  "p_annual_90ci": [
+   0.0449,
+   0.2035
+  ],
+  "p_annual_incl_borderline": 0.1203,
+  "universe": [
+   "Aster USDF",
+   "Axis",
+   "BitFi Basis",
+   "Bitway Earn",
+   "Bitwise USCC",
+   "Ethena USDe",
+   "Falcon Finance",
+   "Frankencoin",
+   "Liquity V1",
+   "Liquity V2",
+   "Lista CDP",
+   "Reservoir Protocol",
+   "Sky Lending",
+   "Solstice",
+   "Solv Basis Trading",
+   "Tori Finance",
+   "USDD",
+   "Unitas USDu",
+   "ZEROBASE CeDeFi",
+   "crvUSD",
+   "fx Protocol"
+  ],
+  "added_back": [
+   "Terra",
+   "Resolv USR",
+   "Stream Finance",
+   "Elixir",
+   "Stables Labs USDX",
+   "Synthetix v1+v2",
+   "Level"
+  ]
+ },
+ "lst_lrt": {
+  "tokens": 46,
+  "token_years": 129.4,
+  "failures": 2,
+  "failures_incl_borderline": 3,
+  "p_annual": 0.0155,
+  "p_annual_90ci": [
+   0.0027,
+   0.0487
+  ],
+  "p_annual_incl_borderline": 0.0232,
+  "universe": [
+   "Benqi Staked Avax",
+   "Binance Staked SOL",
+   "Binance staked ETH",
+   "Bitget SOL",
+   "BlazeStake",
+   "Bybit Staked SOL",
+   "Coinbase Wrapped Staked ETH",
+   "DFDV Staked SOL",
+   "DoubleZero Staked SOL",
+   "Drift Staked SOL",
+   "Forward Industries SOL",
+   "Frax Ether",
+   "Gate SOL",
+   "Helius Staked SOL",
+   "JPool",
+   "JagPool Staked SOL",
+   "Jito Liquid Staking",
+   "Jupiter Staked SOL",
+   "JustLend sTRX",
+   "Kelp",
+   "Kinetiq kHYPE",
+   "LiNEAR Protocol",
+   "Lido",
+   "Liquid Collective",
+   "Lista Liquid Staking",
+   "Marinade Liquid Staking",
+   "Meta Pool Near",
+   "Origin Ether",
+   "Phantom SOL",
+   "Phase Delegation",
+   "Renzo",
+   "Rocket Pool",
+   "STKESOL by SOL Strategies",
+   "Sanctum Validator LSTs",
+   "SpringSui",
+   "StackingDAO",
+   "Stader",
+   "StakeWise V3",
+   "The Vault Liquid Staking",
+   "Tonstakers LSD",
+   "Valdora Finance",
+   "ether.fi Stake",
+   "mETH Protocol",
+   "stHYPE",
+   "stake.link liquid"
+  ],
+  "added_back": [
+   "Ankr"
+  ]
+ },
+ "rwa_credit": {
+  "tokens": 24,
+  "token_years": 57.8,
+  "failures": 3,
+  "failures_incl_borderline": 4,
+  "p_annual": 0.0519,
+  "p_annual_90ci": [
+   0.0141,
+   0.1341
+  ],
+  "p_annual_incl_borderline": 0.0692,
+  "universe": [
+   "Anemoy Capital",
+   "Ethena USDtb",
+   "Frax USD",
+   "Huma",
+   "Invesco USTB",
+   "Lofty",
+   "Maple",
+   "OnRe",
+   "OpenTrade",
+   "Plume Vaults",
+   "R25",
+   "Re",
+   "RealT Tokens",
+   "Sky RWA",
+   "Theo Network thUSD",
+   "USD AI",
+   "Usual USD0",
+   "Valos",
+   "stUSDT"
+  ],
+  "added_back": [
+   "Goldfinch",
+   "TrueFi",
+   "Clearpool Lending",
+   "Centrifuge Protocol",
+   "Tangible RWA"
+  ]
+ },
+ "wrapped_btc": {
+  "tokens": 21,
+  "token_years": 39.4,
+  "failures": 2,
+  "failures_incl_borderline": 3,
+  "p_annual": 0.0508,
+  "p_annual_90ci": [
+   0.009,
+   0.16
+  ],
+  "p_annual_incl_borderline": 0.0762,
+  "universe": [
+   "Bedrock uniBTC",
+   "Binance Bitcoin",
+   "BitFi BTC",
+   "Bitget bgBTC",
+   "Circle Bitcoin",
+   "Function FBTC",
+   "GTBTC",
+   "Kraken Bitcoin",
+   "Lombard BTC.b",
+   "Lombard LBTC",
+   "Lorenzo enzoBTC",
+   "Nexus BTC",
+   "OKX xBTC",
+   "SolvBTC",
+   "SolvBTC LSTs",
+   "Stacks sBTC",
+   "WBTC",
+   "exSat Staking BTC",
+   "tBTC"
+  ],
+  "added_back": [
+   "RenVM",
+   "Multichain"
+  ]
+ },
+ "curator_vault": {
+  "tokens": 211,
+  "token_years": 189.1,
+  "failures": 18,
+  "p_annual": 0.0952,
+  "p_annual_90ci": [
+   0.0615,
+   0.1412
+  ],
+  "note": "survivor-only denominator (vaults above $1M today); failures include vaults since shrunk, so the rate is biased high"
+ },
+ "pendle_pt_specific": {
+  "failures": 0,
+  "token_years_assumed": 225.5,
+  "p_annual_upper95": 0.0133,
+  "note": "PT risk = underlying class probability + this PT-specific term"
+ }
+}

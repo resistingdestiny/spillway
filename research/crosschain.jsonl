@@ -1,0 +1,2 @@
+{"s":"USDe","tool":"glacis","to":"997300500000000000000000","toUsd":"997867.8184","fromUsd":"992490.4074","secs":3,"msg":null,"why":[]}
+{"s":"wstETH","tool":null,"to":null,"toUsd":null,"fromUsd":null,"secs":null,"msg":"No available quotes for the requested transfer","why":["The source or destination asset is not supported","LiFi Intents API returned empty quote data","LiFi Intents API returned empty quote data"]}

@@ -1,0 +1,200 @@
+{
+ "UST": {
+  "url": "https://coins.llama.fi/chart/coingecko:terrausd?start=1651363200&span=200&period=1d",
+  "start_ratio": 0.9994040411109741,
+  "low": 0.006491782302064006,
+  "low_date": "2022-06-19",
+  "drawdown": -0.9935043465555258,
+  "first_breach_10pct": "2022-05-09",
+  "after30": [
+   0.04456807696651464,
+   "exact"
+  ],
+  "after180": [
+   0.02307631,
+   "latest"
+  ],
+  "last": 0.02307631,
+  "last_date": "2022-11-15"
+ },
+ "USDR": {
+  "url": "https://coins.llama.fi/chart/coingecko:real-usd?start=1696118400&span=200&period=1d",
+  "start_ratio": 0.999147,
+  "low": 0.517864,
+  "low_date": "2024-03-26",
+  "drawdown": -0.48169388488380593,
+  "first_breach_10pct": "2023-10-11",
+  "after30": [
+   0.657635,
+   "latest"
+  ],
+  "after180": [
+   0.657635,
+   "latest"
+  ],
+  "last": 0.657635,
+  "last_date": "2024-04-17"
+ },
+ "sUSD": {
+  "url": "https://coins.llama.fi/chart/coingecko:nusd?start=1735689600&span=300&period=1d",
+  "start_ratio": 0.969327,
+  "low": 0.73085,
+  "low_date": "2025-04-17",
+  "drawdown": -0.24602327181642525,
+  "first_breach_10pct": "2025-04-10",
+  "after30": [
+   0.965201,
+   "exact"
+  ],
+  "after180": [
+   0.9966979895211786,
+   "exact"
+  ],
+  "last": 0.9951903892928256,
+  "last_date": "2025-10-26"
+ },
+ "USD0++": {
+  "url": "https://coins.llama.fi/chart/coingecko:usd0-liquid-bond?start=1734652800&span=150&period=1d",
+  "start_ratio": 0.997834,
+  "low": 0.911472,
+  "low_date": "2025-01-20",
+  "drawdown": -0.08654946614366721,
+  "first_breach_10pct": null,
+  "after30": [
+   0.943509,
+   "exact"
+  ],
+  "after180": [
+   0.971925,
+   "latest"
+  ],
+  "last": 0.971925,
+  "last_date": "2025-05-17"
+ },
+ "USDX": {
+  "url": "https://coins.llama.fi/chart/coingecko:usdx-money-usdx?start=1760918400&span=200&period=1d",
+  "start_ratio": 0.9969169926784238,
+  "low": 0.009829514248545026,
+  "low_date": "2026-03-29",
+  "drawdown": -0.9901400875692409,
+  "first_breach_10pct": "2025-11-06",
+  "after30": [
+   0.010820894242175666,
+   "exact"
+  ],
+  "after180": [
+   0.023511618310873776,
+   "latest"
+  ],
+  "last": 0.023511618310873776,
+  "last_date": "2026-05-06"
+ },
+ "USR": {
+  "url": "https://coins.llama.fi/chart/coingecko:resolv-usr?start=1773532800&span=200&period=1d",
+  "start_ratio": 0.9991619133585089,
+  "low": 0.08505876561285872,
+  "low_date": "2026-09-28",
+  "drawdown": -0.9148698879774666,
+  "first_breach_10pct": "2026-03-23",
+  "after30": [
+   0.08667583482806356,
+   "latest"
+  ],
+  "after180": [
+   0.08667583482806356,
+   "latest"
+  ],
+  "last": 0.08667583482806356,
+  "last_date": "2026-09-30"
+ },
+ "renBTC": {
+  "url": "https://coins.llama.fi/chart/coingecko:renbtc,coingecko:wrapped-bitcoin?start=1667260800&span=240&period=1d",
+  "start_ratio": 0.999788782816553,
+  "low": 0.9343007694881231,
+  "low_date": "2023-02-23",
+  "drawdown": -0.0655018484443689,
+  "first_breach_10pct": null,
+  "after30": [
+   1.0875898948581861,
+   "exact"
+  ],
+  "after180": [
+   1.033701260531644,
+   "latest"
+  ],
+  "last": 1.033701260531644,
+  "last_date": "2023-06-27"
+ },
+ "stETH": {
+  "url": "https://coins.llama.fi/chart/coingecko:staked-ether,coingecko:ethereum?start=1654041600&span=60&period=1d",
+  "start_ratio": 0.979686276328518,
+  "low": 0.9338840769138435,
+  "low_date": "2022-06-18",
+  "drawdown": -0.046751904687614254,
+  "first_breach_10pct": null,
+  "after30": [
+   0.9748273316784937,
+   "exact"
+  ],
+  "after180": [
+   0.9741731464929666,
+   "latest"
+  ],
+  "last": 0.9741731464929666,
+  "last_date": "2022-07-29"
+ },
+ "ezETH": {
+  "url": "https://coins.llama.fi/chart/coingecko:renzo-restaked-eth,coingecko:ethereum?start=1713744000&span=120&period=1h",
+  "start_ratio": 1.009487395080562,
+  "low": 0.8644564681166627,
+  "low_date": "2024-04-24",
+  "drawdown": -0.14366789290353177,
+  "first_breach_10pct": "2024-04-24",
+  "after30": [
+   0.9816783803885185,
+   "latest"
+  ],
+  "after180": [
+   0.9816783803885185,
+   "latest"
+  ],
+  "last": 0.9816783803885185,
+  "last_date": "2024-04-26"
+ },
+ "rsETH": {
+  "url": "https://coins.llama.fi/chart/coingecko:kelp-dao-restaked-eth,coingecko:ethereum?start=1775347200&span=150&period=1d",
+  "start_ratio": 1.0657150713103927,
+  "low": 0.8518752402180889,
+  "low_date": "2026-04-21",
+  "drawdown": -0.20065384909060957,
+  "first_breach_10pct": "2026-04-20",
+  "after30": [
+   1.0695101882552984,
+   "exact"
+  ],
+  "after180": [
+   1.0733826104036692,
+   "latest"
+  ],
+  "last": 1.0733826104036692,
+  "last_date": "2026-08-31"
+ },
+ "uniBTC": {
+  "url": "https://coins.llama.fi/chart/coingecko:universal-btc,coingecko:wrapped-bitcoin?start=1726790400&span=30&period=1d",
+  "start_ratio": 0.9968629574190261,
+  "low": 0.6655435279768257,
+  "low_date": "2024-09-28",
+  "drawdown": -0.33236206338734686,
+  "first_breach_10pct": "2024-09-28",
+  "after30": [
+   0.9451014875064117,
+   "latest"
+  ],
+  "after180": [
+   0.9451014875064117,
+   "latest"
+  ],
+  "last": 0.9451014875064117,
+  "last_date": "2024-10-19"
+ }
+}

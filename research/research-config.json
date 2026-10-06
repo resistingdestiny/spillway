@@ -1,0 +1,864 @@
+{
+ "generated": "2026-10-06",
+ "monad_block_for_oracle_reads": 111062289,
+ "chain_id": 143,
+ "definitions": {
+  "failure": "sustained depeg beyond 10% or a loss passed to lenders",
+  "window": "2022-01-01 to 2026-10-06",
+  "token_years": "years each material token (DefiLlama TVL >= $50M today, plus failed tokens added back) was live in the window",
+  "range": "90% Poisson (Garwood) interval on the failure count",
+  "quote_vs_ref": "output / (input x reference price) - 1"
+ },
+ "failure_frequency": {
+  "synthetic_dollar": {
+   "tokens": 28,
+   "token_years": 58.2,
+   "failures": 6,
+   "failures_incl_borderline": 7,
+   "p_annual": 0.1031,
+   "p_annual_90ci": [
+    0.0449,
+    0.2035
+   ],
+   "p_annual_incl_borderline": 0.1203,
+   "added_back": [
+    "Terra",
+    "Resolv USR",
+    "Stream Finance",
+    "Elixir",
+    "Stables Labs USDX",
+    "Synthetix v1+v2",
+    "Level"
+   ]
+  },
+  "lst_lrt": {
+   "tokens": 46,
+   "token_years": 129.4,
+   "failures": 2,
+   "failures_incl_borderline": 3,
+   "p_annual": 0.0155,
+   "p_annual_90ci": [
+    0.0027,
+    0.0487
+   ],
+   "p_annual_incl_borderline": 0.0232,
+   "added_back": [
+    "Ankr"
+   ]
+  },
+  "rwa_credit": {
+   "tokens": 24,
+   "token_years": 57.8,
+   "failures": 3,
+   "failures_incl_borderline": 4,
+   "p_annual": 0.0519,
+   "p_annual_90ci": [
+    0.0141,
+    0.1341
+   ],
+   "p_annual_incl_borderline": 0.0692,
+   "added_back": [
+    "Goldfinch",
+    "TrueFi",
+    "Clearpool Lending",
+    "Centrifuge Protocol",
+    "Tangible RWA"
+   ]
+  },
+  "wrapped_btc": {
+   "tokens": 21,
+   "token_years": 39.4,
+   "failures": 2,
+   "failures_incl_borderline": 3,
+   "p_annual": 0.0508,
+   "p_annual_90ci": [
+    0.009,
+    0.16
+   ],
+   "p_annual_incl_borderline": 0.0762,
+   "added_back": [
+    "RenVM",
+    "Multichain"
+   ]
+  },
+  "curator_vault": {
+   "tokens": 211,
+   "token_years": 189.1,
+   "failures": 18,
+   "p_annual": 0.0952,
+   "p_annual_90ci": [
+    0.0615,
+    0.1412
+   ],
+   "note": "survivor-only denominator (vaults above $1M today); failures include vaults since shrunk, so the rate is biased high"
+  },
+  "pendle_pt_specific": {
+   "failures": 0,
+   "token_years_assumed": 225.5,
+   "p_annual_upper95": 0.0133,
+   "note": "PT risk = underlying class probability + this PT-specific term"
+  }
+ },
+ "failure_frequency_alt": {
+  "synthetic_dollar_narrow": {
+   "universe": "DefiLlama Basis Trading >= $50M plus failed",
+   "token_years": 25.2,
+   "failures": 5,
+   "p_annual": 0.1987,
+   "p_annual_90ci": [
+    0.0783,
+    0.4178
+   ]
+  }
+ },
+ "pendle_pt_rule": "p(PT) = p(underlying class) + pendle_pt_specific.p_annual_upper95 (upper bound)",
+ "incidents": {
+  "synthetic_dollar": [
+   {
+    "token": "UST",
+    "date": "2022-05-09",
+    "kind": "depeg",
+    "size_usd": null,
+    "low_vs_pre": -0.9935,
+    "low_date": "2022-06-19",
+    "first_breach_10pct": "2022-05-09",
+    "ratio_after_30d": 0.0446,
+    "ratio_after_180d_or_latest": 0.0231,
+    "source": "https://coins.llama.fi/chart/coingecko:terrausd?start=1651363200&span=200&period=1d"
+   },
+   {
+    "token": "sUSD",
+    "date": "2025-04-10",
+    "kind": "depeg",
+    "size_usd": null,
+    "low_vs_pre": -0.246,
+    "low_date": "2025-04-17",
+    "first_breach_10pct": "2025-04-10",
+    "ratio_after_30d": 0.9652,
+    "ratio_after_180d_or_latest": 0.9967,
+    "source": "https://coins.llama.fi/chart/coingecko:nusd?start=1735689600&span=300&period=1d"
+   },
+   {
+    "token": "USDX (Stables Labs)",
+    "date": "2025-11-06",
+    "kind": "depeg",
+    "size_usd": null,
+    "low_vs_pre": -0.9901,
+    "low_date": "2026-03-29",
+    "first_breach_10pct": "2025-11-06",
+    "ratio_after_30d": 0.0108,
+    "ratio_after_180d_or_latest": 0.0235,
+    "source": "https://coins.llama.fi/chart/coingecko:usdx-money-usdx?start=1760918400&span=200&period=1d",
+    "also": "https://news.google.com/rss/search?q=Stables+Labs+USDX+depeg"
+   },
+   {
+    "token": "xUSD (Stream)",
+    "date": "2025-11-04",
+    "kind": "loss to lenders",
+    "size_usd": 93000000.0,
+    "low_vs_pre": -0.77,
+    "morpho_unrealised_bad_debt_usd": 143517747,
+    "source": "https://news.google.com/rss/search?q=Stream+Finance+xUSD+93+million",
+    "morpho_source": "https://blue-api.morpho.org/graphql",
+    "note": "size is the fund loss disclosed by Stream; 77% fall is headline-level"
+   },
+   {
+    "token": "deUSD / sdeUSD (Elixir)",
+    "date": "2025-11-06",
+    "kind": "loss to lenders",
+    "size_usd": null,
+    "morpho_unrealised_bad_debt_usd": 46927251,
+    "sdeUSD_price_now": 1.07e-08,
+    "source": "https://blue-api.morpho.org/graphql",
+    "price_source": "https://coins.llama.fi/prices/current/ethereum:0x5C5b196aBE0d54485975D1Ec29617D42D9198326"
+   },
+   {
+    "token": "USR (Resolv)",
+    "date": "2026-03-22",
+    "kind": "exploit, loss to lenders",
+    "size_usd": 24500000.0,
+    "low_vs_pre": -0.9149,
+    "low_date": "2026-09-28",
+    "first_breach_10pct": "2026-03-23",
+    "ratio_after_30d": 0.0867,
+    "ratio_after_180d_or_latest": 0.0867,
+    "source": "https://coins.llama.fi/chart/coingecko:resolv-usr?start=1773532800&span=200&period=1d",
+    "intraday_low": 0.0025,
+    "hack_source": "https://api.llama.fi/hacks",
+    "detail_source": "https://www.halborn.com/blog/post/explained-the-resolv-hack-march-2026"
+   }
+  ],
+  "synthetic_dollar_borderline": [
+   {
+    "token": "USD0++",
+    "date": "2025-01-20",
+    "kind": "depeg under 10% (daily)",
+    "low_vs_pre": -0.0865,
+    "low_date": "2025-01-20",
+    "first_breach_10pct": null,
+    "ratio_after_30d": 0.9435,
+    "ratio_after_180d_or_latest": 0.9719,
+    "source": "https://coins.llama.fi/chart/coingecko:usd0-liquid-bond?start=1734652800&span=150&period=1d"
+   }
+  ],
+  "lst_lrt": [
+   {
+    "token": "aBNBc (Ankr)",
+    "date": "2022-12-02",
+    "kind": "unbacked mint",
+    "size_usd": 5000000.0,
+    "low_vs_pre": null,
+    "source": "https://api.llama.fi/hacks",
+    "note": "price drawdown not fetched"
+   },
+   {
+    "token": "rsETH (Kelp)",
+    "date": "2026-04-18",
+    "kind": "bridge exploit, loss to lenders covered by coalition",
+    "size_usd": 293000000.0,
+    "low_vs_pre": -0.2007,
+    "low_date": "2026-04-21",
+    "first_breach_10pct": "2026-04-20",
+    "ratio_after_30d": 1.0695,
+    "ratio_after_180d_or_latest": 1.0734,
+    "source": "https://coins.llama.fi/chart/coingecko:kelp-dao-restaked-eth,coingecko:ethereum?start=1775347200&span=150&period=1d",
+    "hack_source": "https://api.llama.fi/hacks",
+    "aave_report": "https://governance.aave.com/t/rseth-incident-report-april-20-2026/24580"
+   }
+  ],
+  "lst_lrt_borderline": [
+   {
+    "token": "ezETH",
+    "date": "2024-04-24",
+    "kind": "hours-long depeg, liquidations",
+    "low_vs_pre": -0.1437,
+    "low_date": "2024-04-24",
+    "first_breach_10pct": "2024-04-24",
+    "ratio_after_30d": 0.9817,
+    "ratio_after_180d_or_latest": 0.9817,
+    "source": "https://coins.llama.fi/chart/coingecko:renzo-restaked-eth,coingecko:ethereum?start=1713744000&span=120&period=1h"
+   },
+   {
+    "token": "stETH",
+    "date": "2022-06-18",
+    "kind": "discount under 10%",
+    "low_vs_pre": -0.0468,
+    "low_date": "2022-06-18",
+    "first_breach_10pct": null,
+    "ratio_after_30d": 0.9748,
+    "ratio_after_180d_or_latest": 0.9742,
+    "source": "https://coins.llama.fi/chart/coingecko:staked-ether,coingecko:ethereum?start=1654041600&span=60&period=1d"
+   }
+  ],
+  "rwa_credit": [
+   {
+    "token": "Maple pools (Orthogonal Trading)",
+    "date": "2022-12-05",
+    "kind": "loan default, loss to lenders",
+    "size_usd": 36000000.0,
+    "source": "https://news.google.com/rss/search?q=Maple+Finance+Orthogonal+Trading+default",
+    "note": "headline-level; recovery not confirmed"
+   },
+   {
+    "token": "Goldfinch pool",
+    "date": "2023-08-12",
+    "kind": "loan default",
+    "size_usd": 5000000.0,
+    "source": "https://news.google.com/rss/search?q=Goldfinch+loan+default+writedown",
+    "note": "headline-level"
+   },
+   {
+    "token": "USDR (Tangible)",
+    "date": "2023-10-11",
+    "kind": "depeg",
+    "size_usd": null,
+    "low_vs_pre": -0.4817,
+    "low_date": "2024-03-26",
+    "first_breach_10pct": "2023-10-11",
+    "ratio_after_30d": 0.6576,
+    "ratio_after_180d_or_latest": 0.6576,
+    "source": "https://coins.llama.fi/chart/coingecko:real-usd?start=1696118400&span=200&period=1d",
+    "also": "https://news.google.com/rss/search?q=Tangible+USDR+depeg"
+   }
+  ],
+  "wrapped_btc": [
+   {
+    "token": "multiBTC (Multichain)",
+    "date": "2023-07-07",
+    "kind": "bridge collapse",
+    "size_usd": 126000000.0,
+    "low_vs_pre": null,
+    "source": "https://api.llama.fi/hacks",
+    "note": "size is the whole Multichain loss; multiBTC drawdown not fetched"
+   },
+   {
+    "token": "uniBTC (Bedrock)",
+    "date": "2024-09-26",
+    "kind": "exploit, depeg",
+    "size_usd": 2000000.0,
+    "low_vs_pre": -0.3324,
+    "low_date": "2024-09-28",
+    "first_breach_10pct": "2024-09-28",
+    "ratio_after_30d": 0.9451,
+    "ratio_after_180d_or_latest": 0.9451,
+    "source": "https://coins.llama.fi/chart/coingecko:universal-btc,coingecko:wrapped-bitcoin?start=1726790400&span=30&period=1d",
+    "hack_source": "https://api.llama.fi/hacks"
+   }
+  ],
+  "wrapped_btc_borderline": [
+   {
+    "token": "renBTC",
+    "date": "2022-12",
+    "kind": "unconfirmed: DefiLlama shows -6.6% to Jun 2023 but 81% below WBTC today",
+    "source": "https://coins.llama.fi/prices/current/coingecko:renbtc,coingecko:wrapped-bitcoin"
+   }
+  ],
+  "curator_vault": [
+   {
+    "event": "Stream/Elixir",
+    "date": "2025-11-04",
+    "vaults_hit": null,
+    "counted_as": 3,
+    "source": "https://blue-api.morpho.org/graphql",
+    "also": "https://news.google.com/rss/search?q=MEV+Capital+xUSD+loss+vault"
+   },
+   {
+    "event": "Resolv USR",
+    "date": "2026-03-22",
+    "vaults_hit": 15,
+    "source": "https://www.halborn.com/blog/post/explained-the-resolv-hack-march-2026"
+   }
+  ],
+  "pendle_pt": [
+   {
+    "token": "PT-RLP-9APR2026",
+    "date": "2026-03-22",
+    "kind": "underlying failure",
+    "morpho_unrealised_bad_debt_usd": 17672079,
+    "source": "https://blue-api.morpho.org/graphql"
+   }
+  ]
+ },
+ "oracles": [
+  {
+   "market": "wstETH/WETH",
+   "kind": "exchange_rate",
+   "depeg_triggers_liquidation": false,
+   "feeds": {
+    "BASE_FEED_1": {
+     "address": "0x026864Bee872E81A205fEb21266991c2890926e6",
+     "description": "Chronicle WSTETH/STETH (wat())"
+    }
+   },
+   "assumed_fixed": [
+    "stETH = ETH"
+   ],
+   "note": "Market discount of wstETH or stETH to ETH is invisible. Only a fall in the reported stETH-per-wstETH rate moves it.",
+   "marketId": "0x8bdb7d2c5024d349772884afb3c5c409bc8de58ed63d79618bf48fb57b595060",
+   "oracle": "0xBB16f6B3c5422209ee1d9b0f63761F159C136694",
+   "lltv": 0.945,
+   "borrow_usd": 35311553,
+   "collateral_usd": 39242051,
+   "oracle_price_raw": "1245706212082717324000000000000000000"
+  },
+  {
+   "market": "aHYPER/USDC",
+   "kind": "vault_share_price",
+   "depeg_triggers_liquidation": false,
+   "feeds": {
+    "BASE_VAULT": {
+     "address": "0x7Cd231120a60F500887444a9bAF5e1BD753A5e59",
+     "description": "Hyperithm Delta Neutral Vault convertToAssets"
+    }
+   },
+   "assumed_fixed": [
+    "USDC = 1"
+   ],
+   "note": "totalAssets() reads 64,443.8 USDC against 83.8M shares at share price 1.0803, so the price is a vault-reported figure, not onchain balances (inference).",
+   "marketId": "0x9e8441e7af65860feac831ebc117473e3033321abf528ebc8fbde1eeaaa3a626",
+   "oracle": "0x4af4f38164cD7F28653A66aa2255B249a23cFBec",
+   "lltv": 0.77,
+   "borrow_usd": 34367210,
+   "collateral_usd": 49933002,
+   "oracle_price_raw": "1080325056773000000000000000000000000"
+  },
+  {
+   "market": "PT-USDat-14JAN2027/USDC",
+   "kind": "market_price_twap_pt_vs_underlying",
+   "depeg_triggers_liquidation": "PT selloff yes (15 min TWAP); USDat depeg no",
+   "feeds": {
+    "meta_oracle": "0x597921a5b5aD74A0Bf573fD7B58F80c383DCdAB2",
+    "primary": "0x67cD0fc83D3Eb39808BD3e686d18324Dd269ED6C",
+    "backup": "0x313C14e7262B59A9366B59692A4e0b140427a723",
+    "BASE_FEED_1": {
+     "address": "0x5346c2C152e471Daad390224491Acd8f6B860977",
+     "description": "Pendle Chainlink-compatible Oracle",
+     "market": "0x88C5D8A908834E44B421CB67aEc9A931782f9538",
+     "twapDuration": 900,
+     "baseOracleType": 1
+    }
+   },
+   "assumed_fixed": [
+    "USDat = USDC"
+   ],
+   "params": {
+    "deviationThreshold": 0.01,
+    "challengeTimelock_s": 14400,
+    "healingTimelock_s": 43200
+   },
+   "note": "Backup is an owner-settable wrapper that today points at the primary; owner 0x9BEc4DbAdE98251CC20d3C15C27bfdaA45434d4A can repoint it.",
+   "marketId": "0x093bd94086b08a013c96dc0776ebf663e9300e742a2c14479211cc35da6c3439",
+   "oracle": "0x597921a5b5aD74A0Bf573fD7B58F80c383DCdAB2",
+   "lltv": 0.915,
+   "borrow_usd": 21398657,
+   "collateral_usd": 26252056,
+   "oracle_price_raw": "976532950033637791000000000000000000"
+  },
+  {
+   "market": "earnAUSD/USDC",
+   "kind": "vault_share_price_operator_reported",
+   "depeg_triggers_liquidation": false,
+   "feeds": {
+    "BASE_FEED_1": {
+     "address": "0xf43D69D8e46B8fD2EB8940283657750BB3d88Cb0",
+     "description": "earnAUSD Share Price Oracle",
+     "VAULT": "0x36eDbF0C834591BFdfCaC0Ef9605528c75c406aA"
+    }
+   },
+   "assumed_fixed": [
+    "AUSD = USDC"
+   ],
+   "params": {
+    "externalAssets_share": 0.9865,
+    "maxChangePercent_raw": 3,
+    "lagDuration_s": 259200
+   },
+   "note": "Vault exposes updateTotalAssets(); 98.7% of assets sit outside the vault. Units of maxChangePercent not confirmed.",
+   "marketId": "0xc4504d2bf84ff1f6ff015afe00086226425dd5a626e096283504154a71821ec1",
+   "oracle": "0x3C453EddffbA99318BFcc335803225Cdae1D0CEE",
+   "lltv": 0.915,
+   "borrow_usd": 7314923,
+   "collateral_usd": 8519446,
+   "oracle_price_raw": "1045724000000000000000000000000000000"
+  },
+  {
+   "market": "strUSD/AUSD",
+   "kind": "exchange_rate_over_market_quote",
+   "depeg_triggers_liquidation": false,
+   "feeds": {
+    "BASE_FEED_1": {
+     "address": "0xb81131B6368b3F0a83af09dB4E39Ac23DA96C2Db",
+     "description": "RedStone Price Feed for strUSD_FUNDAMENTAL"
+    },
+    "QUOTE_FEED_1": {
+     "address": "0xE20751C7B5867bCBef815ffc1b284c3f412a9e13",
+     "description": "AUSD / USD"
+    }
+   },
+   "assumed_fixed": [],
+   "note": "strUSD market price invisible. An AUSD fall raises collateral value in AUSD terms, so it never triggers liquidations either.",
+   "marketId": "0x58532a6ef16789d5e93f6728e1f53db9ee9a1e4163059c9515684d10b49af464",
+   "oracle": "0x941A39F4df8965E9e94E2F66B56fa371AA6020F0",
+   "lltv": 0.86,
+   "borrow_usd": 6137661,
+   "collateral_usd": 8178606,
+   "oracle_price_raw": "1028774090004025095915450"
+  },
+  {
+   "market": "mROX/AUSD",
+   "kind": "issuer_nav_push",
+   "depeg_triggers_liquidation": false,
+   "feeds": {
+    "BASE_FEED_1": {
+     "address": "0x47b301D6Fe113F97376B82D41E5CD1Ea79a8F6C4",
+     "description": "mROX/USD (Midas custom aggregator)"
+    }
+   },
+   "assumed_fixed": [
+    "AUSD = 1 USD"
+   ],
+   "params": {
+    "maxAnswerDeviation_raw": 31000000,
+    "last_update_unix": 1790950453
+   },
+   "note": "Feed admin calls setRoundData. Last update about 4 days before the read. Deviation units not confirmed.",
+   "marketId": "0x02888f830660219ecdd6110cff429adbda165b69984cb5efd33eb1577a230244",
+   "oracle": "0xA78e73c6373AeFAFeFBa573E4a105De80f3CCa2D",
+   "lltv": 0.86,
+   "borrow_usd": 5543590,
+   "collateral_usd": 9058863,
+   "oracle_price_raw": "1151884310000000000000000"
+  },
+  {
+   "market": "mHyperBTC/cbBTC",
+   "kind": "issuer_nav_push",
+   "depeg_triggers_liquidation": false,
+   "feeds": {
+    "BASE_FEED_1": {
+     "address": "0x165d2E3C0A368988F497F649B6fe2134bE20FD8c",
+     "description": "mHyperBTC/BTC (Midas custom aggregator)"
+    }
+   },
+   "assumed_fixed": [
+    "cbBTC = BTC"
+   ],
+   "params": {
+    "maxAnswerDeviation_raw": 20000000,
+    "last_update_unix": 1791276974
+   },
+   "marketId": "0x1456e298a2eb4a0cda636aedf75cb694e66748500bea6f664d2250c33edd3ead",
+   "oracle": "0xCb8D23D57837a27Cf249E9D84A3f32f2cACbF01F",
+   "lltv": 0.77,
+   "borrow_usd": 3760595,
+   "collateral_usd": 5050864,
+   "oracle_price_raw": "102734168000000000000000000"
+  },
+  {
+   "market": "PT-AUSD-8OCT2026/USDC",
+   "kind": "market_price_twap_pt_vs_underlying",
+   "depeg_triggers_liquidation": "PT selloff yes (15 min TWAP); AUSD depeg no",
+   "feeds": {
+    "BASE_FEED_1": {
+     "address": "0x85656e850e7A74Fd9945f948233fB2E4EBAaB420",
+     "description": "Pendle Chainlink-compatible Oracle",
+     "market": "0x6f99CF00ee7290aE78a072Bb6910eF72D1129fE7",
+     "twapDuration": 900,
+     "baseOracleType": 1
+    }
+   },
+   "assumed_fixed": [
+    "AUSD = USDC"
+   ],
+   "note": "Matures 8 Oct 2026.",
+   "marketId": "0x93a7a013b5501cee5d9bee0d29bb3fca790196134c4c7058365e5bc6d2ad80a2",
+   "oracle": "0x436CA3263B1AAA57d286823a42E35d8c228e85a2",
+   "lltv": 0.915,
+   "borrow_usd": 3533405,
+   "collateral_usd": 4020277,
+   "oracle_price_raw": "999751641606998580000000000000000000"
+  }
+ ],
+ "exit_liquidity": {
+  "aggregators": {
+   "kyberswap": {
+    "public": true,
+    "endpoint": "https://aggregator-api.kyberswap.com/monad/api/v1/routes"
+   },
+   "kuru_flow": {
+    "public": true,
+    "auth": "free JWT from POST https://ws.kuru.io/api/generate-token, 1 request/s",
+    "endpoint": "https://ws.kuru.io/api/quote"
+   },
+   "monorail": {
+    "public": true,
+    "endpoint": "https://pathfinder.monorail.xyz/v4/quote"
+   },
+   "lifi": {
+    "public": true,
+    "endpoint": "https://li.quest/v1/quote",
+    "note": "drops routes above 10% impact; same-chain routes go through KyberSwap"
+   },
+   "pendle_hosted_sdk": {
+    "public": true,
+    "endpoint": "https://api-v2.pendle.finance/core/v2/sdk/143/convert",
+    "note": "only source that routes PTs through the Pendle AMM"
+   },
+   "0x": {
+    "public": false,
+    "reason": "No API key found in request"
+   },
+   "okx_dex": {
+    "public": false,
+    "reason": "OK-ACCESS-KEY header required"
+   },
+   "1inch": {
+    "public": false,
+    "reason": "Unauthorized"
+   },
+   "uniswap_trading_api": {
+    "public": false,
+    "reason": "empty response without API key"
+   },
+   "paraswap": {
+    "public": false,
+    "reason": "chain 143 not in supported networks"
+   },
+   "odos": {
+    "public": null,
+    "reason": "Cloudflare error 1033 from this network"
+   },
+   "openocean": {
+    "public": null,
+    "reason": "Cloudflare challenge page"
+   }
+  },
+  "best_quote_vs_reference": {
+   "wstETH": {
+    "1000": {
+     "vs_ref": -0.0072,
+     "venue": "kyber",
+     "out_sym": "WETH",
+     "ref_source": "morpho_oracle_price"
+    },
+    "100000": {
+     "vs_ref": -0.1861,
+     "venue": "kuru",
+     "out_sym": "WETH",
+     "ref_source": "morpho_oracle_price"
+    },
+    "1000000": {
+     "vs_ref": -0.6885,
+     "venue": "kuru",
+     "out_sym": "WETH",
+     "ref_source": "morpho_oracle_price"
+    },
+    "10000000": {
+     "vs_ref": -0.9566,
+     "venue": "kuru",
+     "out_sym": "WETH",
+     "ref_source": "morpho_oracle_price"
+    }
+   },
+   "aHYPER": {
+    "1000": {
+     "vs_ref": -0.6984,
+     "venue": "monorail",
+     "out_sym": "USDC",
+     "ref_source": "morpho_oracle_price"
+    },
+    "100000": {
+     "vs_ref": -0.9494,
+     "venue": "monorail",
+     "out_sym": "USDC",
+     "ref_source": "morpho_oracle_price"
+    },
+    "1000000": {
+     "vs_ref": -0.9996,
+     "venue": "kyber",
+     "out_sym": "USDC",
+     "ref_source": "morpho_oracle_price"
+    },
+    "10000000": {
+     "vs_ref": -1.0,
+     "venue": "kuru",
+     "out_sym": "USDC",
+     "ref_source": "morpho_oracle_price"
+    }
+   },
+   "PT-USDat-14JAN2027": {
+    "1000": {
+     "vs_ref": -0.0006,
+     "venue": "pendle_api(kyberswap)",
+     "out_sym": "USDC",
+     "ref_source": "morpho_oracle_price"
+    },
+    "100000": {
+     "vs_ref": -0.0011,
+     "venue": "pendle_api(kyberswap)",
+     "out_sym": "USDC",
+     "ref_source": "morpho_oracle_price"
+    },
+    "1000000": {
+     "vs_ref": -0.0083,
+     "venue": "pendle_api(kyberswap)",
+     "out_sym": "USDC",
+     "ref_source": "morpho_oracle_price"
+    },
+    "10000000": null
+   },
+   "earnAUSD": {
+    "1000": {
+     "vs_ref": -0.0138,
+     "venue": "kyber",
+     "out_sym": "USDC",
+     "ref_source": "morpho_oracle_price"
+    },
+    "100000": {
+     "vs_ref": -0.91,
+     "venue": "kyber",
+     "out_sym": "USDC",
+     "ref_source": "morpho_oracle_price"
+    },
+    "1000000": {
+     "vs_ref": -0.9877,
+     "venue": "kyber",
+     "out_sym": "USDC",
+     "ref_source": "morpho_oracle_price"
+    },
+    "10000000": {
+     "vs_ref": -0.9987,
+     "venue": "kyber",
+     "out_sym": "USDC",
+     "ref_source": "morpho_oracle_price"
+    }
+   },
+   "strUSD": {
+    "1000": null,
+    "100000": null,
+    "1000000": null,
+    "10000000": null
+   },
+   "mROX": {
+    "1000": null,
+    "100000": null,
+    "1000000": null,
+    "10000000": null
+   },
+   "mHyperBTC": {
+    "1000": null,
+    "100000": null,
+    "1000000": null,
+    "10000000": null
+   },
+   "PT-AUSD-8OCT2026": {
+    "1000": {
+     "vs_ref": -0.0001,
+     "venue": "pendle_api(kyberswap)",
+     "out_sym": "USDC",
+     "ref_source": "morpho_oracle_price"
+    },
+    "100000": {
+     "vs_ref": -0.0001,
+     "venue": "pendle_api(kyberswap)",
+     "out_sym": "USDC",
+     "ref_source": "morpho_oracle_price"
+    },
+    "1000000": {
+     "vs_ref": -0.0008,
+     "venue": "pendle_api(kyberswap)",
+     "out_sym": "USDC",
+     "ref_source": "morpho_oracle_price"
+    },
+    "10000000": {
+     "vs_ref": -0.6667,
+     "venue": "pendle_api(kyberswap)",
+     "out_sym": "USDC",
+     "ref_source": "morpho_oracle_price"
+    }
+   },
+   "syrupUSDC": {
+    "1000": {
+     "vs_ref": -0.001,
+     "venue": "monorail",
+     "out_sym": "USDC",
+     "ref_source": "morpho_api_priceUsd_ratio"
+    },
+    "100000": {
+     "vs_ref": -0.0011,
+     "venue": "kyber",
+     "out_sym": "USDC",
+     "ref_source": "morpho_api_priceUsd_ratio"
+    },
+    "1000000": {
+     "vs_ref": -0.0023,
+     "venue": "kyber",
+     "out_sym": "USDC",
+     "ref_source": "morpho_api_priceUsd_ratio"
+    },
+    "10000000": {
+     "vs_ref": -0.5169,
+     "venue": "kyber",
+     "out_sym": "USDC",
+     "ref_source": "morpho_api_priceUsd_ratio"
+    }
+   },
+   "USDe": {
+    "1000": {
+     "vs_ref": -0.7774,
+     "venue": "kyber",
+     "out_sym": "USDC",
+     "ref_source": "morpho_api_priceUsd_ratio"
+    },
+    "100000": {
+     "vs_ref": -0.9438,
+     "venue": "kyber",
+     "out_sym": "USDC",
+     "ref_source": "morpho_api_priceUsd_ratio"
+    },
+    "1000000": {
+     "vs_ref": -0.9897,
+     "venue": "kyber",
+     "out_sym": "USDC",
+     "ref_source": "morpho_api_priceUsd_ratio"
+    },
+    "10000000": {
+     "vs_ref": -0.9989,
+     "venue": "kyber",
+     "out_sym": "USDC",
+     "ref_source": "morpho_api_priceUsd_ratio"
+    }
+   },
+   "vUSD": {
+    "1000": null,
+    "100000": null,
+    "1000000": null,
+    "10000000": null
+   },
+   "wsrUSD": {
+    "1000": {
+     "vs_ref": -0.9442,
+     "venue": "monorail",
+     "out_sym": "USDC",
+     "ref_source": "morpho_api_priceUsd_ratio"
+    },
+    "100000": {
+     "vs_ref": -0.9976,
+     "venue": "kuru",
+     "out_sym": "USDC",
+     "ref_source": "morpho_api_priceUsd_ratio"
+    },
+    "1000000": {
+     "vs_ref": -0.9998,
+     "venue": "kuru",
+     "out_sym": "USDC",
+     "ref_source": "morpho_api_priceUsd_ratio"
+    },
+    "10000000": {
+     "vs_ref": -1.0,
+     "venue": "kuru",
+     "out_sym": "USDC",
+     "ref_source": "morpho_api_priceUsd_ratio"
+    }
+   },
+   "savUSD": {
+    "1000": {
+     "vs_ref": -0.7831,
+     "venue": "monorail",
+     "out_sym": "AUSD",
+     "ref_source": "morpho_api_priceUsd_ratio"
+    },
+    "100000": {
+     "vs_ref": -0.9506,
+     "venue": "monorail",
+     "out_sym": "AUSD",
+     "ref_source": "morpho_api_priceUsd_ratio"
+    },
+    "1000000": {
+     "vs_ref": -0.9953,
+     "venue": "monorail",
+     "out_sym": "AUSD",
+     "ref_source": "morpho_api_priceUsd_ratio"
+    },
+    "10000000": {
+     "vs_ref": -0.9997,
+     "venue": "kyber",
+     "out_sym": "AUSD",
+     "ref_source": "morpho_api_priceUsd_ratio"
+    }
+   }
+  },
+  "cross_chain": {
+   "USDe_1M_monad_to_ethereum_usde": {
+    "tool": "glacis via LI.FI",
+    "amount_in": 1000000,
+    "amount_out": 997300.5,
+    "vs_input_tokens": -0.0027,
+    "est_seconds": 3,
+    "source": "https://li.quest/v1/quote"
+   },
+   "wstETH_300_monad_to_ethereum_weth": {
+    "result": "no route on LI.FI"
+   }
+  }
+ }
+}
