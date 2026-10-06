@@ -623,7 +623,7 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
     /// market's supply totals now, and what the policy owes in total for it. The loss is
     /// what the shares redeemed for at inception less what they redeem for now, both
     /// rounded down as Morpho rounds a withdrawal.
-    function _due(Policy storage p, uint256 totalAssets, uint256 totalShares, uint256 held)
+    function _due(Policy storage p, uint256 supplyAssets, uint256 supplyShares, uint256 held)
         internal
         view
         returns (uint256 loss, uint256 due)
@@ -631,7 +631,7 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
         uint256 shares = Math.min(p.coveredShares, held);
         uint256 atStart =
             SharesMathLib.toAssetsDown(shares, p.startSupplyAssets, p.startSupplyShares);
-        uint256 atNow = SharesMathLib.toAssetsDown(shares, totalAssets, totalShares);
+        uint256 atNow = SharesMathLib.toAssetsDown(shares, supplyAssets, supplyShares);
         if (atNow >= atStart) return (0, 0);
         loss = atStart - atNow;
         if (loss <= p.deductible) return (loss, 0);
