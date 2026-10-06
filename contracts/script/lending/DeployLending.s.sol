@@ -18,7 +18,8 @@ import {LendingConfig} from "./LendingConfig.sol";
 /// `SeedMarket`. Terms come from `LendingConfig`.
 ///
 /// Settings come from the environment.
-///   USD   an existing MockUSD to reuse (the Perpl demo's tUSD)   default: deploy a new one
+///   USD             an existing MockUSD to reuse (the Perpl demo's tUSD)   default: deploy a new one
+///   WAITING_PERIOD  seconds before cover attaches   default LendingConfig.WAITING_PERIOD
 contract DeployLending is Script {
     function run()
         external
@@ -35,6 +36,7 @@ contract DeployLending is Script {
             morpho,
             deployer,
             LendingConfig.POLICY_TERM,
+            vm.envOr("WAITING_PERIOD", LendingConfig.WAITING_PERIOD),
             LendingConfig.CLAIM_WINDOW,
             LendingConfig.WITHDRAWAL_NOTICE,
             LendingConfig.WITHDRAWAL_WINDOW,

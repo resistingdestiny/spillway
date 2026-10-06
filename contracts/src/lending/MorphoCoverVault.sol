@@ -55,6 +55,10 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
     IMorpho public immutable morpho;
     /// @notice Length of every policy, in seconds.
     uint256 public immutable policyTerm;
+    /// @notice Time from purchase until cover can attach. A buyer who sees a loss coming
+    /// cannot buy cover for it the moment before it lands: a loss realised before the
+    /// policy attaches is in its start price. Shorter than `policyTerm`.
+    uint256 public immutable waitingPeriod;
     /// @notice How long after its end a policy can still be claimed, so a loss realised
     /// late in the term has time to be claimed.
     uint256 public immutable claimWindow;
@@ -87,9 +91,12 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
         uint64 start;
         uint64 end;
         bool released; // capacity and covered shares handed back after the claim window
+        bool attached; // cover has attached and the start totals are final
+        uint64 attachesAt; // earliest time cover can attach: start + waitingPeriod
         Id marketId;
-        // The market's supply totals at inception. Their ratio, with Morpho's virtual
-        // shares and assets, is the start share price, kept exact rather than rounded.
+        // The market's supply totals when cover attached. Their ratio, with Morpho's
+        // virtual shares and assets, is the start share price, kept exact rather than
+        // rounded. Until then they hold the totals at purchase, for display.
         uint128 startSupplyAssets;
         uint128 startSupplyShares;
         uint256 coveredShares; // Morpho supply shares
@@ -205,6 +212,7 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
         uint256 amount,
         uint256 paidTotal
     );
+    event PolicyAttached(uint256 indexed policyId, uint256 startPrice);
     event PolicyReleased(uint256 indexed policyId, uint256 unusedLimit);
 
     // ----------------------------------------------------------------- errors
@@ -232,12 +240,18 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
     error NoticePending(uint256 readyAt);
     error WithdrawalExpired(uint256 expiredAt);
     error BorrowersNotSorted(uint256 index);
+    error WaitingPeriodTooLong(uint256 waitingPeriod, uint256 policyTerm);
+    error WaitingPeriodRunning(uint256 policyId, uint256 attachesAt);
+    error AttachWindowClosed(uint256 policyId, uint256 end);
+    error AlreadyAttached(uint256 policyId);
+    error NotAttached(uint256 policyId);
 
     constructor(
         IERC20 asset_,
         IMorpho morpho_,
         address owner_,
         uint256 policyTerm_,
+        uint256 waitingPeriod_,
         uint256 claimWindow_,
         uint256 withdrawalNotice_,
         uint256 withdrawalWindow_,
@@ -247,6 +261,9 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
             revert ZeroAddress();
         }
         if (policyTerm_ == 0 || withdrawalWindow_ == 0) revert ZeroAmount();
+        if (waitingPeriod_ >= policyTerm_) {
+            revert WaitingPeriodTooLong(waitingPeriod_, policyTerm_);
+        }
         if (withdrawalNotice_ <= claimWindow_) {
             revert NoticeTooShort(withdrawalNotice_, claimWindow_);
         }
@@ -254,6 +271,7 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
         asset = asset_;
         morpho = morpho_;
         policyTerm = policyTerm_;
+        waitingPeriod = waitingPeriod_;
         claimWindow = claimWindow_;
         withdrawalNotice = withdrawalNotice_;
         withdrawalWindow = withdrawalWindow_;
@@ -409,6 +427,8 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
             start: SafeCast.toUint64(block.timestamp),
             end: SafeCast.toUint64(block.timestamp + policyTerm),
             released: false,
+            attached: waitingPeriod == 0,
+            attachesAt: SafeCast.toUint64(block.timestamp + waitingPeriod),
             marketId: id,
             coveredShares: coveredShares,
             limit: limit,
@@ -433,6 +453,28 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
             block.timestamp + policyTerm,
             premium
         );
+    }
+
+    /// @notice Attaches cover to policy `policyId` once its waiting period has run.
+    /// Accrues interest on Morpho and records the market's supply totals as the start
+    /// price, so a loss realised during the waiting period is not covered. Anyone can call
+    /// it, from `attachesAt` until the policy ends. Claims wait for it. A policy sold with
+    /// no waiting period attaches when it is bought.
+    /// @dev The holder wants this called as soon as it can be: cover protects the price
+    /// at attachment, and any loss realised before the call is outside it.
+    function attach(uint256 policyId) external nonReentrant {
+        Policy storage p = _policies[policyId];
+        if (p.holder == address(0)) revert UnknownPolicy(policyId);
+        if (p.attached) revert AlreadyAttached(policyId);
+        if (block.timestamp < p.attachesAt) revert WaitingPeriodRunning(policyId, p.attachesAt);
+        if (block.timestamp > p.end) revert AttachWindowClosed(policyId, p.end);
+
+        morpho.accrueInterest(_marketParams[p.marketId]);
+        Market memory m = morpho.market(p.marketId);
+        p.attached = true;
+        p.startSupplyAssets = m.totalSupplyAssets;
+        p.startSupplyShares = m.totalSupplyShares;
+        emit PolicyAttached(policyId, sharePriceOf(m.totalSupplyAssets, m.totalSupplyShares));
     }
 
     /// @notice Pays policy `policyId`'s loss to its holder. Anyone can call it, from
@@ -533,11 +575,11 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
     }
 
     /// @notice What `claim(policyId)` would pay right now, before the free capital cap
-    /// and the dust threshold. 0 once the claim window has closed.
+    /// and the dust threshold. 0 before the policy attaches and once its claim window has
+    /// closed.
     function claimable(uint256 policyId) external view returns (uint256) {
         Policy storage p = _policies[policyId];
-        if (p.holder == address(0)) return 0;
-        if (block.timestamp > uint256(p.end) + claimWindow) return 0;
+        if (!p.attached || block.timestamp > uint256(p.end) + claimWindow) return 0;
         uint256 held = morpho.position(p.marketId, p.holder).supplyShares;
         (uint256 assets, uint256 shares,,) =
             morpho.expectedMarketBalances(_marketParams[p.marketId]);
@@ -546,15 +588,15 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
     }
 
     /// @notice What `claimShortfall(policyId, borrowers)` would pay right now, before the
-    /// free capital cap and the dust threshold. 0 once the claim window has closed.
+    /// free capital cap and the dust threshold. 0 before the policy attaches and once its
+    /// claim window has closed.
     function claimableShortfall(uint256 policyId, address[] calldata borrowers)
         external
         view
         returns (uint256)
     {
         Policy storage p = _policies[policyId];
-        if (p.holder == address(0)) return 0;
-        if (block.timestamp > uint256(p.end) + claimWindow) return 0;
+        if (!p.attached || block.timestamp > uint256(p.end) + claimWindow) return 0;
         MarketParams memory mp = _marketParams[p.marketId];
         (uint256 supplyAssets, uint256 supplyShares, uint256 borrowAssets, uint256 borrowShares) =
             morpho.expectedMarketBalances(mp);
@@ -678,10 +720,11 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
         premiumUnallocated += premium * PRECISION - rate * policyTerm;
     }
 
-    /// @dev A live policy: known, and its claim window not yet closed.
+    /// @dev A live policy: known, attached, and its claim window not yet closed.
     function _openPolicy(uint256 policyId) internal view returns (Policy storage p) {
         p = _policies[policyId];
         if (p.holder == address(0)) revert UnknownPolicy(policyId);
+        if (!p.attached) revert NotAttached(policyId);
         uint256 closesAt = uint256(p.end) + claimWindow;
         if (block.timestamp > closesAt) revert ClaimWindowClosed(policyId, closesAt);
     }

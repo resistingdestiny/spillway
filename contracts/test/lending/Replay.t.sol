@@ -15,12 +15,15 @@ import {LendingConfig} from "../../script/lending/LendingConfig.sol";
 /// deploy, seed the book and buy cover, then a 25% depeg, liquidations and the claim.
 contract ReplayTest is Test {
     function test_deploySeedAndScenario() public {
+        // A replay runs in minutes, so its vault attaches cover at purchase.
+        vm.setEnv("WAITING_PERIOD", "0");
         (IMorpho morpho, FixedRateIrm irm, MockUSD usd, MorphoCoverVault vault) =
             new DeployLending().run();
         assertTrue(morpho.isIrmEnabled(address(irm)));
         assertEq(vault.owner(), morpho.owner());
         assertEq(address(vault.asset()), address(usd));
         assertEq(vault.policyTerm(), LendingConfig.POLICY_TERM);
+        assertEq(vault.waitingPeriod(), 0);
         assertGt(vault.withdrawalNotice(), vault.claimWindow());
 
         vm.setEnv("MORPHO", vm.toString(address(morpho)));

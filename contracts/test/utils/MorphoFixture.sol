@@ -68,6 +68,7 @@ abstract contract MorphoFixture is Test {
             morpho,
             owner,
             LendingConfig.POLICY_TERM,
+            _waitingPeriod(),
             LendingConfig.CLAIM_WINDOW,
             LendingConfig.WITHDRAWAL_NOTICE,
             LendingConfig.WITHDRAWAL_WINDOW,
@@ -75,6 +76,13 @@ abstract contract MorphoFixture is Test {
         );
         vm.prank(owner);
         vault.listMarket(params, LendingConfig.PREMIUM_BPS);
+    }
+
+    /// @dev No waiting period by default, so a policy attaches when bought and the
+    /// claim tests measure from that moment. The waiting period tests override it with
+    /// the config's default.
+    function _waitingPeriod() internal view virtual returns (uint256) {
+        return 0;
     }
 
     // ---------------------------------------------------------------- helpers
