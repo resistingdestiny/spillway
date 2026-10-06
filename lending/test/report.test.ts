@@ -106,10 +106,11 @@ describe("vault exposure and cover", () => {
 });
 
 describe("pricing", () => {
-  it("prices at expected loss rate x (1 + risk load) + capital charge, marked as placeholder", () => {
+  it("prices at expected loss rate x (1 + risk load) + capital charge, flagging placeholder tokens", () => {
     for (const v of vaults.slice(0, 5)) {
       const p = priceVault(prep, cfg, v);
-      expect(p.placeholder).toBe(true);
+      expect(p.placeholder).toBe(p.tokens.some((t) => t.placeholder));
+      expect(p.placeholderTokens).toEqual(p.tokens.filter((t) => t.placeholder).map((t) => t.symbol));
       const el = p.tokens.reduce((a, t) => a + t.annualProbability * t.lossUsd, 0);
       expect(p.expectedLossUsd).toBeCloseTo(el, 0);
       if (p.limitUsd > 0) expect(p.rate).toBeCloseTo((el / p.limitUsd) * (1 + cfg.pricing.riskLoad) + cfg.pricing.capitalCharge, 6);

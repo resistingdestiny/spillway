@@ -2,15 +2,17 @@
 //
 //   rate = expected yearly loss / limit * (1 + risk load) + capital charge
 //
-// Each collateral token the vault lends against fails in a year with its class's probability, and
-// falls by its class's severity when it does. The loss that fall puts on the vault comes from the
-// depeg scenario. Tokens fail one at a time, so the expected loss is the sum over tokens. The limit is
-// the cover that keeps depositors whole through any one token's failure.
+// Each collateral token the vault lends against fails in a year with its class's probability
+// (docs/RESEARCH.md section 1). When it fails it falls by one of the falls seen in the class's
+// incidents, each equally likely, so the loss given failure is the mean of the losses at those falls.
+// The loss each fall puts on the vault comes from the depeg scenario. Tokens fail one at a time, so the
+// expected loss is the sum over tokens. The limit is the cover that keeps depositors whole through any
+// one token's failure.
 //
-// The failure table in config.ts is a PLACEHOLDER. Every result carries `placeholder: true` until it
-// is replaced by research.
+// A token in a class the research does not cover keeps a placeholder rate. A vault that lends against
+// one carries `placeholder: true`, and the placeholder tokens are listed.
 
-import { type LendingConfig, classOf } from "./config.js";
+import { type LendingConfig, tokenRate } from "./config.js";
 import { type VaultExposure, frac, usd } from "./report.js";
 import { type PreparedBook, runScenario } from "./scenarios.js";
 
@@ -18,10 +20,13 @@ export interface TokenRisk {
   token: string;
   symbol: string;
   class: string;
+  pt: boolean;
   annualProbability: number;
-  severity: number;
-  /** Loss to the vault's depositors if this token fails, in USD. */
+  /** The falls drawn from the class's incidents. */
+  falls: number[];
+  /** Loss to the vault's depositors if this token fails, the mean over the falls, in USD. */
   lossUsd: number;
+  placeholder: boolean;
   /** annualProbability * lossUsd */
   expectedLossUsd: number;
 }
@@ -40,7 +45,9 @@ export interface VaultPrice {
   /** The premium as a share of the vault's supply, what depositors would give up in yield. */
   premiumOnSupply: number;
   tokens: TokenRisk[];
+  /** True when any token the vault lends against has a placeholder rate. */
   placeholder: boolean;
+  placeholderTokens: string[];
 }
 
 /** Loss to one vault when `token` falls by `shock` and the oracle follows. */
@@ -57,24 +64,26 @@ function vaultLossAt(prep: PreparedBook, cfg: LendingConfig, vault: string, toke
 
 export function priceVault(prep: PreparedBook, cfg: LendingConfig, v: VaultExposure): VaultPrice {
   const tokens = v.byToken.map((t) => {
-    const cls = classOf(t.symbol, cfg);
-    const rate = cfg.pricing.classes[cls];
-    const lossUsd = vaultLossAt(prep, cfg, v.vault, t.token, rate.severity);
+    const rate = tokenRate(t.symbol, cfg);
+    const falls = rate.incidents.map((i) => i.fall);
+    const lossUsd = falls.reduce((a, f) => a + vaultLossAt(prep, cfg, v.vault, t.token, f), 0) / falls.length;
     return {
       token: t.token,
       symbol: t.symbol,
-      class: cls,
-      annualProbability: rate.annualProbability,
-      severity: rate.severity,
+      class: rate.class,
+      pt: rate.pt,
+      annualProbability: frac(rate.annualProbability),
+      falls,
       lossUsd: usd(lossUsd),
       expectedLossUsd: usd(rate.annualProbability * lossUsd),
+      placeholder: rate.placeholder,
     };
   });
   const limitUsd = Math.max(0, ...tokens.map((t) => t.lossUsd));
   const expectedLossUsd = tokens.reduce((a, t) => a + t.expectedLossUsd, 0);
   const expectedLossRate = limitUsd > 0 ? expectedLossUsd / limitUsd : 0;
   const rate = expectedLossRate * (1 + cfg.pricing.riskLoad) + cfg.pricing.capitalCharge;
-  const placeholder = tokens.some((t) => cfg.pricing.classes[t.class as keyof typeof cfg.pricing.classes].source.startsWith("PLACEHOLDER"));
+  const placeholderTokens = tokens.filter((t) => t.placeholder).map((t) => t.symbol);
   return {
     vault: v.vault,
     name: v.name,
@@ -86,6 +95,7 @@ export function priceVault(prep: PreparedBook, cfg: LendingConfig, v: VaultExpos
     annualPremiumUsd: usd(rate * limitUsd),
     premiumOnSupply: v.supplyUsd > 0 ? frac((rate * limitUsd) / v.supplyUsd) : 0,
     tokens,
-    placeholder,
+    placeholder: placeholderTokens.length > 0,
+    placeholderTokens,
   };
 }
