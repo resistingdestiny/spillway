@@ -19,7 +19,10 @@ import {MorphoBalancesLib} from "morpho-blue/src/libraries/periphery/MorphoBalan
 /// token and earn premium. A policy covers one holder's supply shares in one listed
 /// market. When the market's supply share price falls below its level at inception,
 /// anyone can call `claim` and the vault pays the holder the loss on the covered shares,
-/// less a deductible, up to the policy limit. No keeper, no vote.
+/// less a deductible, up to the policy limit. When borrowers are under water at the
+/// oracle but nobody liquidates them, anyone can call `claimShortfall` and the vault pays
+/// the holder's share of that unrealised loss on the same terms. A policy is paid the
+/// most it was ever due across both, never the sum. No keeper, no vote.
 /// @dev The trigger is Morpho's own supply share price, `totalSupplyAssets /
 /// totalSupplyShares` with the virtual shares and assets of `SharesMathLib`. Interest
 /// only ever raises it. It falls only when `liquidate` writes off bad debt, which anyone
