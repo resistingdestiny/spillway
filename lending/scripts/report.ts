@@ -64,7 +64,37 @@ const bundle = buildLendingBundle(book, cfg, {
 writeFileSync(outPath, `${JSON.stringify(bundle)}\n`);
 
 const s = bundle.summary;
-console.error(`${outPath}: ${s.marketsWithBorrowers} markets with borrowers, ${s.borrowers} borrowers, $${Math.round(s.debtUsd).toLocaleString("en-US")} borrowed`);
+const m = (x: number) => `$${(x / 1e6).toFixed(2)}M`;
+const pct = (x: number | null) => (x === null ? "never" : `${Math.round(x * 100)}%`);
+const at = (xs: { shock: number; lossUsd: number }[], shock: number) => xs.find((x) => x.shock === shock)?.lossUsd ?? 0;
+console.error(`${outPath}: ${s.marketsWithBorrowers} markets with borrowers, ${s.borrowers} borrowers, ${m(s.debtUsd)} borrowed`);
+console.error(`Headline: ${s.headlineScenario} (liquidators sell only what Monad's exits take), against "${s.comparisonScenario}".`);
+console.error("The five largest markets: what would have to happen for suppliers to lose money");
 console.table(
-  bundle.headline.pml.map((r) => ({ token: r.symbol, markets: r.markets, debt: Math.round(r.debtUsd), pml: Math.round(r.pmlUsd), firstLoss: r.firstLoss })),
+  bundle.headline.markets.map((r) => ({
+    market: r.pair,
+    shock: r.shockMeans ?? "oracle not read",
+    debt: m(r.debtUsd),
+    exitDepth: r.exit.depthUsd === null ? "not measured" : `$${Math.round(r.exit.depthUsd).toLocaleString("en-US")}`,
+    firstLoss: pct(r.firstLoss),
+    "25% thin": m(at(r.lossUsd, 0.25)),
+    "25% always act": m(at(r.alwaysActUsd, 0.25)),
+  })),
+);
+console.error("Collateral tokens by probable maximum loss");
+console.table(
+  bundle.headline.pml.map((r) => ({ token: r.symbol, class: r.class, markets: r.markets, pml: m(r.pmlUsd), firstLoss: pct(r.firstLoss), "25% thin": m(at(r.lossUsd, 0.25)), "25% always act": m(at(r.alwaysActUsd, 0.25)) })),
+);
+console.error("Cover for the five largest vaults, limit at each class's 90th percentile fall");
+console.table(
+  bundle.headline.pricing.map((p) => ({
+    vault: p.name ?? p.vault,
+    supply: m(p.supplyUsd),
+    limit: m(p.limitUsd),
+    worst: p.limitToken,
+    expectedLoss: m(p.expectedLossUsd),
+    rate: `${(p.rate * 100).toFixed(1)}%`,
+    rateHigh: `${(p.rateHigh * 100).toFixed(1)}%`,
+    placeholder: p.placeholderTokens.join(" ") || "none",
+  })),
 );

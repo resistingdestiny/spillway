@@ -29,7 +29,10 @@ Every large loss in 2025 and 2026 came from collateral failing (Stream and Elixi
 
 - **Depeg:** a collateral token falls by 1% to 100% against its loan asset, one token at a time, with the oracle following it.
 - **Hidden loss:** the token's market price falls but its oracle does not (a fixed or exchange-rate oracle). No liquidation fires; the loss is unrealised until the oracle or a liquidator catches up.
-- **Thin exit:** as a depeg, but liquidators act only up to the exit depth available within the incentive.
+- **Thin exit:** as a depeg, but liquidators act only up to the exit depth available within the incentive. Exit depth comes from quotes on Monad's exchanges (`RESEARCH.md` section 3). This is the headline scenario; liquidators always acting is the comparison.
+- **Nobody liquidates:** as a depeg, with no liquidations. The thin exit at zero depth.
+
+Most large Monad markets price collateral from an issuer or vault figure (`RESEARCH.md` section 2), so for them a shock means the issuer marks down, not the market price falling.
 
 Every scenario reports, per market: liquidatable debt, bad debt realised, bad debt left unrealised, and the bad debt split across the market's suppliers (vaults by name).
 
@@ -42,6 +45,7 @@ Every published run carries: the Monad block (or block range) of the inputs, the
 A policy covers one holder's supply in one whitelisted Morpho market.
 
 - **Trigger:** the market's supply share price, `totalSupplyAssets / totalSupplyShares` read from Morpho after accruing interest. It only falls when bad debt is realised. Anyone can read it, and anyone can force realisation by liquidating, so no keeper or vote is needed.
+- **Shortfall proof:** with thin exits, a loss can sit unrealised and the share price does not move. Anyone can instead name the market's short borrowers, and the contract sums `max(0, debt - collateral x price)` over them from Morpho's position data at the oracle price, with Morpho's rounding. `lending/src/shortfall.ts` computes the same figure off chain and the list to pass.
 - **Payout:** `coveredShares * (sharePriceAtStart - sharePriceNow)`, less a deductible, capped by the policy limit and by the vault's remaining capital. `claim()` is permissionless and pays the policyholder.
 - **Capital that cannot run:** withdrawals need notice longer than the claim window, so underwriters cannot leave between a loss and its claim.
 - **Whitelist and dust:** only listed market ids and oracles, and a minimum loss before a claim pays.

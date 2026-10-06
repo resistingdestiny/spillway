@@ -6,8 +6,13 @@
 // - depeg:  the token's price falls by `shock` and the oracle follows. Liquidators always act.
 // - hidden: the token's price falls but the oracle does not (a fixed or exchange-rate oracle). Nothing
 //           becomes liquidatable, so the loss stays unrealised until the oracle or a liquidator moves.
-// - thin:   as a depeg, but liquidators only act up to the token's exit depth (config.thinExit). The
-//           positions that turn liquidatable first, at the smallest fall, use the depth first.
+// - thin:   as a depeg, but liquidators only act up to the token's exit depth on Monad (src/exit.ts).
+//           They clear the most unhealthy positions first. Every market that takes the token sells
+//           into the same pools, so the depth is shared: each sale uses up what is left, and a market
+//           can sell until the token's total sales reach its own depth. A token with no measured depth
+//           has no limit, and the thin exit equals the depeg.
+// - nobody: as a depeg, but nobody liquidates. Every shortfall stays unrealised. It is the thin exit
+//           with zero depth.
 //
 // The fall is a jump: the oracle goes from today's price to the shocked price in one update, as when a
 // failed token is repriced, and liquidators act at the new price. A slow slide with liquidators at work
@@ -16,11 +21,12 @@
 
 import { type SupplierShare, supplierShares } from "./attribution.js";
 import type { LendingConfig } from "./config.js";
+import { exitDepth } from "./exit.js";
 import { collateralValue, debt, healthFactor } from "./fidelity.js";
 import { type Outcome, type PositionResult, liquidationIncentive, positionOutcome } from "./model.js";
 import { type LendingBook, type Market, positionsByMarket } from "./snapshot.js";
 
-export type ScenarioKind = "depeg" | "hidden" | "thin";
+export type ScenarioKind = "depeg" | "hidden" | "thin" | "nobody";
 
 export interface Scenario {
   kind: ScenarioKind;
@@ -100,24 +106,34 @@ export interface MarketRun {
 
 const emptyOutcomes = (): Record<Outcome, number> => ({ healthy: 0, liquidated: 0, "bad-debt": 0, unrealised: 0 });
 
-/** Shares of a full liquidation liquidators can carry out, per market and borrower, for a thin exit. */
-function thinFills(markets: PreparedMarket[], s: Scenario, depthUsd: number): Map<string, number> {
-  const queue: { key: string; hf: number; usd: number }[] = [];
+/**
+ * Shares of a full liquidation liquidators can carry out, per market and borrower, for a thin exit.
+ * Undefined when no market taking the token has a measured depth.
+ */
+function thinFills(markets: PreparedMarket[], cfg: LendingConfig, s: Scenario): Map<string, number> | undefined {
+  const depths = new Map(markets.map((pm) => [pm.market.id, exitDepth(pm.market.collateral as { address: string; symbol: string }, pm.lif, cfg).depthUsd]));
+  if ([...depths.values()].every((d) => d === null)) return undefined;
+  const queue: { key: string; hf: number; usd: number; depth: number }[] = [];
   for (const pm of markets) {
     for (const b of pm.borrowers) {
       const value = b.value * (1 - s.shock);
       if (value * pm.market.lltv >= b.debt) continue;
       // Dollars of collateral a full liquidation puts up for sale.
-      queue.push({ key: `${pm.market.id}:${b.user}`, hf: b.healthFactor, usd: Math.min(value, b.debt * pm.lif) * pm.loanUsd });
+      queue.push({ key: `${pm.market.id}:${b.user}`, hf: b.healthFactor, usd: Math.min(value, b.debt * pm.lif) * pm.loanUsd, depth: depths.get(pm.market.id) ?? Infinity });
     }
   }
+  // The most unhealthy first. A fall scales every health factor by the same 1 - shock, so the order
+  // before the shock is the order after it.
   queue.sort((a, b) => a.hf - b.hf || (a.key < b.key ? -1 : 1));
   const fills = new Map<string, number>();
-  let left = depthUsd;
+  let sold = 0;
   for (const q of queue) {
-    const fill = q.usd <= 0 ? 1 : Math.min(1, left / q.usd);
+    // A sale worth nothing in USD (an unpriced loan token, or a worthless collateral) goes through
+    // while any depth is left, so zero depth always means nobody liquidates.
+    const left = Math.max(0, q.depth - sold);
+    const fill = q.usd <= 0 ? (left > 0 ? 1 : 0) : Math.min(1, left / q.usd);
     fills.set(q.key, fill);
-    left = Math.max(0, left - fill * q.usd);
+    sold += fill * q.usd;
   }
   return fills;
 }
@@ -125,14 +141,13 @@ function thinFills(markets: PreparedMarket[], s: Scenario, depthUsd: number): Ma
 /** Run one scenario on every market that takes the token. */
 export function runScenario(prep: PreparedBook, cfg: LendingConfig, s: Scenario): MarketRun[] {
   const markets = prep.byToken.get(s.token) ?? [];
-  const depth = cfg.thinExit.exitDepthUsd[s.token];
-  const fills = s.kind === "thin" && depth !== undefined ? thinFills(markets, s, depth) : undefined;
+  const fills = s.kind === "thin" ? thinFills(markets, cfg, s) : undefined;
   return markets.map((pm) => {
     const run: MarketRun = { marketId: pm.market.id, liquidatableDebt: 0, realised: 0, unrealised: 0, outcomes: emptyOutcomes(), positions: [] };
     for (const b of pm.borrowers) {
       const marketValue = b.value * (1 - s.shock);
       const oracleValue = s.kind === "hidden" ? b.value : marketValue;
-      const fill = fills?.get(`${pm.market.id}:${b.user}`) ?? 1;
+      const fill = s.kind === "nobody" ? 0 : (fills?.get(`${pm.market.id}:${b.user}`) ?? 1);
       const result = positionOutcome({ debt: b.debt, oracleValue, marketValue, lltv: pm.market.lltv, lif: pm.lif, fill });
       if (result.liquidatable) run.liquidatableDebt += b.debt;
       run.realised += result.realised;
