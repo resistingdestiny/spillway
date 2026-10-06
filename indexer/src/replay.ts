@@ -110,12 +110,17 @@ function checkShares(book: Book, e: MorphoEvent, totalAssets: bigint, totalShare
   check(book, e, "shares", shares === fromAssets || assets === fromShares, shares, fromAssets);
 }
 
+const ACCRUES = new Set<MorphoEvent["kind"]>(["SetFee", "Supply", "Withdraw", "Borrow", "Repay", "WithdrawCollateral", "Liquidate"]);
+
 /** Apply one event. Events must come in chain order. */
 export function apply(book: Book, e: MorphoEvent): void {
   if (e.block < book.block) throw new Error(`${e.kind} at ${e.block}:${e.logIndex} arrives after block ${book.block}`);
   book.block = e.block;
   book.timestamp = e.timestamp;
   book.events++;
+  // Every entry point but supplyCollateral accrues interest first, which sets lastUpdate even when no
+  // AccrueInterest is emitted: in a market with no IRM, or a second call in the same block.
+  if (ACCRUES.has(e.kind) && "id" in e) marketOf(book, e).lastUpdate = e.timestamp;
   switch (e.kind) {
     case "CreateMarket": {
       if (book.markets.has(e.id)) throw new Error(`market ${e.id} created twice`);
