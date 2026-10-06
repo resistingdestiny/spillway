@@ -7,6 +7,10 @@ import { plain } from "../cover/errors.js";
 import { int } from "../cover/format.js";
 import { type Live, publicClient, readLive } from "../cover/read.js";
 import { type Block, REPLAY_NOTE, claimsBlock, dl, headline, marketBlock, policyBlock, vaultBlock } from "../cover/render.js";
+import { type Step, claimForDepositor, getTestDollars, underwrite } from "../cover/actions.js";
+import { CHAIN, DEFAULT_DEPOSIT, MON_FAUCET, USD_DECIMALS } from "../cover/config.js";
+import { shortAddr, txLink } from "../cover/format.js";
+import { type Wallet, connect, injected, reconnect, switchToMonad } from "../cover/wallet.js";
 
 const BLOCKS = [
   ["market", "The market"],
@@ -20,7 +24,18 @@ const VIEW = `
   <p class="headline" id="cov-headline"></p>
   <p class="note">${REPLAY_NOTE}</p>
   <p class="status" id="cov-error" role="status" hidden></p>
-  ${BLOCKS.map(([id, title]) => `<h2 class="section">${title}</h2><p class="explain" id="cov-${id}-s"></p><dl class="manifest" id="cov-${id}"></dl>`).join("")}`;
+  ${BLOCKS.map(([id, title]) => `<h2 class="section">${title}</h2><p class="explain" id="cov-${id}-s"></p><dl class="manifest" id="cov-${id}"></dl>`).join("")}
+  <h2 class="section">Try it</h2>
+  <p class="explain">With a browser wallet on Monad testnet you can underwrite the cover with test dollars, or claim for the depositor. A claim pays the depositor, never the caller. Gas needs testnet MON from <a href="${MON_FAUCET}" target="_blank" rel="noopener">Monad's faucet</a>.</p>
+  <p class="explain" id="cov-wallet"></p>
+  <div class="actions">
+    <button id="cov-connect">Connect wallet</button>
+    <button id="cov-faucet" disabled>Get 10,000 test dollars</button>
+    <label class="amount">Deposit <input id="cov-amount" type="number" min="1" step="1" value="${DEFAULT_DEPOSIT}" /> tUSD</label>
+    <button id="cov-underwrite" disabled>Underwrite</button>
+    <button id="cov-claim" disabled>Claim for the depositor</button>
+  </div>
+  <ol class="steps" id="cov-steps"></ol>`;
 
 export async function mountCover(root: HTMLElement): Promise<() => void> {
   root.innerHTML = VIEW;
@@ -81,6 +96,88 @@ export async function mountCover(root: HTMLElement): Promise<() => void> {
       busy = false;
     }
   }
+
+  // ---------------------------------------------------------------- the wallet and its actions
+  let wallet: Wallet | null = null;
+  let acting = false;
+  const buttons = ["cov-faucet", "cov-underwrite", "cov-claim"] as const;
+
+  function walletLine(): void {
+    const el = $("cov-wallet");
+    if (!injected()) {
+      el.textContent = "No browser wallet found. Install one such as MetaMask to try the actions.";
+      ($("cov-connect") as HTMLButtonElement).disabled = true;
+      return;
+    }
+    if (!wallet) {
+      el.textContent = "Wallet not connected.";
+      return;
+    }
+    const onMonad = wallet.chainId === CHAIN.id;
+    el.innerHTML = `Connected as <code>${shortAddr(wallet.account)}</code>${onMonad ? " on Monad testnet." : ". Switch to Monad testnet to act."}`;
+    $("cov-connect").textContent = onMonad ? "Connected" : "Switch to Monad testnet";
+    for (const id of buttons) ($(id) as HTMLButtonElement).disabled = acting || !onMonad;
+    ($("cov-connect") as HTMLButtonElement).disabled = acting || onMonad;
+  }
+
+  function showSteps(steps: Step[]): void {
+    const word = { waiting: "Waiting for the wallet", sent: "Sent, waiting for a block", done: "Done", failed: "Failed" };
+    $("cov-steps").innerHTML = steps
+      .map((s) => `<li class="step ${s.state}">${s.label}: ${word[s.state]}${s.hash ? ` (${txLink(s.hash)})` : ""}</li>`)
+      .join("");
+  }
+
+  async function act(fn: () => Promise<void>): Promise<void> {
+    if (!wallet || acting) return;
+    acting = true;
+    walletLine();
+    fail(null);
+    try {
+      await fn();
+      await poll();
+    } catch (e) {
+      fail(plain(e));
+    } finally {
+      acting = false;
+      walletLine();
+    }
+  }
+
+  const onConnect = async () => {
+    const provider = injected();
+    if (!provider) return;
+    try {
+      wallet = wallet ?? (await connect(provider));
+      if (wallet.chainId !== CHAIN.id) await switchToMonad(wallet);
+      fail(null);
+    } catch (e) {
+      fail(plain(e));
+    }
+    walletLine();
+  };
+  $("cov-connect").addEventListener("click", () => void onConnect());
+  $("cov-faucet").addEventListener("click", () => void act(() => getTestDollars(pub, wallet as Wallet, showSteps)));
+  $("cov-claim").addEventListener("click", () => void act(() => claimForDepositor(pub, wallet as Wallet, showSteps)));
+  $("cov-underwrite").addEventListener("click", () => {
+    const whole = Math.floor(Number(($("cov-amount") as HTMLInputElement).value));
+    if (!(whole > 0)) {
+      fail("Enter a deposit of at least 1 tUSD.");
+      return;
+    }
+    void act(() => underwrite(pub, wallet as Wallet, BigInt(whole) * 10n ** BigInt(USD_DECIMALS), showSteps));
+  });
+  const provider = injected();
+  if (provider) {
+    reconnect(provider)
+      .then((w) => {
+        wallet = w;
+        walletLine();
+      })
+      .catch(() => walletLine());
+    provider.on?.("accountsChanged", () => void reconnect(provider).then((w) => ((wallet = w), walletLine())));
+    provider.on?.("chainChanged", () => void reconnect(provider).then((w) => ((wallet = w), walletLine())));
+  }
+  walletLine();
 
   const onVisible = () => {
     if (!document.hidden && Date.now() - readAt >= POLL_MS) void poll();

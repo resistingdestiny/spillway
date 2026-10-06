@@ -146,3 +146,22 @@ html, body {
 .status { font-size: 13px; color: var(--danger); margin: 8px 0 0; }
 .paid { background: var(--accent); padding: 0 4px; border-radius: 2px; font-weight: 600; }
 .manifest dd .muted { display: inline-block; margin-top: 2px; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+.actions button {
+  font: inherit;
+  font-size: 14px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: #fff;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.actions button:disabled { background: #fff; color: var(--muted); border-color: var(--hair); cursor: default; }
+.actions .amount { font-size: 14px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.actions .amount input { width: 96px; font: inherit; padding: 6px 8px; border: 1px solid var(--hair); border-radius: 6px; font-variant-numeric: tabular-nums; }
+.steps { font-size: 14px; padding-left: 18px; margin: 6px 0 0; }
+.steps .step.done { color: var(--ink); }
+.steps .step.failed { color: var(--danger); }
+.steps .step.waiting, .steps .step.sent { color: var(--muted); }
