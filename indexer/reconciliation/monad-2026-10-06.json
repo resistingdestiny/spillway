@@ -1,0 +1,2743 @@
+{
+ "schema": "spillway.morpho-reconciliation/1",
+ "api": "fixtures/morpho/monad-2026-10-06.json",
+ "apiSha256": "52756061d821794db315fc27a54529c18022d6a64db4fbede03bbf8c4e4545fb",
+ "logs": {
+  "logs": 672131,
+  "sources": {
+   "rpc": 16
+  }
+ },
+ "ends": [
+  {
+   "block": 111058609,
+   "positions": {
+    "compared": 1109,
+    "exact": 1109,
+    "diffs": []
+   },
+   "markets": {
+    "compared": 130,
+    "exact": 130,
+    "missing": [],
+    "rows": [
+     {
+      "marketId": "0x00e5927e593eb2ec5c052291a8b94dc242106c3a01fac0cd34dfc8f7d7ff841a",
+      "exact": true,
+      "lastUpdate": 1784101609,
+      "apiTimestamp": 1791295499,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x02888f830660219ecdd6110cff429adbda165b69984cb5efd33eb1577a230244",
+      "exact": true,
+      "lastUpdate": 1791247619,
+      "apiTimestamp": 1791295499,
+      "supplyAssetsGap": "598949691",
+      "borrowAssetsGap": "598949691",
+      "expectedInterest": "599021403",
+      "residual": -0.00011972958844050894
+     },
+     {
+      "marketId": "0x039e2a8cfea2c9b99ba203514a511373eb9da86b263a47f9f017deea59efa13a",
+      "exact": true,
+      "lastUpdate": 1775802834,
+      "apiTimestamp": 1791295499,
+      "supplyAssetsGap": "2362386836980",
+      "borrowAssetsGap": "2362386836980",
+      "expectedInterest": "2362379131087",
+      "residual": 0.000003261909895269721
+     },
+     {
+      "marketId": "0x03ed0c08d38cd5175db34c9b9975adc7f0e02a46e994c1f5c1e5a0cd6d23a220",
+      "exact": true,
+      "lastUpdate": 1763370778,
+      "apiTimestamp": 1791295501,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x083ed5e57e6ef8d3d83bb721ec00727edeac56674750113afde9f3e5c5799add",
+      "exact": true,
+      "lastUpdate": 1763041620,
+      "apiTimestamp": 1791295501,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     },
+     {
+      "marketId": "0x08d20c5fcb86795781fd940cdc6e7fac864e9b0318d91d73b3ca360844378651",
+      "exact": true,
+      "lastUpdate": 1791277872,
+      "apiTimestamp": 1791295501,
+      "supplyAssetsGap": "15114443",
+      "borrowAssetsGap": "15114443",
+      "expectedInterest": "15114875",
+      "residual": -0.000028581933188010965
+     },
+     {
+      "marketId": "0x093bd94086b08a013c96dc0776ebf663e9300e742a2c14479211cc35da6c3439",
+      "exact": true,
+      "lastUpdate": 1791288156,
+      "apiTimestamp": 1791295502,
+      "supplyAssetsGap": "385849542",
+      "borrowAssetsGap": "385849542",
+      "expectedInterest": "385858635",
+      "residual": -0.00002356618062280867
+     },
+     {
+      "marketId": "0x0aad5e92127102bd856e439e5f6b30a229551610ee8845f67f8f4a4c9f59a64a",
+      "exact": true,
+      "lastUpdate": 1786393503,
+      "apiTimestamp": 1791295502,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     },
+     {
+      "marketId": "0x0ce0a3398925f5112360db21750912f2a834c5cb90ecf03f461b2e2561320955",
+      "exact": true,
+      "lastUpdate": 1791286459,
+      "apiTimestamp": 1791295502,
+      "supplyAssetsGap": "410414",
+      "borrowAssetsGap": "410414",
+      "expectedInterest": "410413",
+      "residual": 0.0000024365640548324377
+     },
+     {
+      "marketId": "0x0d4f56105851be80f722b960a8e2ee726cecbb9d1ed8d2013b7e088f2a800ae0",
+      "exact": true,
+      "lastUpdate": 1790280589,
+      "apiTimestamp": 1791295503,
+      "supplyAssetsGap": "373",
+      "borrowAssetsGap": "373",
+      "expectedInterest": "373",
+      "residual": 0
+     },
+     {
+      "marketId": "0x0e747c3de720c1825bcc69d4c1ae4831ab9dcf16ec1c3ceb9cbbc2d13bed7b54",
+      "exact": true,
+      "lastUpdate": 1791243639,
+      "apiTimestamp": 1791295503,
+      "supplyAssetsGap": "363035",
+      "borrowAssetsGap": "363035",
+      "expectedInterest": "363034",
+      "residual": 0.0000027545553459032878
+     },
+     {
+      "marketId": "0x1456e298a2eb4a0cda636aedf75cb694e66748500bea6f664d2250c33edd3ead",
+      "exact": true,
+      "lastUpdate": 1791294224,
+      "apiTimestamp": 1791295503,
+      "supplyAssetsGap": "8083",
+      "borrowAssetsGap": "8083",
+      "expectedInterest": "8083",
+      "residual": 0
+     },
+     {
+      "marketId": "0x15e8a6fb41f1182d206924ce27d83781c84c0d78f3353dc49ab9e2242aa53481",
+      "exact": true,
+      "lastUpdate": 1774321517,
+      "apiTimestamp": 1791295505,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x173abb821c79fd87394c94c7ee3a5bc2ddda50a7be3c5ab1c6f9b428dab08ea2",
+      "exact": true,
+      "lastUpdate": 1791243639,
+      "apiTimestamp": 1791295505,
+      "supplyAssetsGap": "30",
+      "borrowAssetsGap": "30",
+      "expectedInterest": "30",
+      "residual": 0
+     },
+     {
+      "marketId": "0x180f81e89c937d41cc88987f2899cdd1157f897c98e90499938526c0ac77eeca",
+      "exact": true,
+      "lastUpdate": 1789732418,
+      "apiTimestamp": 1791295505,
+      "supplyAssetsGap": "82",
+      "borrowAssetsGap": "82",
+      "expectedInterest": "82",
+      "residual": 0
+     },
+     {
+      "marketId": "0x1c1312c28440a3e4f880e53b0d4ad942204149319d0b55455b1fee5b2c235af8",
+      "exact": true,
+      "lastUpdate": 1790770706,
+      "apiTimestamp": 1791295506,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x1ff3cfc2e85ef3defab68c3311c43b0380460361e4092f8ab8004ceffd8cb4b9",
+      "exact": true,
+      "lastUpdate": 1789732418,
+      "apiTimestamp": 1791295506,
+      "supplyAssetsGap": "88",
+      "borrowAssetsGap": "88",
+      "expectedInterest": "88",
+      "residual": 0
+     },
+     {
+      "marketId": "0x1ff69452df6081bc4616cab7c59f3911ad4691a4f105231c96e027e70fc46fc1",
+      "exact": true,
+      "lastUpdate": 1791243639,
+      "apiTimestamp": 1791295506,
+      "supplyAssetsGap": "131573",
+      "borrowAssetsGap": "131573",
+      "expectedInterest": "131573",
+      "residual": 0
+     },
+     {
+      "marketId": "0x1ffc4d12911badf03e1ab004673e47358817dcf4ad7910c8bddfd5cfb058761b",
+      "exact": true,
+      "lastUpdate": 1790719360,
+      "apiTimestamp": 1791295508,
+      "supplyAssetsGap": "600",
+      "borrowAssetsGap": "600",
+      "expectedInterest": "600",
+      "residual": 0
+     },
+     {
+      "marketId": "0x2127fa3d2cfb96224b742395311b26b0e428539d335ba1bd63f763b12fdbe287",
+      "exact": true,
+      "lastUpdate": 1791246807,
+      "apiTimestamp": 1791295508,
+      "supplyAssetsGap": "320630",
+      "borrowAssetsGap": "320630",
+      "expectedInterest": "320630",
+      "residual": 0
+     },
+     {
+      "marketId": "0x24759b1a77fbeced695e1fc677640cccbc17f4d5364da400f8b5113d2247bb40",
+      "exact": true,
+      "lastUpdate": 1772867998,
+      "apiTimestamp": 1791295508,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x2500eef83abd591fb77159373841f0a6f3defe67f51e82e6cb55ae948aef3567",
+      "exact": true,
+      "lastUpdate": 1784737425,
+      "apiTimestamp": 1791295509,
+      "supplyAssetsGap": "2114",
+      "borrowAssetsGap": "2114",
+      "expectedInterest": "2114",
+      "residual": 0
+     },
+     {
+      "marketId": "0x2761e7fe2dc3b712a7cf6d46286abc26864a65767d823c32ca554fa4ba309c6b",
+      "exact": true,
+      "lastUpdate": 1791227615,
+      "apiTimestamp": 1791295509,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x2883836b76571fddac28d0c25b55e172b67f0beac00961ad9884781c385fc0f9",
+      "exact": true,
+      "lastUpdate": 1774353232,
+      "apiTimestamp": 1791295509,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x2c9575e846ebf86aab37b87c1cc697a2f8b63034fbbc432955544b977e735a50",
+      "exact": true,
+      "lastUpdate": 1791218989,
+      "apiTimestamp": 1791295510,
+      "supplyAssetsGap": "49",
+      "borrowAssetsGap": "49",
+      "expectedInterest": "49",
+      "residual": 0
+     },
+     {
+      "marketId": "0x300a4c4ff6e1a37313d5bf746988781422b38d5ce87c3a9ab13b2849e9a94098",
+      "exact": true,
+      "lastUpdate": 1789974732,
+      "apiTimestamp": 1791295510,
+      "supplyAssetsGap": "9966",
+      "borrowAssetsGap": "9966",
+      "expectedInterest": "9965",
+      "residual": 0.00010034115994380895
+     },
+     {
+      "marketId": "0x35e27fddf5e175b6686d389d56bc85b9f2f692c26a6bea6a0ce0db62c9def489",
+      "exact": true,
+      "lastUpdate": 1763042458,
+      "apiTimestamp": 1791295510,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     },
+     {
+      "marketId": "0x36e7678318a4570afc05c24ebc1ff0b3b7ed32363dd271c23ce0122e3eda0517",
+      "exact": true,
+      "lastUpdate": 1775634349,
+      "apiTimestamp": 1791295510,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x379a33e5d5a9d38af8dbc2672060776322d6a24e8f4ebeec0471c86d10ebd3c7",
+      "exact": true,
+      "lastUpdate": 1791247258,
+      "apiTimestamp": 1791295510,
+      "supplyAssetsGap": "13958",
+      "borrowAssetsGap": "13958",
+      "expectedInterest": "13962",
+      "residual": -0.0002865740077374982
+     },
+     {
+      "marketId": "0x37dbcb83a7b717bdf96ff77c60ad0efa827c3b96d4863db81476ac533829c30f",
+      "exact": true,
+      "lastUpdate": 1791247619,
+      "apiTimestamp": 1791295510,
+      "supplyAssetsGap": "15131091",
+      "borrowAssetsGap": "15131091",
+      "expectedInterest": "15130729",
+      "residual": 0.00002392424974511091
+     },
+     {
+      "marketId": "0x38222c5214a6637ae884373acd4998e87244654300332c815e1433e919b02fbc",
+      "exact": true,
+      "lastUpdate": 1789808943,
+      "apiTimestamp": 1791295513,
+      "supplyAssetsGap": "806066",
+      "borrowAssetsGap": "806066",
+      "expectedInterest": "806066",
+      "residual": 0
+     },
+     {
+      "marketId": "0x3a0be4b2baf0845d7d6b60a133393884b6b8a2eda11a66d9a114ef0b8e6ebc4a",
+      "exact": true,
+      "lastUpdate": 1780473899,
+      "apiTimestamp": 1791295513,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x3bb04e09a4d24d1fcddafb8f06d21aba521357a35936876137d11ceb6d74375d",
+      "exact": true,
+      "lastUpdate": 1791294224,
+      "apiTimestamp": 1791295513,
+      "supplyAssetsGap": "1619",
+      "borrowAssetsGap": "1619",
+      "expectedInterest": "1618",
+      "residual": 0.0006176652254478073
+     },
+     {
+      "marketId": "0x3f469832b60170b12a05f22293385e8b744e38214225d4aabb3ea95e61547414",
+      "exact": true,
+      "lastUpdate": 1772868165,
+      "apiTimestamp": 1791295515,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x3f8554321d307fcf828ae9747f991f116ef8e5568a17402642db0ab78a9f0cd1",
+      "exact": true,
+      "lastUpdate": 1789732418,
+      "apiTimestamp": 1791295515,
+      "supplyAssetsGap": "184",
+      "borrowAssetsGap": "184",
+      "expectedInterest": "184",
+      "residual": 0
+     },
+     {
+      "marketId": "0x4054807856dbc9b3639aaa6abcffc0f2834e5190021d925c21d61d689aeeabf9",
+      "exact": true,
+      "lastUpdate": 1790627032,
+      "apiTimestamp": 1791295515,
+      "supplyAssetsGap": "648",
+      "borrowAssetsGap": "648",
+      "expectedInterest": "648",
+      "residual": 0
+     },
+     {
+      "marketId": "0x409f2824aee2d8391d4a5924935e13312e157055e262b923b60c9dcb47e6311d",
+      "exact": true,
+      "lastUpdate": 1791232433,
+      "apiTimestamp": 1791295516,
+      "supplyAssetsGap": "236403",
+      "borrowAssetsGap": "236403",
+      "expectedInterest": "236400",
+      "residual": 0.000012690194286874533
+     },
+     {
+      "marketId": "0x421a573af1d0aa2076fa9d691422d752301112208119776907b67ba0e2110a0d",
+      "exact": true,
+      "lastUpdate": 1790627032,
+      "apiTimestamp": 1791295516,
+      "supplyAssetsGap": "3678082",
+      "borrowAssetsGap": "3678082",
+      "expectedInterest": "3677835",
+      "residual": 0.00006715456588515427
+     },
+     {
+      "marketId": "0x42fc9b90d6727210e63cfe636d2ba291c4a348ee7ec9460c48403efb7d36f039",
+      "exact": true,
+      "lastUpdate": 1775802741,
+      "apiTimestamp": 1791295516,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     },
+     {
+      "marketId": "0x455f1c30ebdd5b43e58ed28f096203cf0716202fd58cd1807cfb5edeef5b24f5",
+      "exact": true,
+      "lastUpdate": 1791056014,
+      "apiTimestamp": 1791295517,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     },
+     {
+      "marketId": "0x46b17553f5634feffc1af0526e41f06204a5c4d5fbd19eac0d339e73692ae906",
+      "exact": true,
+      "lastUpdate": 1791243639,
+      "apiTimestamp": 1791295517,
+      "supplyAssetsGap": "30",
+      "borrowAssetsGap": "30",
+      "expectedInterest": "30",
+      "residual": 0
+     },
+     {
+      "marketId": "0x4be0bb8cb25ec4cc758d3cbfa8c22f2855a1a4308a334ab18354c99f3ea3ac8e",
+      "exact": true,
+      "lastUpdate": 1789386884,
+      "apiTimestamp": 1791295517,
+      "supplyAssetsGap": "10",
+      "borrowAssetsGap": "10",
+      "expectedInterest": "10",
+      "residual": 0
+     },
+     {
+      "marketId": "0x4cec4884b2a8366d61d9bae2261bedb002eb8a670325e63147d12405836ef2cc",
+      "exact": true,
+      "lastUpdate": 1776693959,
+      "apiTimestamp": 1791295519,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x4fbd9725c44351767d8dd40942a89fcc967a5857a84de4e3ef9b299ddcc0a0fc",
+      "exact": true,
+      "lastUpdate": 1784704319,
+      "apiTimestamp": 1791295519,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     },
+     {
+      "marketId": "0x4fdff99f37736c26435560f41f81fe3e06c3e216a9e6940ea9edc551b9100063",
+      "exact": true,
+      "lastUpdate": 1785904781,
+      "apiTimestamp": 1791295519,
+      "supplyAssetsGap": "25",
+      "borrowAssetsGap": "25",
+      "expectedInterest": "25",
+      "residual": 0
+     },
+     {
+      "marketId": "0x51767fd4e639aafa8cfd6375fa9298283664e35fe2981c9f7692dd53eb93a424",
+      "exact": true,
+      "lastUpdate": 1775044316,
+      "apiTimestamp": 1791295520,
+      "supplyAssetsGap": "5",
+      "borrowAssetsGap": "5",
+      "expectedInterest": "5",
+      "residual": 0
+     },
+     {
+      "marketId": "0x51efed9df487fd3e316421212683e04cfdb198d470c5c936ae4f36efb45b213d",
+      "exact": true,
+      "lastUpdate": 1791250556,
+      "apiTimestamp": 1791295520,
+      "supplyAssetsGap": "14809213",
+      "borrowAssetsGap": "14809213",
+      "expectedInterest": "14810674",
+      "residual": -0.0000986548036009746
+     },
+     {
+      "marketId": "0x58532a6ef16789d5e93f6728e1f53db9ee9a1e4163059c9515684d10b49af464",
+      "exact": true,
+      "lastUpdate": 1791294229,
+      "apiTimestamp": 1791295520,
+      "supplyAssetsGap": "37675750",
+      "borrowAssetsGap": "37675750",
+      "expectedInterest": "37683803",
+      "residual": -0.00021374491549604188
+     },
+     {
+      "marketId": "0x59606428a45f20ae8e559b0a33611b186638acea45c5f32de607a18053c045fd",
+      "exact": true,
+      "lastUpdate": 1789732418,
+      "apiTimestamp": 1791295522,
+      "supplyAssetsGap": "11434",
+      "borrowAssetsGap": "11434",
+      "expectedInterest": "11432",
+      "residual": 0.00017491691446562882
+     },
+     {
+      "marketId": "0x5a2a14dbccdcdb3fb1956e8b07892f5a5ca77192d2d296c639df84ec1d5f9d5c",
+      "exact": true,
+      "lastUpdate": 1790627032,
+      "apiTimestamp": 1791295522,
+      "supplyAssetsGap": "808",
+      "borrowAssetsGap": "808",
+      "expectedInterest": "807",
+      "residual": 0.0012376237623762376
+     },
+     {
+      "marketId": "0x5e8ba99bae57567169a143c0a27f06592a33941e2147815946d5e518b718ca80",
+      "exact": true,
+      "lastUpdate": 1791218989,
+      "apiTimestamp": 1791295522,
+      "supplyAssetsGap": "44",
+      "borrowAssetsGap": "44",
+      "expectedInterest": "44",
+      "residual": 0
+     },
+     {
+      "marketId": "0x5f161c98eb2c60e2a070755235e18fe8bcb976bd21288f04d38beada91e01fdc",
+      "exact": true,
+      "lastUpdate": 1791243639,
+      "apiTimestamp": 1791295523,
+      "supplyAssetsGap": "30",
+      "borrowAssetsGap": "30",
+      "expectedInterest": "30",
+      "residual": 0
+     },
+     {
+      "marketId": "0x5f1740586d04283625bbce86c399e8b4f6fe3bacac6b9aedfb8e9f7326404b86",
+      "exact": true,
+      "lastUpdate": 1790627032,
+      "apiTimestamp": 1791295523,
+      "supplyAssetsGap": "637",
+      "borrowAssetsGap": "637",
+      "expectedInterest": "637",
+      "residual": 0
+     },
+     {
+      "marketId": "0x5f7ae53e542b8b7bf08be3c8d43492322f56e60d2fe154c8a2321ea247158e50",
+      "exact": true,
+      "lastUpdate": 1791218989,
+      "apiTimestamp": 1791295523,
+      "supplyAssetsGap": "44",
+      "borrowAssetsGap": "44",
+      "expectedInterest": "44",
+      "residual": 0
+     },
+     {
+      "marketId": "0x5fdfdfc0cc1ceef2b8819a2635b20edc43e4daff4193a3af8fa2949955c5a581",
+      "exact": true,
+      "lastUpdate": 1790237988,
+      "apiTimestamp": 1791295524,
+      "supplyAssetsGap": "13",
+      "borrowAssetsGap": "13",
+      "expectedInterest": "13",
+      "residual": 0
+     },
+     {
+      "marketId": "0x60ac06f9da1150352beb43fc69400166c4c95fdd039b33034376355ebcb0bfa7",
+      "exact": true,
+      "lastUpdate": 1789732418,
+      "apiTimestamp": 1791295524,
+      "supplyAssetsGap": "128",
+      "borrowAssetsGap": "128",
+      "expectedInterest": "128",
+      "residual": 0
+     },
+     {
+      "marketId": "0x632ee586105294e8970f8a7da50e12f455219ae1c0c9bfbf006058f407162aea",
+      "exact": true,
+      "lastUpdate": 1775637318,
+      "apiTimestamp": 1791295524,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x6351b952d0c723e7b3e7e9b98bf22f12883768953abefe4ae25044e7d5b42fc6",
+      "exact": true,
+      "lastUpdate": 1786166619,
+      "apiTimestamp": 1791295526,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x646d90bce18e086f0e130d6ec5de4e023e08b9fa0308cfdec6bb863c91516ba9",
+      "exact": true,
+      "lastUpdate": 1790595518,
+      "apiTimestamp": 1791295526,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x647f2acdadd47ed0fad3ef826e3513fd7fdf9328b0c1f24b8c762c6d79511bf6",
+      "exact": true,
+      "lastUpdate": 1791179607,
+      "apiTimestamp": 1791295526,
+      "supplyAssetsGap": "91459463",
+      "borrowAssetsGap": "91459463",
+      "expectedInterest": "91459065",
+      "residual": 0.000004351654677876252
+     },
+     {
+      "marketId": "0x64abe9ae72308efcbfdaf7f434b50f31be2a5b1c782d4a3c00f754a35887267c",
+      "exact": true,
+      "lastUpdate": 1777820590,
+      "apiTimestamp": 1791295527,
+      "supplyAssetsGap": "100828960",
+      "borrowAssetsGap": "100828960",
+      "expectedInterest": "100829117",
+      "residual": -0.0000015570923274424332
+     },
+     {
+      "marketId": "0x66a1f3e0320a1869c1a1e8eaacb0b2c64e4de5cb4606207d2d9c4630acd2ad47",
+      "exact": true,
+      "lastUpdate": 1773417892,
+      "apiTimestamp": 1791295527,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x66bdba739ae3766e396c3e0e30ef5a36089ed9ed1db237af88d7080be41a4faa",
+      "exact": true,
+      "lastUpdate": 1763665476,
+      "apiTimestamp": 1791295528,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x672eae4e05969c8bc0c26b9de239ba17f9832d546092847a7a667442066ca814",
+      "exact": true,
+      "lastUpdate": 1790781568,
+      "apiTimestamp": 1791295528,
+      "supplyAssetsGap": "103",
+      "borrowAssetsGap": "103",
+      "expectedInterest": "103",
+      "residual": 0
+     },
+     {
+      "marketId": "0x679cbc082685b62759b86da6edcf3565d9c01793f76478266936a8b42d81c16e",
+      "exact": true,
+      "lastUpdate": 1774322474,
+      "apiTimestamp": 1791295528,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x67c3a8f21f0ab1c3dd07761225f47de1be3ee650ce6b9f6b6d5fb05262046175",
+      "exact": true,
+      "lastUpdate": 1787677064,
+      "apiTimestamp": 1791295529,
+      "supplyAssetsGap": "7192299",
+      "borrowAssetsGap": "7192299",
+      "expectedInterest": "7194278",
+      "residual": -0.00027515541275467
+     },
+     {
+      "marketId": "0x6c7158ce7b750894a1ef9cf095626448fe9255bc4205ba1299b0b9a448944e64",
+      "exact": true,
+      "lastUpdate": 1789055338,
+      "apiTimestamp": 1791295529,
+      "supplyAssetsGap": "1268",
+      "borrowAssetsGap": "1268",
+      "expectedInterest": "1268",
+      "residual": 0
+     },
+     {
+      "marketId": "0x6e917df11bfabfec89a2658e7efd23c0530b54365b2461b33cd547d0d2736fd5",
+      "exact": true,
+      "lastUpdate": 1789473661,
+      "apiTimestamp": 1791295529,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x6f68f498083f8ff7a59648f2bb0d14578d44fe94ae6b28d99456a0a1584f1f80",
+      "exact": true,
+      "lastUpdate": 1791218989,
+      "apiTimestamp": 1791295531,
+      "supplyAssetsGap": "44",
+      "borrowAssetsGap": "44",
+      "expectedInterest": "44",
+      "residual": 0
+     },
+     {
+      "marketId": "0x71c36bfa66af9f357b8b1e294dec4a1d368a34d1b7d3b07576cdfbb0414340de",
+      "exact": true,
+      "lastUpdate": 1763847116,
+      "apiTimestamp": 1791295531,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     },
+     {
+      "marketId": "0x71cad28b047d94c5a57c947619f9790b06b121536f975e03fdf241e9316edec7",
+      "exact": true,
+      "lastUpdate": 1791295917,
+      "apiTimestamp": 1791295919,
+      "supplyAssetsGap": "5121",
+      "borrowAssetsGap": "5121",
+      "expectedInterest": "5121",
+      "residual": 0
+     },
+     {
+      "marketId": "0x74b42fd3296e4f4a1c4db4e99f4ef538dec4729f04ab865c14e9b9f4506980c3",
+      "exact": true,
+      "lastUpdate": 1763984365,
+      "apiTimestamp": 1791295531,
+      "supplyAssetsGap": "294973551958450187015",
+      "borrowAssetsGap": "294973551958450187015",
+      "expectedInterest": "294973551958450187015",
+      "residual": 0
+     },
+     {
+      "marketId": "0x78736c8a794777e2c965737884accf49bbd148961ccf032ac2dfd36038667edf",
+      "exact": true,
+      "lastUpdate": 1775044316,
+      "apiTimestamp": 1791295531,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x7aeb107bee5e822bac2a9aaa1917d1c9aca5919226b373de1f9205a932bc9f7e",
+      "exact": true,
+      "lastUpdate": 1791219051,
+      "apiTimestamp": 1791295531,
+      "supplyAssetsGap": "3834093",
+      "borrowAssetsGap": "3834093",
+      "expectedInterest": "3834943",
+      "residual": -0.00022169519623024272
+     },
+     {
+      "marketId": "0x823542f629eabe0912688a9fdeea092c3e656d6fa1e490c45631f9e98b7e5f3f",
+      "exact": true,
+      "lastUpdate": 1791119794,
+      "apiTimestamp": 1791295533,
+      "supplyAssetsGap": "736663227",
+      "borrowAssetsGap": "736663227",
+      "expectedInterest": "736675794",
+      "residual": -0.000017059355672167954
+     },
+     {
+      "marketId": "0x82fc81e4419b8f94d1934395bca3829e704f2785e65a0f1f19409c63fd96051f",
+      "exact": true,
+      "lastUpdate": 1774635204,
+      "apiTimestamp": 1791295533,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x879d9bcb5366e88ea1417353ccbfb3dd28d42d9c99f9dd802fcb8071c3633ef4",
+      "exact": true,
+      "lastUpdate": 1789034536,
+      "apiTimestamp": 1791295533,
+      "supplyAssetsGap": "385278648",
+      "borrowAssetsGap": "385278648",
+      "expectedInterest": "385278636",
+      "residual": 3.1146288698562913e-8
+     },
+     {
+      "marketId": "0x887e09782166af976d67b737b173cf3a21a21d8de414adca64a07e046ddb6d83",
+      "exact": true,
+      "lastUpdate": 1763672648,
+      "apiTimestamp": 1791295535,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x8bdb7d2c5024d349772884afb3c5c409bc8de58ed63d79618bf48fb57b595060",
+      "exact": true,
+      "lastUpdate": 1791294003,
+      "apiTimestamp": 1791295535,
+      "supplyAssetsGap": "10935133903945942",
+      "borrowAssetsGap": "10935133903945942",
+      "expectedInterest": "10935104746288946",
+      "residual": 0.0000026664197486853327
+     },
+     {
+      "marketId": "0x8d0918317751c6781d1117a1d8ff9a0f450f87cc76b2446bf0d696312bc32c5c",
+      "exact": true,
+      "lastUpdate": 1788989852,
+      "apiTimestamp": 1791295535,
+      "supplyAssetsGap": "22",
+      "borrowAssetsGap": "22",
+      "expectedInterest": "22",
+      "residual": 0
+     },
+     {
+      "marketId": "0x8fa5d51aeab15e8ae42544e52d6dc0a2b0a23d1f360cb243fdc054a82cfd31d3",
+      "exact": true,
+      "lastUpdate": 1791294853,
+      "apiTimestamp": 1791295536,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x93a7a013b5501cee5d9bee0d29bb3fca790196134c4c7058365e5bc6d2ad80a2",
+      "exact": true,
+      "lastUpdate": 1791294471,
+      "apiTimestamp": 1791295536,
+      "supplyAssetsGap": "4602928",
+      "borrowAssetsGap": "4602928",
+      "expectedInterest": "4602706",
+      "residual": 0.000048230170013521826
+     },
+     {
+      "marketId": "0x9c8738983371b2e7285100cb7b1b7f1e0db8838cd644a9704d92eabd6f18d26a",
+      "exact": true,
+      "lastUpdate": 1784101609,
+      "apiTimestamp": 1791295536,
+      "supplyAssetsGap": "118",
+      "borrowAssetsGap": "118",
+      "expectedInterest": "118",
+      "residual": 0
+     },
+     {
+      "marketId": "0x9cfe91a0e49f8aff310293ca38b6fe632417984d053c049a90ec08c6abff6f71",
+      "exact": true,
+      "lastUpdate": 1790627032,
+      "apiTimestamp": 1791295538,
+      "supplyAssetsGap": "795",
+      "borrowAssetsGap": "795",
+      "expectedInterest": "795",
+      "residual": 0
+     },
+     {
+      "marketId": "0x9e2c6d03ed3c06e51c299cb415d3a70e694ab3af856c5beba144bd16bbf543a5",
+      "exact": true,
+      "lastUpdate": 1783336341,
+      "apiTimestamp": 1791295538,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x9e8441e7af65860feac831ebc117473e3033321abf528ebc8fbde1eeaaa3a626",
+      "exact": true,
+      "lastUpdate": 1791294267,
+      "apiTimestamp": 1791295538,
+      "supplyAssetsGap": "113294403",
+      "borrowAssetsGap": "113294403",
+      "expectedInterest": "113291853",
+      "residual": 0.00002250773147195983
+     },
+     {
+      "marketId": "0xa00c349ebd9b7f26247e3e20b6724cd162e037a1b01b9eeffe0fa7216d1a05ea",
+      "exact": true,
+      "lastUpdate": 1791218989,
+      "apiTimestamp": 1791295539,
+      "supplyAssetsGap": "44",
+      "borrowAssetsGap": "44",
+      "expectedInterest": "44",
+      "residual": 0
+     },
+     {
+      "marketId": "0xa484c81c94d669c0881ebc781465f937f8c9fbe545c1fc7bd2b3938d198af3dd",
+      "exact": true,
+      "lastUpdate": 1782463407,
+      "apiTimestamp": 1791295539,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xb03e5cef40a9a710a411fd2e6a087ffe8e5118edbfda866bd88756194fdc5e0b",
+      "exact": true,
+      "lastUpdate": 1785428408,
+      "apiTimestamp": 1791295539,
+      "supplyAssetsGap": "1304",
+      "borrowAssetsGap": "1304",
+      "expectedInterest": "1304",
+      "residual": 0
+     },
+     {
+      "marketId": "0xb0e2356396611ddd427580df2c4316bf1c8569983cc5863febdc9be80491dd2b",
+      "exact": true,
+      "lastUpdate": 1791219833,
+      "apiTimestamp": 1791295541,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     },
+     {
+      "marketId": "0xba2e101bfd40a1485745543c07fff784c488fc31bdb01dc40ba967bd296f9737",
+      "exact": true,
+      "lastUpdate": 1790781564,
+      "apiTimestamp": 1791295541,
+      "supplyAssetsGap": "103",
+      "borrowAssetsGap": "103",
+      "expectedInterest": "103",
+      "residual": 0
+     },
+     {
+      "marketId": "0xba9c7d24eb44c2cd1dcd62f20c272a13c6577b1a3c05566fd6ccb69ca6441b08",
+      "exact": true,
+      "lastUpdate": 1763140557,
+      "apiTimestamp": 1791295541,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xbc3e3ac4b896a999b2943273f3ed121238a4da4218d4e48533739c0f4b43253e",
+      "exact": true,
+      "lastUpdate": 1791270656,
+      "apiTimestamp": 1791295542,
+      "supplyAssetsGap": "284",
+      "borrowAssetsGap": "284",
+      "expectedInterest": "284",
+      "residual": 0
+     },
+     {
+      "marketId": "0xc0ae288f2cf8b3057afc1e898faed145acc2b88b0286e61ccbf456eb40a116fa",
+      "exact": true,
+      "lastUpdate": 1791290286,
+      "apiTimestamp": 1791295542,
+      "supplyAssetsGap": "330",
+      "borrowAssetsGap": "330",
+      "expectedInterest": "330",
+      "residual": 0
+     },
+     {
+      "marketId": "0xc25cdc7bc4c92e1d86360e889c6dd8253a275e613bb7c2a295af03a8bf60f662",
+      "exact": true,
+      "lastUpdate": 1763141615,
+      "apiTimestamp": 1791295542,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xc4504d2bf84ff1f6ff015afe00086226425dd5a626e096283504154a71821ec1",
+      "exact": true,
+      "lastUpdate": 1791295526,
+      "apiTimestamp": 1791295769,
+      "supplyAssetsGap": "5737810",
+      "borrowAssetsGap": "5737810",
+      "expectedInterest": "5737959",
+      "residual": -0.00002596809584144473
+     },
+     {
+      "marketId": "0xc4877b3ae3a92cc2931dfc80206b578525587d1b86da2c59e6f698fa995ad118",
+      "exact": true,
+      "lastUpdate": 1763140331,
+      "apiTimestamp": 1791295544,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xc4b22219698af4834d04eb32f569ab7faf40a041236f5064adb3cca17d424e4c",
+      "exact": true,
+      "lastUpdate": 1763371130,
+      "apiTimestamp": 1791295544,
+      "supplyAssetsGap": "1212725987872673625000",
+      "borrowAssetsGap": "1212725987872673625000",
+      "expectedInterest": "1212716923866339735000",
+      "residual": 0.000007474076109962647
+     },
+     {
+      "marketId": "0xc5a8e035a7dbc3d545ecfb0f2e6f6ebed5920dec4df9e33337c667113e8c9746",
+      "exact": true,
+      "lastUpdate": 1791155844,
+      "apiTimestamp": 1791295544,
+      "supplyAssetsGap": "87",
+      "borrowAssetsGap": "87",
+      "expectedInterest": "87",
+      "residual": 0
+     },
+     {
+      "marketId": "0xcaa68590c9fd1815f5f2e9f61c2001061813f6e346f07505b9e9b3d228b4aa13",
+      "exact": true,
+      "lastUpdate": 1791232433,
+      "apiTimestamp": 1791295545,
+      "supplyAssetsGap": "3233379",
+      "borrowAssetsGap": "3233379",
+      "expectedInterest": "3233376",
+      "residual": 9.278219472570336e-7
+     },
+     {
+      "marketId": "0xcb9212a2bad6e116fd5288912b4ab29705b9b2eeba56a9efca3af2e8e09bc553",
+      "exact": true,
+      "lastUpdate": 1789660789,
+      "apiTimestamp": 1791295545,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xcd29d72dff607c9796831c5d969d94312f50da4c66eab0ef376b243b029117aa",
+      "exact": true,
+      "lastUpdate": 1791255643,
+      "apiTimestamp": 1791295545,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     },
+     {
+      "marketId": "0xcd6d902d2d214c0a06785a072b94b4f3a4fd3ddfa6f6e6861807964ea78cdf98",
+      "exact": true,
+      "lastUpdate": 1791286348,
+      "apiTimestamp": 1791295547,
+      "supplyAssetsGap": "69730950",
+      "borrowAssetsGap": "69730950",
+      "expectedInterest": "69730352",
+      "residual": 0.000008575818915417042
+     },
+     {
+      "marketId": "0xd3d46b7c9d598e11bca3582b7f256ecc30ade99b94638e0f9d20b101baaf78fe",
+      "exact": true,
+      "lastUpdate": 1773418761,
+      "apiTimestamp": 1791295547,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xd708dcac093e0fffa2cfbe416978f7c5152d8a14297221e411b8c239b0698e1d",
+      "exact": true,
+      "lastUpdate": 1789485196,
+      "apiTimestamp": 1791295547,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xd7d92f438bbdbe913e0f21e14347e14c4a2acf8d2bc9556c0fbb3ac9c3508993",
+      "exact": true,
+      "lastUpdate": 1791255643,
+      "apiTimestamp": 1791295548,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xd8140d6b3f1ab6aaa7b921fb03f91e7fca17c77c306c03118a8dcc0089e80a00",
+      "exact": true,
+      "lastUpdate": 1791243639,
+      "apiTimestamp": 1791295548,
+      "supplyAssetsGap": "32",
+      "borrowAssetsGap": "32",
+      "expectedInterest": "32",
+      "residual": 0
+     },
+     {
+      "marketId": "0xda022976cf21aafbacb2b95d0c6e4e2a24307e7301e07c78f0c9321478cbd82c",
+      "exact": true,
+      "lastUpdate": 1791218989,
+      "apiTimestamp": 1791295548,
+      "supplyAssetsGap": "6872991",
+      "borrowAssetsGap": "6872991",
+      "expectedInterest": "6872520",
+      "residual": 0.00006852911636287608
+     },
+     {
+      "marketId": "0xdae8f49b294971b3056a9be9e7d1213fc528068ee555719e346924b3862e542a",
+      "exact": true,
+      "lastUpdate": 1763984365,
+      "apiTimestamp": 1791295549,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     },
+     {
+      "marketId": "0xdcaf3f0c5ea425d47dc8bb5842a2f8cd33dd8025afb65f419eec42579ce0e6a8",
+      "exact": true,
+      "lastUpdate": 1791204825,
+      "apiTimestamp": 1791295549,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xdcf2ce5fb573fdd291c5a6e8c454da3e8a4871f62379e0acc188790f9ea1e388",
+      "exact": true,
+      "lastUpdate": 1787319422,
+      "apiTimestamp": 1791295549,
+      "supplyAssetsGap": "5060",
+      "borrowAssetsGap": "5060",
+      "expectedInterest": "5060",
+      "residual": 0
+     },
+     {
+      "marketId": "0xdf9a5f543c051f0cb4cdca3b75c9facaad58b7871d58f05b16722e6bd5b4df1a",
+      "exact": true,
+      "lastUpdate": 1791218989,
+      "apiTimestamp": 1791295551,
+      "supplyAssetsGap": "44",
+      "borrowAssetsGap": "44",
+      "expectedInterest": "44",
+      "residual": 0
+     },
+     {
+      "marketId": "0xe2add120fd9acbda344dec443e8b2d84963d4caca47be588a26e963bf907ff6d",
+      "exact": true,
+      "lastUpdate": 1791218989,
+      "apiTimestamp": 1791295551,
+      "supplyAssetsGap": "44",
+      "borrowAssetsGap": "44",
+      "expectedInterest": "44",
+      "residual": 0
+     },
+     {
+      "marketId": "0xe35c5abc6418b6319b014e07aa3c86163a870a957284128f03cf7a9e414f8899",
+      "exact": true,
+      "lastUpdate": 1791232433,
+      "apiTimestamp": 1791295551,
+      "supplyAssetsGap": "1404213",
+      "borrowAssetsGap": "1404213",
+      "expectedInterest": "1404090",
+      "residual": 0.0000875935488419492
+     },
+     {
+      "marketId": "0xe5192cf7306644ce173758036f29af4dd6cdcd5f222d73907ded30ab9b2450e5",
+      "exact": true,
+      "lastUpdate": 1791218430,
+      "apiTimestamp": 1791295552,
+      "supplyAssetsGap": "260156498",
+      "borrowAssetsGap": "260156498",
+      "expectedInterest": "260164173",
+      "residual": -0.000029501473378535407
+     },
+     {
+      "marketId": "0xeb01a16d46e51c8b244bc9bc0a5c9521b5b03b2ffd903281ef8e2a779c623952",
+      "exact": true,
+      "lastUpdate": 1790596259,
+      "apiTimestamp": 1791295552,
+      "supplyAssetsGap": "799",
+      "borrowAssetsGap": "799",
+      "expectedInterest": "799",
+      "residual": 0
+     },
+     {
+      "marketId": "0xeea9a8f0dcd518b90f8cba74b62f62cc9b005541ff8a10a86bba45eebe4e2098",
+      "exact": true,
+      "lastUpdate": 1791119794,
+      "apiTimestamp": 1791295552,
+      "supplyAssetsGap": "261310785",
+      "borrowAssetsGap": "261310785",
+      "expectedInterest": "261312650",
+      "residual": -0.000007137095393900408
+     },
+     {
+      "marketId": "0xf15cbbe4f311d421adf0b15a6b3474b194585cc53edf6601d60517a4a8e36968",
+      "exact": true,
+      "lastUpdate": 1790622914,
+      "apiTimestamp": 1791295554,
+      "supplyAssetsGap": "1034",
+      "borrowAssetsGap": "1034",
+      "expectedInterest": "1034",
+      "residual": 0
+     },
+     {
+      "marketId": "0xf24e30d7d188524415d11cc78abd40589df5dd4b93b0d429c6a7ec0a5a550447",
+      "exact": true,
+      "lastUpdate": 1789732418,
+      "apiTimestamp": 1791295554,
+      "supplyAssetsGap": "42096",
+      "borrowAssetsGap": "42096",
+      "expectedInterest": "42091",
+      "residual": 0.00011877613074876472
+     },
+     {
+      "marketId": "0xf2f3e506c5f0d7580ae36eebcbf9d27628185bf1e8bd1e9ab77e1d121dbd4d68",
+      "exact": true,
+      "lastUpdate": 1782144203,
+      "apiTimestamp": 1791295554,
+      "supplyAssetsGap": "37",
+      "borrowAssetsGap": "37",
+      "expectedInterest": "37",
+      "residual": 0
+     },
+     {
+      "marketId": "0xf3dfe9975c11c17f21b654563563f4a8ff3fabecc0bf8274a403e6630464671b",
+      "exact": true,
+      "lastUpdate": 1789732418,
+      "apiTimestamp": 1791295555,
+      "supplyAssetsGap": "174",
+      "borrowAssetsGap": "174",
+      "expectedInterest": "174",
+      "residual": 0
+     },
+     {
+      "marketId": "0xf452ca78bd14ce69b5d6b60a704822a2d59157925b920d01b5beaf098a7a39df",
+      "exact": true,
+      "lastUpdate": 1784737425,
+      "apiTimestamp": 1791295555,
+      "supplyAssetsGap": "2108",
+      "borrowAssetsGap": "2108",
+      "expectedInterest": "2108",
+      "residual": 0
+     },
+     {
+      "marketId": "0xf595a96bda2e2a3e2783ca92292d54781e4ed1efe4826f758bdee390c605ebd4",
+      "exact": true,
+      "lastUpdate": 1787319383,
+      "apiTimestamp": 1791295555,
+      "supplyAssetsGap": "7950",
+      "borrowAssetsGap": "7950",
+      "expectedInterest": "7950",
+      "residual": 0
+     },
+     {
+      "marketId": "0xf6994a750ede6124e4a9a8cbef29e2c298845461a8b1e53bea3f769d195bc29d",
+      "exact": true,
+      "lastUpdate": 1769154265,
+      "apiTimestamp": 1791295557,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xf7ba77865ddd40a9961f2226d8996b64fa6c9874e533f3a044b1d90198bf9785",
+      "exact": true,
+      "lastUpdate": 1789480936,
+      "apiTimestamp": 1791295557,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xf7e3362b90e750c560ccd07818512d400d3cf65e779a397a53cdda29c1e1b6d3",
+      "exact": true,
+      "lastUpdate": 1787563968,
+      "apiTimestamp": 1791295557,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xfa0b720389b546fcf8562c18cda8c00460072b63776add7fbfe8cd4f06d7c3ba",
+      "exact": true,
+      "lastUpdate": 1791243639,
+      "apiTimestamp": 1791295557,
+      "supplyAssetsGap": "535541",
+      "borrowAssetsGap": "535541",
+      "expectedInterest": "535699",
+      "residual": -0.0002950287653046172
+     },
+     {
+      "marketId": "0xfbd812dc49623513c0a04a165101b7e643d567312237b229dda10f134797919a",
+      "exact": true,
+      "lastUpdate": 1791243639,
+      "apiTimestamp": 1791295557,
+      "supplyAssetsGap": "30",
+      "borrowAssetsGap": "30",
+      "expectedInterest": "30",
+      "residual": 0
+     },
+     {
+      "marketId": "0xfdfec1ced463198bba499c38a43c04a5919cab0472a298c4c68041b225d16563",
+      "exact": true,
+      "lastUpdate": 1763370924,
+      "apiTimestamp": 1791295557,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xfe1d7da2fbde85b1fee120c88df3e6b55164a2442dab97486d3d4f719a5ff1fb",
+      "exact": true,
+      "lastUpdate": 1761813959,
+      "apiTimestamp": 1774533834,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     }
+    ]
+   },
+   "storage": {
+    "markets": 130,
+    "positions": 1109,
+    "diffs": [
+     {
+      "marketId": "0x71c36bfa66af9f357b8b1e294dec4a1d368a34d1b7d3b07576cdfbb0414340de",
+      "user": null,
+      "field": "lastUpdate",
+      "storage": "1767177267",
+      "replay": "1763847116",
+      "cause": "accrueInterest() on a market with no IRM moves lastUpdate without an event; no amount depends on it"
+     },
+     {
+      "marketId": "0x42fc9b90d6727210e63cfe636d2ba291c4a348ee7ec9460c48403efb7d36f039",
+      "user": null,
+      "field": "lastUpdate",
+      "storage": "1782294089",
+      "replay": "1775802741",
+      "cause": "accrueInterest() on a market with no IRM moves lastUpdate without an event; no amount depends on it"
+     },
+     {
+      "marketId": "0x0aad5e92127102bd856e439e5f6b30a229551610ee8845f67f8f4a4c9f59a64a",
+      "user": null,
+      "field": "lastUpdate",
+      "storage": "1791295415",
+      "replay": "1786393503",
+      "cause": "accrueInterest() on a market with no IRM moves lastUpdate without an event; no amount depends on it"
+     },
+     {
+      "marketId": "0x4fbd9725c44351767d8dd40942a89fcc967a5857a84de4e3ef9b299ddcc0a0fc",
+      "user": null,
+      "field": "lastUpdate",
+      "storage": "1791295416",
+      "replay": "1784704319",
+      "cause": "accrueInterest() on a market with no IRM moves lastUpdate without an event; no amount depends on it"
+     }
+    ]
+   },
+   "replay": {
+    "events": 672131,
+    "checksPassed": 964389,
+    "checksFailed": 0
+   },
+   "interest": {
+    "zeroGap": 47,
+    "gaps": 83,
+    "toTheWei": 53,
+    "within1e4": 22,
+    "maxAbsResidual": 0.0002950287653046172
+   }
+  },
+  {
+   "block": 111058632,
+   "positions": {
+    "compared": 1109,
+    "exact": 1109,
+    "diffs": []
+   },
+   "markets": {
+    "compared": 130,
+    "exact": 130,
+    "missing": [],
+    "rows": [
+     {
+      "marketId": "0x00e5927e593eb2ec5c052291a8b94dc242106c3a01fac0cd34dfc8f7d7ff841a",
+      "exact": true,
+      "lastUpdate": 1784101609,
+      "apiTimestamp": 1791295499,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x02888f830660219ecdd6110cff429adbda165b69984cb5efd33eb1577a230244",
+      "exact": true,
+      "lastUpdate": 1791247619,
+      "apiTimestamp": 1791295499,
+      "supplyAssetsGap": "598949691",
+      "borrowAssetsGap": "598949691",
+      "expectedInterest": "599022587",
+      "residual": -0.00012170638218093679
+     },
+     {
+      "marketId": "0x039e2a8cfea2c9b99ba203514a511373eb9da86b263a47f9f017deea59efa13a",
+      "exact": true,
+      "lastUpdate": 1775802834,
+      "apiTimestamp": 1791295499,
+      "supplyAssetsGap": "2362386836980",
+      "borrowAssetsGap": "2362386836980",
+      "expectedInterest": "2362379004990",
+      "residual": 0.000003315286843543442
+     },
+     {
+      "marketId": "0x03ed0c08d38cd5175db34c9b9975adc7f0e02a46e994c1f5c1e5a0cd6d23a220",
+      "exact": true,
+      "lastUpdate": 1763370778,
+      "apiTimestamp": 1791295501,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x083ed5e57e6ef8d3d83bb721ec00727edeac56674750113afde9f3e5c5799add",
+      "exact": true,
+      "lastUpdate": 1763041620,
+      "apiTimestamp": 1791295501,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     },
+     {
+      "marketId": "0x08d20c5fcb86795781fd940cdc6e7fac864e9b0318d91d73b3ca360844378651",
+      "exact": true,
+      "lastUpdate": 1791277872,
+      "apiTimestamp": 1791295501,
+      "supplyAssetsGap": "15114443",
+      "borrowAssetsGap": "15114443",
+      "expectedInterest": "15114882",
+      "residual": -0.00002904506636466855
+     },
+     {
+      "marketId": "0x093bd94086b08a013c96dc0776ebf663e9300e742a2c14479211cc35da6c3439",
+      "exact": true,
+      "lastUpdate": 1791288156,
+      "apiTimestamp": 1791295502,
+      "supplyAssetsGap": "385849542",
+      "borrowAssetsGap": "385849542",
+      "expectedInterest": "385858786",
+      "residual": -0.000023957524873775798
+     },
+     {
+      "marketId": "0x0aad5e92127102bd856e439e5f6b30a229551610ee8845f67f8f4a4c9f59a64a",
+      "exact": true,
+      "lastUpdate": 1786393503,
+      "apiTimestamp": 1791295502,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     },
+     {
+      "marketId": "0x0ce0a3398925f5112360db21750912f2a834c5cb90ecf03f461b2e2561320955",
+      "exact": true,
+      "lastUpdate": 1791286459,
+      "apiTimestamp": 1791295502,
+      "supplyAssetsGap": "410414",
+      "borrowAssetsGap": "410414",
+      "expectedInterest": "410413",
+      "residual": 0.0000024365640548324377
+     },
+     {
+      "marketId": "0x0d4f56105851be80f722b960a8e2ee726cecbb9d1ed8d2013b7e088f2a800ae0",
+      "exact": true,
+      "lastUpdate": 1790280589,
+      "apiTimestamp": 1791295503,
+      "supplyAssetsGap": "373",
+      "borrowAssetsGap": "373",
+      "expectedInterest": "373",
+      "residual": 0
+     },
+     {
+      "marketId": "0x0e747c3de720c1825bcc69d4c1ae4831ab9dcf16ec1c3ceb9cbbc2d13bed7b54",
+      "exact": true,
+      "lastUpdate": 1791243639,
+      "apiTimestamp": 1791295503,
+      "supplyAssetsGap": "363035",
+      "borrowAssetsGap": "363035",
+      "expectedInterest": "363034",
+      "residual": 0.0000027545553459032878
+     },
+     {
+      "marketId": "0x1456e298a2eb4a0cda636aedf75cb694e66748500bea6f664d2250c33edd3ead",
+      "exact": true,
+      "lastUpdate": 1791294224,
+      "apiTimestamp": 1791295503,
+      "supplyAssetsGap": "8083",
+      "borrowAssetsGap": "8083",
+      "expectedInterest": "8083",
+      "residual": 0
+     },
+     {
+      "marketId": "0x15e8a6fb41f1182d206924ce27d83781c84c0d78f3353dc49ab9e2242aa53481",
+      "exact": true,
+      "lastUpdate": 1774321517,
+      "apiTimestamp": 1791295505,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x173abb821c79fd87394c94c7ee3a5bc2ddda50a7be3c5ab1c6f9b428dab08ea2",
+      "exact": true,
+      "lastUpdate": 1791243639,
+      "apiTimestamp": 1791295505,
+      "supplyAssetsGap": "30",
+      "borrowAssetsGap": "30",
+      "expectedInterest": "30",
+      "residual": 0
+     },
+     {
+      "marketId": "0x180f81e89c937d41cc88987f2899cdd1157f897c98e90499938526c0ac77eeca",
+      "exact": true,
+      "lastUpdate": 1789732418,
+      "apiTimestamp": 1791295505,
+      "supplyAssetsGap": "82",
+      "borrowAssetsGap": "82",
+      "expectedInterest": "82",
+      "residual": 0
+     },
+     {
+      "marketId": "0x1c1312c28440a3e4f880e53b0d4ad942204149319d0b55455b1fee5b2c235af8",
+      "exact": true,
+      "lastUpdate": 1790770706,
+      "apiTimestamp": 1791295506,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x1ff3cfc2e85ef3defab68c3311c43b0380460361e4092f8ab8004ceffd8cb4b9",
+      "exact": true,
+      "lastUpdate": 1789732418,
+      "apiTimestamp": 1791295506,
+      "supplyAssetsGap": "88",
+      "borrowAssetsGap": "88",
+      "expectedInterest": "88",
+      "residual": 0
+     },
+     {
+      "marketId": "0x1ff69452df6081bc4616cab7c59f3911ad4691a4f105231c96e027e70fc46fc1",
+      "exact": true,
+      "lastUpdate": 1791243639,
+      "apiTimestamp": 1791295506,
+      "supplyAssetsGap": "131573",
+      "borrowAssetsGap": "131573",
+      "expectedInterest": "131573",
+      "residual": 0
+     },
+     {
+      "marketId": "0x1ffc4d12911badf03e1ab004673e47358817dcf4ad7910c8bddfd5cfb058761b",
+      "exact": true,
+      "lastUpdate": 1790719360,
+      "apiTimestamp": 1791295508,
+      "supplyAssetsGap": "600",
+      "borrowAssetsGap": "600",
+      "expectedInterest": "600",
+      "residual": 0
+     },
+     {
+      "marketId": "0x2127fa3d2cfb96224b742395311b26b0e428539d335ba1bd63f763b12fdbe287",
+      "exact": true,
+      "lastUpdate": 1791246807,
+      "apiTimestamp": 1791295508,
+      "supplyAssetsGap": "320630",
+      "borrowAssetsGap": "320630",
+      "expectedInterest": "320630",
+      "residual": 0
+     },
+     {
+      "marketId": "0x24759b1a77fbeced695e1fc677640cccbc17f4d5364da400f8b5113d2247bb40",
+      "exact": true,
+      "lastUpdate": 1772867998,
+      "apiTimestamp": 1791295508,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x2500eef83abd591fb77159373841f0a6f3defe67f51e82e6cb55ae948aef3567",
+      "exact": true,
+      "lastUpdate": 1784737425,
+      "apiTimestamp": 1791295509,
+      "supplyAssetsGap": "2114",
+      "borrowAssetsGap": "2114",
+      "expectedInterest": "2114",
+      "residual": 0
+     },
+     {
+      "marketId": "0x2761e7fe2dc3b712a7cf6d46286abc26864a65767d823c32ca554fa4ba309c6b",
+      "exact": true,
+      "lastUpdate": 1791227615,
+      "apiTimestamp": 1791295509,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x2883836b76571fddac28d0c25b55e172b67f0beac00961ad9884781c385fc0f9",
+      "exact": true,
+      "lastUpdate": 1774353232,
+      "apiTimestamp": 1791295509,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x2c9575e846ebf86aab37b87c1cc697a2f8b63034fbbc432955544b977e735a50",
+      "exact": true,
+      "lastUpdate": 1791218989,
+      "apiTimestamp": 1791295510,
+      "supplyAssetsGap": "49",
+      "borrowAssetsGap": "49",
+      "expectedInterest": "49",
+      "residual": 0
+     },
+     {
+      "marketId": "0x300a4c4ff6e1a37313d5bf746988781422b38d5ce87c3a9ab13b2849e9a94098",
+      "exact": true,
+      "lastUpdate": 1789974732,
+      "apiTimestamp": 1791295510,
+      "supplyAssetsGap": "9966",
+      "borrowAssetsGap": "9966",
+      "expectedInterest": "9965",
+      "residual": 0.00010034115994380895
+     },
+     {
+      "marketId": "0x35e27fddf5e175b6686d389d56bc85b9f2f692c26a6bea6a0ce0db62c9def489",
+      "exact": true,
+      "lastUpdate": 1763042458,
+      "apiTimestamp": 1791295510,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     },
+     {
+      "marketId": "0x36e7678318a4570afc05c24ebc1ff0b3b7ed32363dd271c23ce0122e3eda0517",
+      "exact": true,
+      "lastUpdate": 1775634349,
+      "apiTimestamp": 1791295510,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x379a33e5d5a9d38af8dbc2672060776322d6a24e8f4ebeec0471c86d10ebd3c7",
+      "exact": true,
+      "lastUpdate": 1791247258,
+      "apiTimestamp": 1791295510,
+      "supplyAssetsGap": "13958",
+      "borrowAssetsGap": "13958",
+      "expectedInterest": "13963",
+      "residual": -0.00035821750967187277
+     },
+     {
+      "marketId": "0x37dbcb83a7b717bdf96ff77c60ad0efa827c3b96d4863db81476ac533829c30f",
+      "exact": true,
+      "lastUpdate": 1791247619,
+      "apiTimestamp": 1791295510,
+      "supplyAssetsGap": "15131091",
+      "borrowAssetsGap": "15131091",
+      "expectedInterest": "15130723",
+      "residual": 0.00002432078427127297
+     },
+     {
+      "marketId": "0x38222c5214a6637ae884373acd4998e87244654300332c815e1433e919b02fbc",
+      "exact": true,
+      "lastUpdate": 1789808943,
+      "apiTimestamp": 1791295513,
+      "supplyAssetsGap": "806066",
+      "borrowAssetsGap": "806066",
+      "expectedInterest": "806066",
+      "residual": 0
+     },
+     {
+      "marketId": "0x3a0be4b2baf0845d7d6b60a133393884b6b8a2eda11a66d9a114ef0b8e6ebc4a",
+      "exact": true,
+      "lastUpdate": 1780473899,
+      "apiTimestamp": 1791295513,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x3bb04e09a4d24d1fcddafb8f06d21aba521357a35936876137d11ceb6d74375d",
+      "exact": true,
+      "lastUpdate": 1791294224,
+      "apiTimestamp": 1791295513,
+      "supplyAssetsGap": "1619",
+      "borrowAssetsGap": "1619",
+      "expectedInterest": "1618",
+      "residual": 0.0006176652254478073
+     },
+     {
+      "marketId": "0x3f469832b60170b12a05f22293385e8b744e38214225d4aabb3ea95e61547414",
+      "exact": true,
+      "lastUpdate": 1772868165,
+      "apiTimestamp": 1791295515,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x3f8554321d307fcf828ae9747f991f116ef8e5568a17402642db0ab78a9f0cd1",
+      "exact": true,
+      "lastUpdate": 1789732418,
+      "apiTimestamp": 1791295515,
+      "supplyAssetsGap": "184",
+      "borrowAssetsGap": "184",
+      "expectedInterest": "184",
+      "residual": 0
+     },
+     {
+      "marketId": "0x4054807856dbc9b3639aaa6abcffc0f2834e5190021d925c21d61d689aeeabf9",
+      "exact": true,
+      "lastUpdate": 1790627032,
+      "apiTimestamp": 1791295515,
+      "supplyAssetsGap": "648",
+      "borrowAssetsGap": "648",
+      "expectedInterest": "648",
+      "residual": 0
+     },
+     {
+      "marketId": "0x409f2824aee2d8391d4a5924935e13312e157055e262b923b60c9dcb47e6311d",
+      "exact": true,
+      "lastUpdate": 1791232433,
+      "apiTimestamp": 1791295516,
+      "supplyAssetsGap": "236403",
+      "borrowAssetsGap": "236403",
+      "expectedInterest": "236400",
+      "residual": 0.000012690194286874533
+     },
+     {
+      "marketId": "0x421a573af1d0aa2076fa9d691422d752301112208119776907b67ba0e2110a0d",
+      "exact": true,
+      "lastUpdate": 1790627032,
+      "apiTimestamp": 1791295516,
+      "supplyAssetsGap": "3678082",
+      "borrowAssetsGap": "3678082",
+      "expectedInterest": "3677831",
+      "residual": 0.0000682420892193268
+     },
+     {
+      "marketId": "0x42fc9b90d6727210e63cfe636d2ba291c4a348ee7ec9460c48403efb7d36f039",
+      "exact": true,
+      "lastUpdate": 1775802741,
+      "apiTimestamp": 1791295516,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     },
+     {
+      "marketId": "0x455f1c30ebdd5b43e58ed28f096203cf0716202fd58cd1807cfb5edeef5b24f5",
+      "exact": true,
+      "lastUpdate": 1791056014,
+      "apiTimestamp": 1791295517,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     },
+     {
+      "marketId": "0x46b17553f5634feffc1af0526e41f06204a5c4d5fbd19eac0d339e73692ae906",
+      "exact": true,
+      "lastUpdate": 1791243639,
+      "apiTimestamp": 1791295517,
+      "supplyAssetsGap": "30",
+      "borrowAssetsGap": "30",
+      "expectedInterest": "30",
+      "residual": 0
+     },
+     {
+      "marketId": "0x4be0bb8cb25ec4cc758d3cbfa8c22f2855a1a4308a334ab18354c99f3ea3ac8e",
+      "exact": true,
+      "lastUpdate": 1789386884,
+      "apiTimestamp": 1791295517,
+      "supplyAssetsGap": "10",
+      "borrowAssetsGap": "10",
+      "expectedInterest": "10",
+      "residual": 0
+     },
+     {
+      "marketId": "0x4cec4884b2a8366d61d9bae2261bedb002eb8a670325e63147d12405836ef2cc",
+      "exact": true,
+      "lastUpdate": 1776693959,
+      "apiTimestamp": 1791295519,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x4fbd9725c44351767d8dd40942a89fcc967a5857a84de4e3ef9b299ddcc0a0fc",
+      "exact": true,
+      "lastUpdate": 1784704319,
+      "apiTimestamp": 1791295519,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     },
+     {
+      "marketId": "0x4fdff99f37736c26435560f41f81fe3e06c3e216a9e6940ea9edc551b9100063",
+      "exact": true,
+      "lastUpdate": 1785904781,
+      "apiTimestamp": 1791295519,
+      "supplyAssetsGap": "25",
+      "borrowAssetsGap": "25",
+      "expectedInterest": "25",
+      "residual": 0
+     },
+     {
+      "marketId": "0x51767fd4e639aafa8cfd6375fa9298283664e35fe2981c9f7692dd53eb93a424",
+      "exact": true,
+      "lastUpdate": 1775044316,
+      "apiTimestamp": 1791295520,
+      "supplyAssetsGap": "5",
+      "borrowAssetsGap": "5",
+      "expectedInterest": "5",
+      "residual": 0
+     },
+     {
+      "marketId": "0x51efed9df487fd3e316421212683e04cfdb198d470c5c936ae4f36efb45b213d",
+      "exact": true,
+      "lastUpdate": 1791250556,
+      "apiTimestamp": 1791295520,
+      "supplyAssetsGap": "14809213",
+      "borrowAssetsGap": "14809213",
+      "expectedInterest": "14810700",
+      "residual": -0.000100410467456981
+     },
+     {
+      "marketId": "0x58532a6ef16789d5e93f6728e1f53db9ee9a1e4163059c9515684d10b49af464",
+      "exact": true,
+      "lastUpdate": 1791294229,
+      "apiTimestamp": 1791295520,
+      "supplyAssetsGap": "37675750",
+      "borrowAssetsGap": "37675750",
+      "expectedInterest": "37683943",
+      "residual": -0.00021746083356004856
+     },
+     {
+      "marketId": "0x59606428a45f20ae8e559b0a33611b186638acea45c5f32de607a18053c045fd",
+      "exact": true,
+      "lastUpdate": 1789732418,
+      "apiTimestamp": 1791295522,
+      "supplyAssetsGap": "11434",
+      "borrowAssetsGap": "11434",
+      "expectedInterest": "11432",
+      "residual": 0.00017491691446562882
+     },
+     {
+      "marketId": "0x5a2a14dbccdcdb3fb1956e8b07892f5a5ca77192d2d296c639df84ec1d5f9d5c",
+      "exact": true,
+      "lastUpdate": 1790627032,
+      "apiTimestamp": 1791295522,
+      "supplyAssetsGap": "808",
+      "borrowAssetsGap": "808",
+      "expectedInterest": "807",
+      "residual": 0.0012376237623762376
+     },
+     {
+      "marketId": "0x5e8ba99bae57567169a143c0a27f06592a33941e2147815946d5e518b718ca80",
+      "exact": true,
+      "lastUpdate": 1791218989,
+      "apiTimestamp": 1791295522,
+      "supplyAssetsGap": "44",
+      "borrowAssetsGap": "44",
+      "expectedInterest": "44",
+      "residual": 0
+     },
+     {
+      "marketId": "0x5f161c98eb2c60e2a070755235e18fe8bcb976bd21288f04d38beada91e01fdc",
+      "exact": true,
+      "lastUpdate": 1791243639,
+      "apiTimestamp": 1791295523,
+      "supplyAssetsGap": "30",
+      "borrowAssetsGap": "30",
+      "expectedInterest": "30",
+      "residual": 0
+     },
+     {
+      "marketId": "0x5f1740586d04283625bbce86c399e8b4f6fe3bacac6b9aedfb8e9f7326404b86",
+      "exact": true,
+      "lastUpdate": 1790627032,
+      "apiTimestamp": 1791295523,
+      "supplyAssetsGap": "637",
+      "borrowAssetsGap": "637",
+      "expectedInterest": "637",
+      "residual": 0
+     },
+     {
+      "marketId": "0x5f7ae53e542b8b7bf08be3c8d43492322f56e60d2fe154c8a2321ea247158e50",
+      "exact": true,
+      "lastUpdate": 1791218989,
+      "apiTimestamp": 1791295523,
+      "supplyAssetsGap": "44",
+      "borrowAssetsGap": "44",
+      "expectedInterest": "44",
+      "residual": 0
+     },
+     {
+      "marketId": "0x5fdfdfc0cc1ceef2b8819a2635b20edc43e4daff4193a3af8fa2949955c5a581",
+      "exact": true,
+      "lastUpdate": 1790237988,
+      "apiTimestamp": 1791295524,
+      "supplyAssetsGap": "13",
+      "borrowAssetsGap": "13",
+      "expectedInterest": "13",
+      "residual": 0
+     },
+     {
+      "marketId": "0x60ac06f9da1150352beb43fc69400166c4c95fdd039b33034376355ebcb0bfa7",
+      "exact": true,
+      "lastUpdate": 1789732418,
+      "apiTimestamp": 1791295524,
+      "supplyAssetsGap": "128",
+      "borrowAssetsGap": "128",
+      "expectedInterest": "128",
+      "residual": 0
+     },
+     {
+      "marketId": "0x632ee586105294e8970f8a7da50e12f455219ae1c0c9bfbf006058f407162aea",
+      "exact": true,
+      "lastUpdate": 1775637318,
+      "apiTimestamp": 1791295524,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x6351b952d0c723e7b3e7e9b98bf22f12883768953abefe4ae25044e7d5b42fc6",
+      "exact": true,
+      "lastUpdate": 1786166619,
+      "apiTimestamp": 1791295526,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x646d90bce18e086f0e130d6ec5de4e023e08b9fa0308cfdec6bb863c91516ba9",
+      "exact": true,
+      "lastUpdate": 1790595518,
+      "apiTimestamp": 1791295526,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x647f2acdadd47ed0fad3ef826e3513fd7fdf9328b0c1f24b8c762c6d79511bf6",
+      "exact": true,
+      "lastUpdate": 1791179607,
+      "apiTimestamp": 1791295526,
+      "supplyAssetsGap": "91459463",
+      "borrowAssetsGap": "91459463",
+      "expectedInterest": "91459058",
+      "residual": 0.000004428191317939403
+     },
+     {
+      "marketId": "0x64abe9ae72308efcbfdaf7f434b50f31be2a5b1c782d4a3c00f754a35887267c",
+      "exact": true,
+      "lastUpdate": 1777820590,
+      "apiTimestamp": 1791295527,
+      "supplyAssetsGap": "100828960",
+      "borrowAssetsGap": "100828960",
+      "expectedInterest": "100829120",
+      "residual": -0.0000015868456840177664
+     },
+     {
+      "marketId": "0x66a1f3e0320a1869c1a1e8eaacb0b2c64e4de5cb4606207d2d9c4630acd2ad47",
+      "exact": true,
+      "lastUpdate": 1773417892,
+      "apiTimestamp": 1791295527,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x66bdba739ae3766e396c3e0e30ef5a36089ed9ed1db237af88d7080be41a4faa",
+      "exact": true,
+      "lastUpdate": 1763665476,
+      "apiTimestamp": 1791295528,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x672eae4e05969c8bc0c26b9de239ba17f9832d546092847a7a667442066ca814",
+      "exact": true,
+      "lastUpdate": 1790781568,
+      "apiTimestamp": 1791295528,
+      "supplyAssetsGap": "103",
+      "borrowAssetsGap": "103",
+      "expectedInterest": "103",
+      "residual": 0
+     },
+     {
+      "marketId": "0x679cbc082685b62759b86da6edcf3565d9c01793f76478266936a8b42d81c16e",
+      "exact": true,
+      "lastUpdate": 1774322474,
+      "apiTimestamp": 1791295528,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x67c3a8f21f0ab1c3dd07761225f47de1be3ee650ce6b9f6b6d5fb05262046175",
+      "exact": true,
+      "lastUpdate": 1787677064,
+      "apiTimestamp": 1791295529,
+      "supplyAssetsGap": "7192299",
+      "borrowAssetsGap": "7192299",
+      "expectedInterest": "7194313",
+      "residual": -0.00028002172879631397
+     },
+     {
+      "marketId": "0x6c7158ce7b750894a1ef9cf095626448fe9255bc4205ba1299b0b9a448944e64",
+      "exact": true,
+      "lastUpdate": 1789055338,
+      "apiTimestamp": 1791295529,
+      "supplyAssetsGap": "1268",
+      "borrowAssetsGap": "1268",
+      "expectedInterest": "1268",
+      "residual": 0
+     },
+     {
+      "marketId": "0x6e917df11bfabfec89a2658e7efd23c0530b54365b2461b33cd547d0d2736fd5",
+      "exact": true,
+      "lastUpdate": 1789473661,
+      "apiTimestamp": 1791295529,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x6f68f498083f8ff7a59648f2bb0d14578d44fe94ae6b28d99456a0a1584f1f80",
+      "exact": true,
+      "lastUpdate": 1791218989,
+      "apiTimestamp": 1791295531,
+      "supplyAssetsGap": "44",
+      "borrowAssetsGap": "44",
+      "expectedInterest": "44",
+      "residual": 0
+     },
+     {
+      "marketId": "0x71c36bfa66af9f357b8b1e294dec4a1d368a34d1b7d3b07576cdfbb0414340de",
+      "exact": true,
+      "lastUpdate": 1763847116,
+      "apiTimestamp": 1791295531,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     },
+     {
+      "marketId": "0x71cad28b047d94c5a57c947619f9790b06b121536f975e03fdf241e9316edec7",
+      "exact": true,
+      "lastUpdate": 1791295917,
+      "apiTimestamp": 1791295919,
+      "supplyAssetsGap": "5121",
+      "borrowAssetsGap": "5121",
+      "expectedInterest": "5121",
+      "residual": 0
+     },
+     {
+      "marketId": "0x74b42fd3296e4f4a1c4db4e99f4ef538dec4729f04ab865c14e9b9f4506980c3",
+      "exact": true,
+      "lastUpdate": 1763984365,
+      "apiTimestamp": 1791295531,
+      "supplyAssetsGap": "294973551958450187015",
+      "borrowAssetsGap": "294973551958450187015",
+      "expectedInterest": "294973551958450187015",
+      "residual": 0
+     },
+     {
+      "marketId": "0x78736c8a794777e2c965737884accf49bbd148961ccf032ac2dfd36038667edf",
+      "exact": true,
+      "lastUpdate": 1775044316,
+      "apiTimestamp": 1791295531,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x7aeb107bee5e822bac2a9aaa1917d1c9aca5919226b373de1f9205a932bc9f7e",
+      "exact": true,
+      "lastUpdate": 1791219051,
+      "apiTimestamp": 1791295531,
+      "supplyAssetsGap": "3834093",
+      "borrowAssetsGap": "3834093",
+      "expectedInterest": "3834958",
+      "residual": -0.00022560746439901171
+     },
+     {
+      "marketId": "0x823542f629eabe0912688a9fdeea092c3e656d6fa1e490c45631f9e98b7e5f3f",
+      "exact": true,
+      "lastUpdate": 1791119794,
+      "apiTimestamp": 1791295533,
+      "supplyAssetsGap": "736663227",
+      "borrowAssetsGap": "736663227",
+      "expectedInterest": "736676019",
+      "residual": -0.000017364786962550527
+     },
+     {
+      "marketId": "0x82fc81e4419b8f94d1934395bca3829e704f2785e65a0f1f19409c63fd96051f",
+      "exact": true,
+      "lastUpdate": 1774635204,
+      "apiTimestamp": 1791295533,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x879d9bcb5366e88ea1417353ccbfb3dd28d42d9c99f9dd802fcb8071c3633ef4",
+      "exact": true,
+      "lastUpdate": 1789034536,
+      "apiTimestamp": 1791295533,
+      "supplyAssetsGap": "385278648",
+      "borrowAssetsGap": "385278648",
+      "expectedInterest": "385278636",
+      "residual": 3.1146288698562913e-8
+     },
+     {
+      "marketId": "0x887e09782166af976d67b737b173cf3a21a21d8de414adca64a07e046ddb6d83",
+      "exact": true,
+      "lastUpdate": 1763672648,
+      "apiTimestamp": 1791295535,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x8bdb7d2c5024d349772884afb3c5c409bc8de58ed63d79618bf48fb57b595060",
+      "exact": true,
+      "lastUpdate": 1791294003,
+      "apiTimestamp": 1791295535,
+      "supplyAssetsGap": "10935133903945942",
+      "borrowAssetsGap": "10935133903945942",
+      "expectedInterest": "10935104247014444",
+      "residual": 0.0000027120775802570006
+     },
+     {
+      "marketId": "0x8d0918317751c6781d1117a1d8ff9a0f450f87cc76b2446bf0d696312bc32c5c",
+      "exact": true,
+      "lastUpdate": 1788989852,
+      "apiTimestamp": 1791295535,
+      "supplyAssetsGap": "22",
+      "borrowAssetsGap": "22",
+      "expectedInterest": "22",
+      "residual": 0
+     },
+     {
+      "marketId": "0x8fa5d51aeab15e8ae42544e52d6dc0a2b0a23d1f360cb243fdc054a82cfd31d3",
+      "exact": true,
+      "lastUpdate": 1791294853,
+      "apiTimestamp": 1791295536,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x93a7a013b5501cee5d9bee0d29bb3fca790196134c4c7058365e5bc6d2ad80a2",
+      "exact": true,
+      "lastUpdate": 1791294471,
+      "apiTimestamp": 1791295536,
+      "supplyAssetsGap": "4602928",
+      "borrowAssetsGap": "4602928",
+      "expectedInterest": "4602702",
+      "residual": 0.000049099182085837536
+     },
+     {
+      "marketId": "0x9c8738983371b2e7285100cb7b1b7f1e0db8838cd644a9704d92eabd6f18d26a",
+      "exact": true,
+      "lastUpdate": 1784101609,
+      "apiTimestamp": 1791295536,
+      "supplyAssetsGap": "118",
+      "borrowAssetsGap": "118",
+      "expectedInterest": "118",
+      "residual": 0
+     },
+     {
+      "marketId": "0x9cfe91a0e49f8aff310293ca38b6fe632417984d053c049a90ec08c6abff6f71",
+      "exact": true,
+      "lastUpdate": 1790627032,
+      "apiTimestamp": 1791295538,
+      "supplyAssetsGap": "795",
+      "borrowAssetsGap": "795",
+      "expectedInterest": "795",
+      "residual": 0
+     },
+     {
+      "marketId": "0x9e2c6d03ed3c06e51c299cb415d3a70e694ab3af856c5beba144bd16bbf543a5",
+      "exact": true,
+      "lastUpdate": 1783336341,
+      "apiTimestamp": 1791295538,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0x9e8441e7af65860feac831ebc117473e3033321abf528ebc8fbde1eeaaa3a626",
+      "exact": true,
+      "lastUpdate": 1791294267,
+      "apiTimestamp": 1791295538,
+      "supplyAssetsGap": "113294403",
+      "borrowAssetsGap": "113294403",
+      "expectedInterest": "113291806",
+      "residual": 0.000022922579855952813
+     },
+     {
+      "marketId": "0xa00c349ebd9b7f26247e3e20b6724cd162e037a1b01b9eeffe0fa7216d1a05ea",
+      "exact": true,
+      "lastUpdate": 1791218989,
+      "apiTimestamp": 1791295539,
+      "supplyAssetsGap": "44",
+      "borrowAssetsGap": "44",
+      "expectedInterest": "44",
+      "residual": 0
+     },
+     {
+      "marketId": "0xa484c81c94d669c0881ebc781465f937f8c9fbe545c1fc7bd2b3938d198af3dd",
+      "exact": true,
+      "lastUpdate": 1782463407,
+      "apiTimestamp": 1791295539,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xb03e5cef40a9a710a411fd2e6a087ffe8e5118edbfda866bd88756194fdc5e0b",
+      "exact": true,
+      "lastUpdate": 1785428408,
+      "apiTimestamp": 1791295539,
+      "supplyAssetsGap": "1304",
+      "borrowAssetsGap": "1304",
+      "expectedInterest": "1304",
+      "residual": 0
+     },
+     {
+      "marketId": "0xb0e2356396611ddd427580df2c4316bf1c8569983cc5863febdc9be80491dd2b",
+      "exact": true,
+      "lastUpdate": 1791219833,
+      "apiTimestamp": 1791295541,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     },
+     {
+      "marketId": "0xba2e101bfd40a1485745543c07fff784c488fc31bdb01dc40ba967bd296f9737",
+      "exact": true,
+      "lastUpdate": 1790781564,
+      "apiTimestamp": 1791295541,
+      "supplyAssetsGap": "103",
+      "borrowAssetsGap": "103",
+      "expectedInterest": "103",
+      "residual": 0
+     },
+     {
+      "marketId": "0xba9c7d24eb44c2cd1dcd62f20c272a13c6577b1a3c05566fd6ccb69ca6441b08",
+      "exact": true,
+      "lastUpdate": 1763140557,
+      "apiTimestamp": 1791295541,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xbc3e3ac4b896a999b2943273f3ed121238a4da4218d4e48533739c0f4b43253e",
+      "exact": true,
+      "lastUpdate": 1791270656,
+      "apiTimestamp": 1791295542,
+      "supplyAssetsGap": "284",
+      "borrowAssetsGap": "284",
+      "expectedInterest": "284",
+      "residual": 0
+     },
+     {
+      "marketId": "0xc0ae288f2cf8b3057afc1e898faed145acc2b88b0286e61ccbf456eb40a116fa",
+      "exact": true,
+      "lastUpdate": 1791290286,
+      "apiTimestamp": 1791295542,
+      "supplyAssetsGap": "330",
+      "borrowAssetsGap": "330",
+      "expectedInterest": "330",
+      "residual": 0
+     },
+     {
+      "marketId": "0xc25cdc7bc4c92e1d86360e889c6dd8253a275e613bb7c2a295af03a8bf60f662",
+      "exact": true,
+      "lastUpdate": 1763141615,
+      "apiTimestamp": 1791295542,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xc4504d2bf84ff1f6ff015afe00086226425dd5a626e096283504154a71821ec1",
+      "exact": true,
+      "lastUpdate": 1791295526,
+      "apiTimestamp": 1791295769,
+      "supplyAssetsGap": "5737810",
+      "borrowAssetsGap": "5737810",
+      "expectedInterest": "5737966",
+      "residual": -0.000027188073498425358
+     },
+     {
+      "marketId": "0xc4877b3ae3a92cc2931dfc80206b578525587d1b86da2c59e6f698fa995ad118",
+      "exact": true,
+      "lastUpdate": 1763140331,
+      "apiTimestamp": 1791295544,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xc4b22219698af4834d04eb32f569ab7faf40a041236f5064adb3cca17d424e4c",
+      "exact": true,
+      "lastUpdate": 1763371130,
+      "apiTimestamp": 1791295544,
+      "supplyAssetsGap": "1212725987872673625000",
+      "borrowAssetsGap": "1212725987872673625000",
+      "expectedInterest": "1212716757753085180000",
+      "residual": 0.000007611051202618483
+     },
+     {
+      "marketId": "0xc5a8e035a7dbc3d545ecfb0f2e6f6ebed5920dec4df9e33337c667113e8c9746",
+      "exact": true,
+      "lastUpdate": 1791155844,
+      "apiTimestamp": 1791295544,
+      "supplyAssetsGap": "87",
+      "borrowAssetsGap": "87",
+      "expectedInterest": "87",
+      "residual": 0
+     },
+     {
+      "marketId": "0xcaa68590c9fd1815f5f2e9f61c2001061813f6e346f07505b9e9b3d228b4aa13",
+      "exact": true,
+      "lastUpdate": 1791232433,
+      "apiTimestamp": 1791295545,
+      "supplyAssetsGap": "3233379",
+      "borrowAssetsGap": "3233379",
+      "expectedInterest": "3233376",
+      "residual": 9.278219472570336e-7
+     },
+     {
+      "marketId": "0xcb9212a2bad6e116fd5288912b4ab29705b9b2eeba56a9efca3af2e8e09bc553",
+      "exact": true,
+      "lastUpdate": 1789660789,
+      "apiTimestamp": 1791295545,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xcd29d72dff607c9796831c5d969d94312f50da4c66eab0ef376b243b029117aa",
+      "exact": true,
+      "lastUpdate": 1791255643,
+      "apiTimestamp": 1791295545,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     },
+     {
+      "marketId": "0xcd6d902d2d214c0a06785a072b94b4f3a4fd3ddfa6f6e6861807964ea78cdf98",
+      "exact": true,
+      "lastUpdate": 1791286348,
+      "apiTimestamp": 1791295547,
+      "supplyAssetsGap": "69730950",
+      "borrowAssetsGap": "69730950",
+      "expectedInterest": "69730341",
+      "residual": 0.000008733568092790934
+     },
+     {
+      "marketId": "0xd3d46b7c9d598e11bca3582b7f256ecc30ade99b94638e0f9d20b101baaf78fe",
+      "exact": true,
+      "lastUpdate": 1773418761,
+      "apiTimestamp": 1791295547,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xd708dcac093e0fffa2cfbe416978f7c5152d8a14297221e411b8c239b0698e1d",
+      "exact": true,
+      "lastUpdate": 1789485196,
+      "apiTimestamp": 1791295547,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xd7d92f438bbdbe913e0f21e14347e14c4a2acf8d2bc9556c0fbb3ac9c3508993",
+      "exact": true,
+      "lastUpdate": 1791255643,
+      "apiTimestamp": 1791295548,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xd8140d6b3f1ab6aaa7b921fb03f91e7fca17c77c306c03118a8dcc0089e80a00",
+      "exact": true,
+      "lastUpdate": 1791243639,
+      "apiTimestamp": 1791295548,
+      "supplyAssetsGap": "32",
+      "borrowAssetsGap": "32",
+      "expectedInterest": "32",
+      "residual": 0
+     },
+     {
+      "marketId": "0xda022976cf21aafbacb2b95d0c6e4e2a24307e7301e07c78f0c9321478cbd82c",
+      "exact": true,
+      "lastUpdate": 1791218989,
+      "apiTimestamp": 1791295548,
+      "supplyAssetsGap": "6872991",
+      "borrowAssetsGap": "6872991",
+      "expectedInterest": "6872512",
+      "residual": 0.00006969309286160858
+     },
+     {
+      "marketId": "0xdae8f49b294971b3056a9be9e7d1213fc528068ee555719e346924b3862e542a",
+      "exact": true,
+      "lastUpdate": 1763984365,
+      "apiTimestamp": 1791295549,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     },
+     {
+      "marketId": "0xdcaf3f0c5ea425d47dc8bb5842a2f8cd33dd8025afb65f419eec42579ce0e6a8",
+      "exact": true,
+      "lastUpdate": 1791204825,
+      "apiTimestamp": 1791295549,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xdcf2ce5fb573fdd291c5a6e8c454da3e8a4871f62379e0acc188790f9ea1e388",
+      "exact": true,
+      "lastUpdate": 1787319422,
+      "apiTimestamp": 1791295549,
+      "supplyAssetsGap": "5060",
+      "borrowAssetsGap": "5060",
+      "expectedInterest": "5060",
+      "residual": 0
+     },
+     {
+      "marketId": "0xdf9a5f543c051f0cb4cdca3b75c9facaad58b7871d58f05b16722e6bd5b4df1a",
+      "exact": true,
+      "lastUpdate": 1791218989,
+      "apiTimestamp": 1791295551,
+      "supplyAssetsGap": "44",
+      "borrowAssetsGap": "44",
+      "expectedInterest": "44",
+      "residual": 0
+     },
+     {
+      "marketId": "0xe2add120fd9acbda344dec443e8b2d84963d4caca47be588a26e963bf907ff6d",
+      "exact": true,
+      "lastUpdate": 1791218989,
+      "apiTimestamp": 1791295551,
+      "supplyAssetsGap": "44",
+      "borrowAssetsGap": "44",
+      "expectedInterest": "44",
+      "residual": 0
+     },
+     {
+      "marketId": "0xe35c5abc6418b6319b014e07aa3c86163a870a957284128f03cf7a9e414f8899",
+      "exact": true,
+      "lastUpdate": 1791232433,
+      "apiTimestamp": 1791295551,
+      "supplyAssetsGap": "1404213",
+      "borrowAssetsGap": "1404213",
+      "expectedInterest": "1404087",
+      "residual": 0.00008972997686248453
+     },
+     {
+      "marketId": "0xe5192cf7306644ce173758036f29af4dd6cdcd5f222d73907ded30ab9b2450e5",
+      "exact": true,
+      "lastUpdate": 1791218430,
+      "apiTimestamp": 1791295552,
+      "supplyAssetsGap": "260156498",
+      "borrowAssetsGap": "260156498",
+      "expectedInterest": "260164318",
+      "residual": -0.0000300588302045794
+     },
+     {
+      "marketId": "0xeb01a16d46e51c8b244bc9bc0a5c9521b5b03b2ffd903281ef8e2a779c623952",
+      "exact": true,
+      "lastUpdate": 1790596259,
+      "apiTimestamp": 1791295552,
+      "supplyAssetsGap": "799",
+      "borrowAssetsGap": "799",
+      "expectedInterest": "799",
+      "residual": 0
+     },
+     {
+      "marketId": "0xeea9a8f0dcd518b90f8cba74b62f62cc9b005541ff8a10a86bba45eebe4e2098",
+      "exact": true,
+      "lastUpdate": 1791119794,
+      "apiTimestamp": 1791295552,
+      "supplyAssetsGap": "261310785",
+      "borrowAssetsGap": "261310785",
+      "expectedInterest": "261312685",
+      "residual": -0.000007271035521936073
+     },
+     {
+      "marketId": "0xf15cbbe4f311d421adf0b15a6b3474b194585cc53edf6601d60517a4a8e36968",
+      "exact": true,
+      "lastUpdate": 1790622914,
+      "apiTimestamp": 1791295554,
+      "supplyAssetsGap": "1034",
+      "borrowAssetsGap": "1034",
+      "expectedInterest": "1034",
+      "residual": 0
+     },
+     {
+      "marketId": "0xf24e30d7d188524415d11cc78abd40589df5dd4b93b0d429c6a7ec0a5a550447",
+      "exact": true,
+      "lastUpdate": 1789732418,
+      "apiTimestamp": 1791295554,
+      "supplyAssetsGap": "42096",
+      "borrowAssetsGap": "42096",
+      "expectedInterest": "42091",
+      "residual": 0.00011877613074876472
+     },
+     {
+      "marketId": "0xf2f3e506c5f0d7580ae36eebcbf9d27628185bf1e8bd1e9ab77e1d121dbd4d68",
+      "exact": true,
+      "lastUpdate": 1782144203,
+      "apiTimestamp": 1791295554,
+      "supplyAssetsGap": "37",
+      "borrowAssetsGap": "37",
+      "expectedInterest": "37",
+      "residual": 0
+     },
+     {
+      "marketId": "0xf3dfe9975c11c17f21b654563563f4a8ff3fabecc0bf8274a403e6630464671b",
+      "exact": true,
+      "lastUpdate": 1789732418,
+      "apiTimestamp": 1791295555,
+      "supplyAssetsGap": "174",
+      "borrowAssetsGap": "174",
+      "expectedInterest": "174",
+      "residual": 0
+     },
+     {
+      "marketId": "0xf452ca78bd14ce69b5d6b60a704822a2d59157925b920d01b5beaf098a7a39df",
+      "exact": true,
+      "lastUpdate": 1784737425,
+      "apiTimestamp": 1791295555,
+      "supplyAssetsGap": "2108",
+      "borrowAssetsGap": "2108",
+      "expectedInterest": "2108",
+      "residual": 0
+     },
+     {
+      "marketId": "0xf595a96bda2e2a3e2783ca92292d54781e4ed1efe4826f758bdee390c605ebd4",
+      "exact": true,
+      "lastUpdate": 1787319383,
+      "apiTimestamp": 1791295555,
+      "supplyAssetsGap": "7950",
+      "borrowAssetsGap": "7950",
+      "expectedInterest": "7950",
+      "residual": 0
+     },
+     {
+      "marketId": "0xf6994a750ede6124e4a9a8cbef29e2c298845461a8b1e53bea3f769d195bc29d",
+      "exact": true,
+      "lastUpdate": 1769154265,
+      "apiTimestamp": 1791295557,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xf7ba77865ddd40a9961f2226d8996b64fa6c9874e533f3a044b1d90198bf9785",
+      "exact": true,
+      "lastUpdate": 1789480936,
+      "apiTimestamp": 1791295557,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xf7e3362b90e750c560ccd07818512d400d3cf65e779a397a53cdda29c1e1b6d3",
+      "exact": true,
+      "lastUpdate": 1787563968,
+      "apiTimestamp": 1791295557,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xfa0b720389b546fcf8562c18cda8c00460072b63776add7fbfe8cd4f06d7c3ba",
+      "exact": true,
+      "lastUpdate": 1791243639,
+      "apiTimestamp": 1791295557,
+      "supplyAssetsGap": "535541",
+      "borrowAssetsGap": "535541",
+      "expectedInterest": "535702",
+      "residual": -0.000300630577304072
+     },
+     {
+      "marketId": "0xfbd812dc49623513c0a04a165101b7e643d567312237b229dda10f134797919a",
+      "exact": true,
+      "lastUpdate": 1791243639,
+      "apiTimestamp": 1791295557,
+      "supplyAssetsGap": "30",
+      "borrowAssetsGap": "30",
+      "expectedInterest": "30",
+      "residual": 0
+     },
+     {
+      "marketId": "0xfdfec1ced463198bba499c38a43c04a5919cab0472a298c4c68041b225d16563",
+      "exact": true,
+      "lastUpdate": 1763370924,
+      "apiTimestamp": 1791295557,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": "0",
+      "residual": 0
+     },
+     {
+      "marketId": "0xfe1d7da2fbde85b1fee120c88df3e6b55164a2442dab97486d3d4f719a5ff1fb",
+      "exact": true,
+      "lastUpdate": 1761813959,
+      "apiTimestamp": 1774533834,
+      "supplyAssetsGap": "0",
+      "borrowAssetsGap": "0",
+      "expectedInterest": null,
+      "residual": null
+     }
+    ]
+   },
+   "storage": {
+    "markets": 130,
+    "positions": 1109,
+    "diffs": [
+     {
+      "marketId": "0x71c36bfa66af9f357b8b1e294dec4a1d368a34d1b7d3b07576cdfbb0414340de",
+      "user": null,
+      "field": "lastUpdate",
+      "storage": "1767177267",
+      "replay": "1763847116",
+      "cause": "accrueInterest() on a market with no IRM moves lastUpdate without an event; no amount depends on it"
+     },
+     {
+      "marketId": "0x42fc9b90d6727210e63cfe636d2ba291c4a348ee7ec9460c48403efb7d36f039",
+      "user": null,
+      "field": "lastUpdate",
+      "storage": "1782294089",
+      "replay": "1775802741",
+      "cause": "accrueInterest() on a market with no IRM moves lastUpdate without an event; no amount depends on it"
+     },
+     {
+      "marketId": "0x0aad5e92127102bd856e439e5f6b30a229551610ee8845f67f8f4a4c9f59a64a",
+      "user": null,
+      "field": "lastUpdate",
+      "storage": "1791295415",
+      "replay": "1786393503",
+      "cause": "accrueInterest() on a market with no IRM moves lastUpdate without an event; no amount depends on it"
+     },
+     {
+      "marketId": "0x4fbd9725c44351767d8dd40942a89fcc967a5857a84de4e3ef9b299ddcc0a0fc",
+      "user": null,
+      "field": "lastUpdate",
+      "storage": "1791295416",
+      "replay": "1784704319",
+      "cause": "accrueInterest() on a market with no IRM moves lastUpdate without an event; no amount depends on it"
+     }
+    ]
+   },
+   "replay": {
+    "events": 672131,
+    "checksPassed": 964389,
+    "checksFailed": 0
+   },
+   "interest": {
+    "zeroGap": 47,
+    "gaps": 83,
+    "toTheWei": 53,
+    "within1e4": 21,
+    "maxAbsResidual": 0.00035821750967187277
+   }
+  }
+ ]
+}

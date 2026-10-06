@@ -52,6 +52,7 @@ Its first payout (transaction `0x9d033418e9f67bc6faaadd095dcfc3aefc1cf48f83ce8c8
 | `lending/` | Stress test of every Morpho market on Monad, cover pricing, shortfall proofs and replay books |
 | `contracts/` | Morpho cover vault and its replay on our own Morpho Blue; the Perpl cover vault (Foundry) |
 | `research/` | Scripts and data behind `docs/RESEARCH.md`: failure rates, oracles, exit quotes |
+| `indexer/` | The same Morpho book rebuilt from Morpho's events on chain through Envio HyperSync, and its reconciliation with the API snapshot |
 | `fixtures/` | Dated Morpho and Perpl snapshots |
 | `engine/` | Perpl risk engine and the Morpho snapshot script |
 | `snapshot/` | Rust reader for Perpl through its SDK |
