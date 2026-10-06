@@ -37,6 +37,12 @@ library LendingConfig {
 
     /// @dev Assumption: policies run 30 days, the same term as the Perpl layer.
     uint256 internal constant POLICY_TERM = 30 days;
+    /// @dev Assumption: cover attaches two days after purchase. In the incidents in
+    /// docs/RESEARCH.md the loss reached lenders within days of the first news (Stream's
+    /// loss on 4 Nov 2025, Elixir shut on 6 Nov), so a buyer who reads the news cannot
+    /// cover the markdown that follows. Two days of a 30-day term is the cost to an
+    /// honest buyer. The replay deploys with 0, since it runs in minutes.
+    uint256 internal constant WAITING_PERIOD = 2 days;
     /// @dev Assumption: a policy can be claimed for one day after it ends. Claims are
     /// permissionless and the trigger is on chain, so a day is ample for anyone to call.
     uint256 internal constant CLAIM_WINDOW = 1 days;
@@ -47,8 +53,9 @@ library LendingConfig {
     uint256 internal constant WITHDRAWAL_WINDOW = 2 days;
     /// @dev Assumption: claims under one dollar (six-decimal loan token) are not paid.
     uint256 internal constant DUST_THRESHOLD = 1e6;
-    /// @dev Assumption: 2% a year of the limit, a placeholder until the engine prices
-    /// each market from its scenarios (docs/LENDING.md, "Premium").
+    /// @dev Assumption: 2% a year of the limit, a placeholder for a replay book with no
+    /// `premiumBps` of its own. The engine prices each market from its scenarios
+    /// (docs/LENDING.md, "Premium") and writes the rate into the book.
     uint256 internal constant PREMIUM_BPS = 200;
 
     // ------------------------------------------------------------- the replay

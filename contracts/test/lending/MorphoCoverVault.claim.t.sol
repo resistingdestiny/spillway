@@ -273,7 +273,7 @@ contract MorphoCoverVaultClaimTest is MorphoFixture {
     function test_unlistedMarketIsRejected() public {
         Id other = Id.wrap(keccak256("not a market"));
         vm.expectRevert(abi.encodeWithSelector(MorphoCoverVault.MarketNotListed.selector, other));
-        vault.buyPolicy(other, holder, 1, 1, 0);
+        vault.buyPolicy(other, holder, 1, 1, 0, _none());
     }
 
     function test_sameMarketWithAnotherOracleIsADifferentId() public {
@@ -284,7 +284,7 @@ contract MorphoCoverVaultClaimTest is MorphoFixture {
         p.oracle = address(rogue);
         morpho.createMarket(p);
         vm.expectRevert(abi.encodeWithSelector(MorphoCoverVault.MarketNotListed.selector, p.id()));
-        vault.buyPolicy(p.id(), holder, 1, 1, 0);
+        vault.buyPolicy(p.id(), holder, 1, 1, 0, _none());
     }
 
     function test_listingChecks() public {
@@ -316,7 +316,7 @@ contract MorphoCoverVaultClaimTest is MorphoFixture {
         assertFalse(vault.isListed(id));
 
         vm.expectRevert(abi.encodeWithSelector(MorphoCoverVault.MarketNotListed.selector, id));
-        vault.buyPolicy(id, holder, 1, 1, 0);
+        vault.buyPolicy(id, holder, 1, 1, 0, _none());
 
         _badDebtOf(100_000e6);
         assertGt(vault.claim(policyId), 0);
@@ -330,19 +330,19 @@ contract MorphoCoverVaultClaimTest is MorphoFixture {
                 MorphoCoverVault.SharesNotHeld.selector, holderShares + 1, holderShares
             )
         );
-        vault.buyPolicy(id, holder, holderShares + 1, 1e6, 0);
+        vault.buyPolicy(id, holder, holderShares + 1, 1e6, 0, _none());
 
         // The same shares cannot be covered twice.
         _buy(holder, holderShares, 100_000e6, 0);
         vm.expectRevert(abi.encodeWithSelector(MorphoCoverVault.SharesNotHeld.selector, 1, 0));
-        vault.buyPolicy(id, holder, 1, 1e6, 0);
+        vault.buyPolicy(id, holder, 1, 1e6, 0, _none());
     }
 
     function test_limitMustFitCapacity() public {
         vm.expectRevert(
             abi.encodeWithSelector(MorphoCoverVault.CapacityExceeded.selector, CAPITAL + 1, CAPITAL)
         );
-        vault.buyPolicy(id, holder, holderShares, CAPITAL + 1, 0);
+        vault.buyPolicy(id, holder, holderShares, CAPITAL + 1, 0, _none());
     }
 
     function test_policyRecordsItsTerms() public {

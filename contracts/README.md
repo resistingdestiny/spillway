@@ -46,10 +46,12 @@ forge test
 | `test/lending/LendingMocks.t.sol` | MockOracle, TestToken, FixedRateIrm, our Morpho Blue deployment, the liquidation incentive factor and liquidations with and without bad debt |
 | `test/lending/MorphoCoverVault.claim.t.sol` | The payout is the exact fall in what the covered shares redeem for, less the deductible, capped by the limit and by free capital. Interest alone never pays. No loss, no claim. Dust, the claim window, release, the whitelist (a market with another oracle is another id), insurable interest |
 | `test/lending/MorphoCoverVault.underwriting.t.sol` | Share pricing, the withdrawal notice and its window, shares under notice stay at risk, capacity, premium streaming per policy, sweep, premium never pays a claim |
+| `test/lending/MorphoCoverVault.shortfall.t.sol` | The unrealised path on a local Morpho Blue: an oracle drop leaves a borrower under water and nobody liquidates. The exact due, no double payment when the position is later liquidated, no clawback when the oracle recovers, unsorted and duplicate lists rejected, healthy borrowers add nothing, the deductible, the limit and interest since attachment |
+| `test/lending/MorphoCoverVault.attach.t.sol` | The waiting period: claims wait for `attach`, a loss realised during the wait is not covered, attachment closes at the end. The purchase-time health check, including Morpho's boundary |
 | `test/lending/MorphoCoverVault.flow.t.sol` | Full flow on a local Morpho Blue: four borrowers, a 25% depeg, liquidations, about 238k of bad debt, and the claim pays the holder's share |
-| `test/lending/MorphoCoverVault.fuzz.t.sol` | Payout equals min(loss less deductible, limit, free capital) over random sizes and withdrawals; interest never pays |
-| `test/lending/MorphoCoverVault.invariant.t.sol` | Solvency, premium reserve, policy limits, `activeLimit` and `paidOut` bookkeeping, and conservation of principal, over random sequences with real bad debt |
-| `test/lending/Replay.t.sol` | Deploy, seed and scenario scripts in order on `replay/example.json` |
+| `test/lending/MorphoCoverVault.fuzz.t.sol` | Payout equals min(loss less deductible, limit, free capital) over random sizes and withdrawals; interest never pays; an unrealised claim then the realised one pay the larger due once, within the limit |
+| `test/lending/MorphoCoverVault.invariant.t.sol` | Solvency, premium reserve, policy limits, `activeLimit` and `paidOut` bookkeeping, conservation of principal, and no policy paid past the most it was ever due, over random sequences with real bad debt, borrowers left under water, oracle moves, liquidations, attachment and both claim paths |
+| `test/lending/Replay.t.sol` | Deploy, seed and scenario scripts in order on `replay/example.json`, the premium rate read from the book, then the unrealised mode on a second copy of the book |
 
 The invariant suite runs with fail-on-revert on. It checks after every call that the vault's balance covers principal plus the premium reserve, that the reserve covers what holders can claim, that no payout passes min(shortfall, remaining limit, principal), that no deposit is accepted while a shortfall is pending, and that the waterfall adds up to all bad debt.
 
@@ -114,16 +116,31 @@ cast call $ADAPTER "adlLoss()(uint256)" --rpc-url $RPC
 
 ## Lending cover (Morpho Blue)
 
-The design is in `docs/LENDING.md` ("Cover" and "Testnet replay"). A policy covers one holder's supply shares in one listed Morpho Blue market. It pays when the market's supply share price falls, which happens only when Morpho writes off bad debt in `liquidate`. No keeper or vote decides anything.
+The design is in `docs/LENDING.md` ("Cover" and "Testnet replay"). A policy covers one holder's supply shares in one listed Morpho Blue market. It pays when the market's supply share price falls, which happens only when Morpho writes off bad debt in `liquidate`. It also pays a loss nobody has realised yet: borrowers whose debt is above their collateral at the market's oracle, whom nobody liquidates. On Monad that is the likely case, since most collateral cannot be sold at size (`docs/RESEARCH.md`, section 3). No keeper or vote decides anything.
 
-**`MorphoCoverVault`** (`src/lending/`). Underwriters deposit the loan token (tUSD on testnet) and get shares, as in `CoverVault`. The owner lists Morpho market ids, each with an annual premium rate in basis points of the limit. Anyone can buy a policy for a holder: it covers some of the holder's supply shares (never more than the holder supplies and has not already covered) for `policyTerm`, with a limit and a deductible. The premium is paid up front and streams to underwriters over the term. The vault backs every live limit in full when it sells, so a new limit must fit in `capacity()`, which is principal less live limits less principal under withdrawal notice. At inception the policy records the market's `totalSupplyAssets` and `totalSupplyShares` after accruing interest. That pair, with Morpho's virtual shares and assets, is the start share price. `claim(policyId)` is permissionless. It accrues interest on Morpho, then pays the holder
+**`MorphoCoverVault`** (`src/lending/`). Underwriters deposit the loan token (tUSD on testnet) and get shares, as in `CoverVault`. The owner lists Morpho market ids, each with an annual premium rate in basis points of the limit. Anyone can buy a policy for a holder: it covers some of the holder's supply shares (never more than the holder supplies and has not already covered) for `policyTerm`, with a limit and a deductible. The buyer passes a list of the market's borrowers, and the sale is refused (`UnhealthyBorrower`) if any of them is unhealthy at the oracle by Morpho's rule. The premium is paid up front and streams to underwriters over the term. The vault backs every live limit in full when it sells, so a new limit must fit in `capacity()`, which is principal less live limits less principal under withdrawal notice. Cover attaches after `waitingPeriod` (default two days, in `LendingConfig`): from then until the policy ends anyone can call `attach(policyId)`, which accrues interest on Morpho and records the market's `totalSupplyAssets` and `totalSupplyShares`. That pair, with Morpho's virtual shares and assets, is the start share price, so a loss realised during the waiting period is not covered. A vault with no waiting period attaches each policy when it is sold. Claims wait for attachment (`NotAttached`). `claim(policyId)` is permissionless. It accrues interest on Morpho, then pays the holder
 
 ```
 loss = toAssetsDown(shares, start totals) - toAssetsDown(shares, totals now)
 paid = min(loss - deductible, limit) - already paid, then capped by free capital
 ```
 
-where `shares` is the lower of the covered shares and what the holder still supplies, and `toAssetsDown` is Morpho's own `SharesMathLib`. So the payout is exactly the fall in what the covered shares redeem for, rounded as Morpho rounds a withdrawal. Claims can repeat as a loss grows. A claim under `dustThreshold` reverts. Underwriters give notice with `requestWithdrawal` and can `withdraw` once `withdrawalNotice` has passed, for `withdrawalWindow`. The notice is longer than the claim window, and shares under notice stay at risk. Every state change emits an event, and every refusal is a custom error.
+where `shares` is the lower of the covered shares and what the holder still supplies, and `toAssetsDown` is Morpho's own `SharesMathLib`. So the payout is exactly the fall in what the covered shares redeem for, rounded as Morpho rounds a withdrawal. Claims can repeat as a loss grows.
+
+`claimShortfall(policyId, borrowers)` is the unrealised path, also permissionless, in the same window. `borrowers` must be strictly increasing (`BorrowersNotSorted(index)` otherwise), so no position counts twice. It accrues interest on Morpho, then
+
+```
+debt_i     = toAssetsDown(borrowShares_i, totalBorrowAssets, totalBorrowShares)
+value_i    = ceil(collateral_i * oraclePrice / 1e36)
+shortfall  = sum of max(0, debt_i - value_i)
+unrealised = floor(shortfall * shares / (totalSupplyShares + 1e6))
+loss       = max(0, toAssetsDown(shares, start totals) + unrealised - toAssetsDown(shares, totals now))
+paid       = min(loss - deductible, limit) - already paid, then capped by free capital
+```
+
+Both sides of the shortfall round against the claimant: Morpho rounds the debt up when it checks health, here it is rounded down, and the collateral value is rounded up. `1e6` is Morpho's virtual shares, so `unrealised` is how much less the shares would redeem for once the shortfall is written off. The realised loss is the same term as in `claim`, and interest earned since attachment absorbs either kind of loss first. A healthy borrower, or an unhealthy one whose collateral still covers its debt, adds nothing. The shortfall at the oracle is a lower bound on what a liquidation books, because the liquidator takes the incentive: Morpho writes off the debt less the collateral divided by the incentive factor.
+
+Both paths share `paid`. A claim on either pays only the increase of the due over what the policy has been paid, so over its life a policy is paid the most it was ever due, never the sum. When a paid shortfall is later realised, the realised loss already contains it and `claim` pays only what liquidation added. If the shortfall shrinks instead (the oracle recovers, the borrower repays), nothing is clawed back. `marketShortfall(id, borrowers)` and `claimableShortfall(policyId, borrowers)` preview the figures with interest accrued in the view. A claim under `dustThreshold` reverts. Underwriters give notice with `requestWithdrawal` and can `withdraw` once `withdrawalNotice` has passed, for `withdrawalWindow`. The notice is longer than the claim window, and shares under notice stay at risk. Every state change emits an event, and every refusal is a custom error.
 
 **`MockOracle`** implements Morpho's `IOracle`. Its owner sets `price()`, scaled by 1e36 as Morpho expects: one base unit of collateral in base units of the loan token. For 18-decimal collateral worth $4,000 in 6-decimal tUSD that is `4000e24`.
 
@@ -131,7 +148,7 @@ where `shares` is the lower of the covered shares and what the holder still supp
 
 **`FixedRateIrm`** is our interest rate model: one borrow rate per second for every market. Morpho only accepts IRMs its owner enabled, and on our own deployment we are the owner.
 
-**`script/lending/LendingConfig.sol`** holds every lending assumption with its source: the mainnet Morpho addresses, the LLTVs to enable, the IRM rate and the vault's terms.
+**`script/lending/LendingConfig.sol`** holds every lending assumption with its source: the mainnet Morpho addresses, the LLTVs to enable, the IRM rate and the vault's terms, including the waiting period.
 
 ### Morpho Blue on Monad testnet
 
@@ -152,13 +169,14 @@ The repository is MIT. Morpho Blue at the pinned commit is GPL-2.0-or-later. Ver
   "collateral": { "name": "Test wstETH", "symbol": "twstETH", "decimals": 18 },
   "lltv": "860000000000000000",              // 1e18 scale, one of the enabled LLTVs
   "oraclePrice": "4000000000000000000000000000", // Morpho oracle scale (see MockOracle)
+  "premiumBps": 300,                         // optional: a year's premium in bps of the limit
   "holderIndex": 0,                          // the supplier whose supply is covered
   "suppliers": [ { "assets": "1500000000000" } ],  // tUSD base units (6 decimals)
   "borrowers": [ { "collateral": "300000000000000000000", "borrowAssets": "1020000000000" } ]
 }
 ```
 
-Every amount is a decimal string in base units of the testnet tokens, already scaled. The loan token is always tUSD (6 decimals). Supplier `holderIndex` supplies on behalf of `HOLDER` (default: the broadcaster). The other suppliers supply on behalf of addresses derived from the market id, which nobody holds a key to. Each borrower is a `ReplayBorrower` contract that mints its test collateral, posts it and borrows, sending the loan to the broadcaster. A borrow above what the oracle allows is trimmed to the most Morpho accepts, and logged.
+Every amount is a decimal string in base units of the testnet tokens, already scaled. `premiumBps` is the annual rate the engine prices for the market. `SeedMarket` lists the market at it, or at `LendingConfig.PREMIUM_BPS` when the book has none. The loan token is always tUSD (6 decimals). Supplier `holderIndex` supplies on behalf of `HOLDER` (default: the broadcaster). The other suppliers supply on behalf of addresses derived from the market id, which nobody holds a key to. Each borrower is a `ReplayBorrower` contract that mints its test collateral, posts it and borrows, sending the loan to the broadcaster. A borrow above what the oracle allows is trimmed to the most Morpho accepts, and logged.
 
 ### Run the replay
 
@@ -170,13 +188,19 @@ RPC=http://127.0.0.1:8545
 KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80   # anvil's first account
 F="--rpc-url $RPC --private-key $KEY --broadcast --slow --gas-estimate-multiplier 200"
 
-forge script script/lending/DeployLending.s.sol $F      # prints export lines for MORPHO, IRM, USD, VAULT
+WAITING_PERIOD=0 forge script script/lending/DeployLending.s.sol $F   # prints export lines for MORPHO, IRM, USD, VAULT
 export MORPHO=... IRM=... USD=... VAULT=...
 forge script script/lending/SeedMarket.s.sol $F         # REPLAY_JSON defaults to replay/example.json
 DROP_BPS=2500 forge script script/lending/Scenario.s.sol $F
+
+# The unrealised case: seed the book again as a fresh market, mark it down, liquidate nobody.
+forge script script/lending/SeedMarket.s.sol $F
+MODE=unrealised DROP_BPS=2500 forge script script/lending/Scenario.s.sol $F
 ```
 
-`SeedMarket` writes `replay/state-<chain id>.json`, which `Scenario` reads. Optional settings for `SeedMarket`: `REPLAY_JSON`, `REPLAY_STATE`, `HOLDER`, and `CAPITAL`, `COVER_LIMIT` and `DEDUCTIBLE` in whole tUSD (capital and limit default to the holder's supply, deductible to 0). `Scenario` takes `DROP_BPS` (default 3000) and `REPLAY_STATE`. On the example book a 25% drop liquidates three of the four borrowers, Morpho writes off 239,299.999998 tUSD, and the holder, with half the supply, is paid its loss of 119,649.999999.
+`DeployLending` reads `WAITING_PERIOD` in seconds and defaults to `LendingConfig.WAITING_PERIOD`. A replay runs in minutes, so it deploys with 0 and each policy attaches when `SeedMarket` buys it.
+
+`SeedMarket` writes `replay/state-<chain id>.json`, which `Scenario` reads. Optional settings for `SeedMarket`: `REPLAY_JSON`, `REPLAY_STATE`, `HOLDER`, and `CAPITAL`, `COVER_LIMIT` and `DEDUCTIBLE` in whole tUSD (capital and limit default to the holder's supply, deductible to 0). `SeedMarket` passes the whole book to the purchase-time health check. `Scenario` takes `DROP_BPS` (default 3000), `REPLAY_STATE` and `MODE` (`liquidate`, the default, or `unrealised`). On the example book a 25% drop liquidates three of the four borrowers, Morpho writes off 239,299.999998 tUSD, and the holder, with half the supply, is paid its loss of 119,649.999999. With `MODE=unrealised` nobody liquidates. Three borrowers are unhealthy at $3,000: the first is 120,000 tUSD short and the second 50,000, while the third's collateral still covers its debt. `Scenario` lists the three in address order and calls `claimShortfall`, which prints the 170,000 shortfall and pays the holder 84,999.999999, half of it. A liquidation later would book more (the incentive) and `claim` would pay the rest.
 
 The scenario prints figures from forge's simulation, where every call happens at one timestamp. On a real chain each transaction lands in its own block, so a little interest accrues between them, which lifts the share price and shrinks the loss by a few hundred base units. The claim reads the chain, so it pays the loss as it stands on chain. The `Claimed` event has the exact figure. Use `--slow` and the higher gas estimate: the first `accrueInterest` costs more on chain than in the simulation, where no time has passed.
 
@@ -192,17 +216,21 @@ forge script script/lending/DeployLending.s.sol --rpc-url monad_testnet --accoun
   --broadcast --slow --gas-estimate-multiplier 200
 ```
 
-Then run `SeedMarket` and `Scenario` the same way with `--rpc-url monad_testnet --account spillway`. Seeding a large book is one transaction per faucet mint, supply and borrower.
+Set `WAITING_PERIOD=0` for a replay vault, as above, or wait out the waiting period and call `attach` before `Scenario`. Then run `SeedMarket` and `Scenario` the same way with `--rpc-url monad_testnet --account spillway`. Seeding a large book is one transaction per faucet mint, supply and borrower.
 
 ### Lending design notes
 
 - The trigger is the share price, so interest earned since inception absorbs a loss first. Cover protects what the shares were worth on the day it was bought.
-- A loss that nobody has realised (an underwater borrower not yet liquidated) does not pay. Anyone can realise it by liquidating, which a liquidator does for profit whenever the collateral still covers the debt times the incentive. `claimable(policyId)` previews the payout with interest accrued in the view.
+- A loss that nobody has realised (an underwater borrower not yet liquidated) pays through `claimShortfall`, measured at the market's own oracle, the one Morpho liquidates on and the listing pins. `claim` alone would miss it: on Monad a liquidator often cannot sell the collateral, so the loss can sit unrealised for a long time. `claimable(policyId)` previews `claim` with interest accrued in the view.
+- The vault cannot list a market's borrowers, so the caller does. A claimant who leaves an underwater borrower out is only paid less. Listing a borrower twice is refused.
 - A listed id pins all five market parameters, so the oracle, IRM and LLTV are listed with it. A market that swaps in another oracle is another id and is not covered.
 - A policy can be claimed until `claimWindow` after its end. The share price has no history on chain, so a claim inside the window pays on the price at the time of the claim. In effect, cover runs to the end of the window. With the default one-day window on a 30-day term we price on the term.
 - A withdrawal request that has lapsed still counts as under notice, reducing capacity, until it is cancelled or replaced. That is the cautious side.
 - Policies are sold permissionlessly at the listed rate. Delisting stops sales at once, and policies already sold stay claimable.
 - Free capital is principal. Premium is a separate book and never pays a claim.
-- Open: cover can be bought after a borrower is under water but before anyone liquidates, so the buyer is covered for a loss already in sight. The owner should delist a market as soon as its collateral is in trouble. A waiting period before cover attaches would close this.
+- Adverse selection has two defences. The purchase-time health check refuses a sale while a listed borrower is unhealthy, and the waiting period keeps a loss realised soon after the sale out of the start price. Residual risk: the check is only as complete as the list. The app passes every borrower it indexes, but a buyer calling the contract directly can leave out one that is already under water. Its shortfall is not netted out at attachment, so after the waiting period `claimShortfall` pays it, and a later liquidation pays it through `claim`. The owner should still delist a market as soon as its collateral is in trouble.
+- Someone must call `attach` once the waiting period has run. A loss realised before that call is in the start price and is not covered, so the holder (or the app) should call it at `attachesAt`.
+- A policy keeps the most it was ever due. If an unrealised shortfall that was paid later shrinks (the oracle recovers, the borrower repays or adds collateral), underwriters bear the difference. Likewise a holder paid on an unrealised loss can still withdraw its Morpho supply at the pre-loss price while the market has idle liquidity. The vault cannot stop either. It pays each loss at most once.
+- The holder's part of a shortfall uses the market's total supply shares at the time of the claim. A large supplier who withdraws just before a claim, even within one transaction, raises it, and the policy keeps the higher figure. The limit and the market's idle liquidity bound this.
 - Open: a deposit made after a loss is realised but before it is claimed shares that loss. Claims are permissionless, so a careful depositor claims open losses first.
 - Amounts are in loan token base units. `premiumBps` is a year's premium in basis points of the limit. `sharePriceOf` is base units per share times 1e36, for display; claims use the recorded totals.

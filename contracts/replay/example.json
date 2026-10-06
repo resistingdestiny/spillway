@@ -10,6 +10,7 @@
   "collateral": { "name": "Test wstETH", "symbol": "twstETH", "decimals": 18 },
   "lltv": "860000000000000000",
   "oraclePrice": "4000000000000000000000000000",
+  "premiumBps": 300,
   "holderIndex": 0,
   "suppliers": [
     { "assets": "1500000000000" },

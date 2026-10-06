@@ -7,7 +7,9 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import {IMorpho, Id, MarketParams, Market} from "morpho-blue/src/interfaces/IMorpho.sol";
+import {IMorpho, Id, MarketParams, Market, Position} from "morpho-blue/src/interfaces/IMorpho.sol";
+import {IOracle} from "morpho-blue/src/interfaces/IOracle.sol";
+import {ORACLE_PRICE_SCALE} from "morpho-blue/src/libraries/ConstantsLib.sol";
 import {MarketParamsLib} from "morpho-blue/src/libraries/MarketParamsLib.sol";
 import {SharesMathLib} from "morpho-blue/src/libraries/SharesMathLib.sol";
 import {MorphoBalancesLib} from "morpho-blue/src/libraries/periphery/MorphoBalancesLib.sol";
@@ -17,7 +19,10 @@ import {MorphoBalancesLib} from "morpho-blue/src/libraries/periphery/MorphoBalan
 /// token and earn premium. A policy covers one holder's supply shares in one listed
 /// market. When the market's supply share price falls below its level at inception,
 /// anyone can call `claim` and the vault pays the holder the loss on the covered shares,
-/// less a deductible, up to the policy limit. No keeper, no vote.
+/// less a deductible, up to the policy limit. When borrowers are under water at the
+/// oracle but nobody liquidates them, anyone can call `claimShortfall` and the vault pays
+/// the holder's share of that unrealised loss on the same terms. A policy is paid the
+/// most it was ever due across both, never the sum. No keeper, no vote.
 /// @dev The trigger is Morpho's own supply share price, `totalSupplyAssets /
 /// totalSupplyShares` with the virtual shares and assets of `SharesMathLib`. Interest
 /// only ever raises it. It falls only when `liquidate` writes off bad debt, which anyone
@@ -53,6 +58,10 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
     IMorpho public immutable morpho;
     /// @notice Length of every policy, in seconds.
     uint256 public immutable policyTerm;
+    /// @notice Time from purchase until cover can attach. A buyer who sees a loss coming
+    /// cannot buy cover for it the moment before it lands: a loss realised before the
+    /// policy attaches is in its start price. Shorter than `policyTerm`.
+    uint256 public immutable waitingPeriod;
     /// @notice How long after its end a policy can still be claimed, so a loss realised
     /// late in the term has time to be claimed.
     uint256 public immutable claimWindow;
@@ -85,9 +94,12 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
         uint64 start;
         uint64 end;
         bool released; // capacity and covered shares handed back after the claim window
+        bool attached; // cover has attached and the start totals are final
+        uint64 attachesAt; // earliest time cover can attach: start + waitingPeriod
         Id marketId;
-        // The market's supply totals at inception. Their ratio, with Morpho's virtual
-        // shares and assets, is the start share price, kept exact rather than rounded.
+        // The market's supply totals when cover attached. Their ratio, with Morpho's
+        // virtual shares and assets, is the start share price, kept exact rather than
+        // rounded. Until then they hold the totals at purchase, for display.
         uint128 startSupplyAssets;
         uint128 startSupplyShares;
         uint256 coveredShares; // Morpho supply shares
@@ -194,6 +206,16 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
         uint256 amount,
         uint256 paidTotal
     );
+    event ShortfallClaimed(
+        uint256 indexed policyId,
+        address indexed holder,
+        uint256 shortfall,
+        uint256 unrealisedLoss,
+        uint256 loss,
+        uint256 amount,
+        uint256 paidTotal
+    );
+    event PolicyAttached(uint256 indexed policyId, uint256 startPrice);
     event PolicyReleased(uint256 indexed policyId, uint256 unusedLimit);
 
     // ----------------------------------------------------------------- errors
@@ -220,12 +242,20 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
     error NoWithdrawalRequest();
     error NoticePending(uint256 readyAt);
     error WithdrawalExpired(uint256 expiredAt);
+    error BorrowersNotSorted(uint256 index);
+    error WaitingPeriodTooLong(uint256 waitingPeriod, uint256 policyTerm);
+    error WaitingPeriodRunning(uint256 policyId, uint256 attachesAt);
+    error AttachWindowClosed(uint256 policyId, uint256 end);
+    error AlreadyAttached(uint256 policyId);
+    error NotAttached(uint256 policyId);
+    error UnhealthyBorrower(address borrower);
 
     constructor(
         IERC20 asset_,
         IMorpho morpho_,
         address owner_,
         uint256 policyTerm_,
+        uint256 waitingPeriod_,
         uint256 claimWindow_,
         uint256 withdrawalNotice_,
         uint256 withdrawalWindow_,
@@ -235,6 +265,9 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
             revert ZeroAddress();
         }
         if (policyTerm_ == 0 || withdrawalWindow_ == 0) revert ZeroAmount();
+        if (waitingPeriod_ >= policyTerm_) {
+            revert WaitingPeriodTooLong(waitingPeriod_, policyTerm_);
+        }
         if (withdrawalNotice_ <= claimWindow_) {
             revert NoticeTooShort(withdrawalNotice_, claimWindow_);
         }
@@ -242,6 +275,7 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
         asset = asset_;
         morpho = morpho_;
         policyTerm = policyTerm_;
+        waitingPeriod = waitingPeriod_;
         claimWindow = claimWindow_;
         withdrawalNotice = withdrawalNotice_;
         withdrawalWindow = withdrawalWindow_;
@@ -376,19 +410,28 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
     /// @notice Buys a policy on `coveredShares` of `holder`'s supply in market `id`,
     /// for `policyTerm` from now. The caller pays the premium, `premiumFor(id, limit)`,
     /// which streams to underwriters over the term. The share price is read after
-    /// accruing interest and recorded as the policy's start price.
+    /// accruing interest and recorded as the policy's start price. Cover attaches after
+    /// `waitingPeriod` (see `attach`).
+    /// @dev The sale is refused if any of `borrowers` is unhealthy at the oracle now, by
+    /// Morpho's own rule, so cover cannot be bought on a loss already on chain. The
+    /// vault cannot list a market's borrowers itself, so the check is as complete as the
+    /// list: the app passes every borrower it indexes. A buyer calling the contract
+    /// directly can leave one out. The waiting period and `delistMarket` are the other
+    /// defences, and the residual risk is in the README.
     function buyPolicy(
         Id id,
         address holder,
         uint256 coveredShares,
         uint256 limit,
-        uint256 deductible
+        uint256 deductible,
+        address[] calldata borrowers
     ) external nonReentrant returns (uint256 policyId) {
         if (!isListed[id]) revert MarketNotListed(id);
         if (holder == address(0)) revert ZeroAddress();
         if (coveredShares == 0 || limit == 0) revert ZeroAmount();
 
-        (uint128 startAssets, uint128 startShares) = _underwrite(id, holder, coveredShares, limit);
+        (uint128 startAssets, uint128 startShares) =
+            _underwrite(id, holder, coveredShares, limit, borrowers);
         uint256 premium = _startStream(id, limit);
 
         policyId = ++policyCount;
@@ -397,6 +440,8 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
             start: SafeCast.toUint64(block.timestamp),
             end: SafeCast.toUint64(block.timestamp + policyTerm),
             released: false,
+            attached: waitingPeriod == 0,
+            attachesAt: SafeCast.toUint64(block.timestamp + waitingPeriod),
             marketId: id,
             coveredShares: coveredShares,
             limit: limit,
@@ -423,6 +468,28 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
         );
     }
 
+    /// @notice Attaches cover to policy `policyId` once its waiting period has run.
+    /// Accrues interest on Morpho and records the market's supply totals as the start
+    /// price, so a loss realised during the waiting period is not covered. Anyone can call
+    /// it, from `attachesAt` until the policy ends. Claims wait for it. A policy sold with
+    /// no waiting period attaches when it is bought.
+    /// @dev The holder wants this called as soon as it can be: cover protects the price
+    /// at attachment, and any loss realised before the call is outside it.
+    function attach(uint256 policyId) external nonReentrant {
+        Policy storage p = _policies[policyId];
+        if (p.holder == address(0)) revert UnknownPolicy(policyId);
+        if (p.attached) revert AlreadyAttached(policyId);
+        if (block.timestamp < p.attachesAt) revert WaitingPeriodRunning(policyId, p.attachesAt);
+        if (block.timestamp > p.end) revert AttachWindowClosed(policyId, p.end);
+
+        morpho.accrueInterest(_marketParams[p.marketId]);
+        Market memory m = morpho.market(p.marketId);
+        p.attached = true;
+        p.startSupplyAssets = m.totalSupplyAssets;
+        p.startSupplyShares = m.totalSupplyShares;
+        emit PolicyAttached(policyId, sharePriceOf(m.totalSupplyAssets, m.totalSupplyShares));
+    }
+
     /// @notice Pays policy `policyId`'s loss to its holder. Anyone can call it, from
     /// the policy's start until `claimWindow` after its end. Accrues interest on Morpho,
     /// reads the supply share price and pays `coveredShares * (startPrice - price)`, less
@@ -432,28 +499,12 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
     /// @dev Covered shares are capped at what the holder still supplies, so a holder who
     /// withdrew before the loss is not paid for it. Claims can repeat as losses grow.
     function claim(uint256 policyId) external nonReentrant returns (uint256 amount) {
-        Policy storage p = _policies[policyId];
-        if (p.holder == address(0)) revert UnknownPolicy(policyId);
-        uint256 closesAt = uint256(p.end) + claimWindow;
-        if (block.timestamp > closesAt) revert ClaimWindowClosed(policyId, closesAt);
-
+        Policy storage p = _openPolicy(policyId);
         morpho.accrueInterest(_marketParams[p.marketId]);
         Market memory m = morpho.market(p.marketId);
         uint256 held = morpho.position(p.marketId, p.holder).supplyShares;
-        (uint256 loss, uint256 due) = _due(p, m.totalSupplyAssets, m.totalSupplyShares, held);
-        if (due <= p.paid) revert NoLoss(policyId);
-
-        amount = due - p.paid;
-        if (amount < dustThreshold) revert BelowDust(amount, dustThreshold);
-        amount = Math.min(amount, totalPrincipal);
-        if (amount == 0) revert NoFreeCapital();
-
-        p.paid += amount;
-        activeLimit -= amount;
-        totalPrincipal -= amount;
-        paidOut += amount;
-
-        asset.safeTransfer(p.holder, amount);
+        (uint256 loss,, uint256 due) = _due(p, m.totalSupplyAssets, m.totalSupplyShares, held, 0);
+        amount = _pay(policyId, p, due);
         emit Claimed(
             policyId,
             p.holder,
@@ -462,6 +513,40 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
             amount,
             p.paid
         );
+    }
+
+    /// @notice Pays policy `policyId` for a loss Morpho has not realised yet: borrowers
+    /// whose debt is above their collateral at the oracle price, whom nobody has
+    /// liquidated. Anyone can call it, in the same window as `claim`. It accrues interest
+    /// on Morpho, sums the shortfall of `borrowers` (strictly increasing, see
+    /// `_shortfall`), gives the covered shares their pro rata part of it, adds any
+    /// realised loss as `claim` measures it, and pays that less the deductible, capped by
+    /// the limit, minus what the policy has already been paid. The payment is capped
+    /// again by free capital. The arithmetic is in `_due`.
+    /// @dev Any borrower may be listed. One whose collateral covers its debt adds nothing.
+    /// Both claim paths share `paid`, so a policy is paid the most it was ever due, never
+    /// the sum: a loss paid here and realised later is not paid again.
+    function claimShortfall(uint256 policyId, address[] calldata borrowers)
+        external
+        nonReentrant
+        returns (uint256 amount)
+    {
+        Policy storage p = _openPolicy(policyId);
+        Id id = p.marketId;
+        MarketParams memory mp = _marketParams[id];
+        morpho.accrueInterest(mp);
+        Market memory m = morpho.market(id);
+        uint256 shortfall =
+            _shortfall(id, mp.oracle, borrowers, m.totalBorrowAssets, m.totalBorrowShares);
+        (uint256 loss, uint256 unrealised, uint256 due) = _due(
+            p,
+            m.totalSupplyAssets,
+            m.totalSupplyShares,
+            morpho.position(id, p.holder).supplyShares,
+            shortfall
+        );
+        amount = _pay(policyId, p, due);
+        emit ShortfallClaimed(policyId, p.holder, shortfall, unrealised, loss, amount, p.paid);
     }
 
     /// @notice Once a policy's claim window has closed, hands its unused limit back to
@@ -503,16 +588,45 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
     }
 
     /// @notice What `claim(policyId)` would pay right now, before the free capital cap
-    /// and the dust threshold. 0 once the claim window has closed.
+    /// and the dust threshold. 0 before the policy attaches and once its claim window has
+    /// closed.
     function claimable(uint256 policyId) external view returns (uint256) {
         Policy storage p = _policies[policyId];
-        if (p.holder == address(0)) return 0;
-        if (block.timestamp > uint256(p.end) + claimWindow) return 0;
+        if (!p.attached || block.timestamp > uint256(p.end) + claimWindow) return 0;
         uint256 held = morpho.position(p.marketId, p.holder).supplyShares;
         (uint256 assets, uint256 shares,,) =
             morpho.expectedMarketBalances(_marketParams[p.marketId]);
-        (, uint256 due) = _due(p, assets, shares, held);
+        (,, uint256 due) = _due(p, assets, shares, held, 0);
         return due > p.paid ? due - p.paid : 0;
+    }
+
+    /// @notice What `claimShortfall(policyId, borrowers)` would pay right now, before the
+    /// free capital cap and the dust threshold. 0 before the policy attaches and once its
+    /// claim window has closed.
+    function claimableShortfall(uint256 policyId, address[] calldata borrowers)
+        external
+        view
+        returns (uint256)
+    {
+        Policy storage p = _policies[policyId];
+        if (!p.attached || block.timestamp > uint256(p.end) + claimWindow) return 0;
+        MarketParams memory mp = _marketParams[p.marketId];
+        (uint256 supplyAssets, uint256 supplyShares, uint256 borrowAssets, uint256 borrowShares) =
+            morpho.expectedMarketBalances(mp);
+        uint256 shortfall = _shortfall(p.marketId, mp.oracle, borrowers, borrowAssets, borrowShares);
+        uint256 held = morpho.position(p.marketId, p.holder).supplyShares;
+        (,, uint256 due) = _due(p, supplyAssets, supplyShares, held, shortfall);
+        return due > p.paid ? due - p.paid : 0;
+    }
+
+    /// @notice Market `id`'s unrealised shortfall over `borrowers` now, with interest
+    /// accrued in the view: each borrower's debt less its collateral at the oracle
+    /// price, where positive, summed. `borrowers` must be strictly increasing.
+    function marketShortfall(Id id, address[] calldata borrowers) external view returns (uint256) {
+        MarketParams memory mp = _marketParams[id];
+        if (mp.loanToken == address(0)) revert MarketNotListed(id);
+        (,, uint256 borrowAssets, uint256 borrowShares) = morpho.expectedMarketBalances(mp);
+        return _shortfall(id, mp.oracle, borrowers, borrowAssets, borrowShares);
     }
 
     /// @notice Premium for a policy with `limit` on market `id`, rounded up.
@@ -581,15 +695,21 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
 
     // ----------------------------------------------------------------- internal
 
-    /// @dev Checks a new policy against the holder's uncovered supply and the vault's
-    /// capacity, and returns the market's supply totals to record as its start price.
-    function _underwrite(Id id, address holder, uint256 coveredShares, uint256 limit)
-        internal
-        returns (uint128 startAssets, uint128 startShares)
-    {
-        // Accrue first so the start price carries all interest earned so far, and so
-        // the holder's supply shares are final.
-        morpho.accrueInterest(_marketParams[id]);
+    /// @dev Checks a new policy against the holder's uncovered supply, the vault's
+    /// capacity and the health of `borrowers`, and returns the market's supply totals to
+    /// record as its start price.
+    function _underwrite(
+        Id id,
+        address holder,
+        uint256 coveredShares,
+        uint256 limit,
+        address[] calldata borrowers
+    ) internal returns (uint128 startAssets, uint128 startShares) {
+        // Accrue first so the start price carries all interest earned so far, so the
+        // holder's supply shares are final, and so debts are current for the health check.
+        MarketParams memory mp = _marketParams[id];
+        morpho.accrueInterest(mp);
+        _requireHealthy(id, mp, borrowers);
 
         // A holder who withdrew from Morpho after buying cover can hold fewer shares
         // than are covered. Nothing is uncovered then.
@@ -602,6 +722,29 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
 
         Market memory m = morpho.market(id);
         (startAssets, startShares) = (m.totalSupplyAssets, m.totalSupplyShares);
+    }
+
+    /// @dev Reverts if any of `borrowers` is unhealthy at the oracle price, by Morpho's
+    /// own rule: the debt, rounded up, must not exceed the collateral at the
+    /// oracle price, rounded down, times the LLTV, rounded down. Uses the stored totals,
+    /// so accrue interest first.
+    function _requireHealthy(Id id, MarketParams memory mp, address[] calldata borrowers)
+        internal
+        view
+    {
+        if (borrowers.length == 0) return;
+        uint256 price = IOracle(mp.oracle).price();
+        Market memory m = morpho.market(id);
+        for (uint256 i; i < borrowers.length; ++i) {
+            Position memory pos = morpho.position(id, borrowers[i]);
+            if (pos.borrowShares == 0) continue;
+            uint256 debt = SharesMathLib.toAssetsUp(
+                pos.borrowShares, m.totalBorrowAssets, m.totalBorrowShares
+            );
+            uint256 maxDebt =
+                Math.mulDiv(Math.mulDiv(pos.collateral, price, ORACLE_PRICE_SCALE), mp.lltv, 1e18);
+            if (debt > maxDebt) revert UnhealthyBorrower(borrowers[i]);
+        }
     }
 
     /// @dev Prices a policy with `limit` on market `id` and starts its premium stream
@@ -619,23 +762,103 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
         premiumUnallocated += premium * PRECISION - rate * policyTerm;
     }
 
-    /// @dev The policy's loss on the covered shares the holder still supplies, at the
-    /// market's supply totals now, and what the policy owes in total for it. The loss is
-    /// what the shares redeemed for at inception less what they redeem for now, both
-    /// rounded down as Morpho rounds a withdrawal.
-    function _due(Policy storage p, uint256 supplyAssets, uint256 supplyShares, uint256 held)
-        internal
-        view
-        returns (uint256 loss, uint256 due)
-    {
+    /// @dev A live policy: known, attached, and its claim window not yet closed.
+    function _openPolicy(uint256 policyId) internal view returns (Policy storage p) {
+        p = _policies[policyId];
+        if (p.holder == address(0)) revert UnknownPolicy(policyId);
+        if (!p.attached) revert NotAttached(policyId);
+        uint256 closesAt = uint256(p.end) + claimWindow;
+        if (block.timestamp > closesAt) revert ClaimWindowClosed(policyId, closesAt);
+    }
+
+    /// @dev The policy's loss on the covered shares the holder still supplies, and what
+    /// the policy owes in total for it, at the market's supply totals now.
+    ///
+    /// `shares` is the lower of the covered shares and what the holder still supplies.
+    /// `atStart` and `atNow` are what those shares redeemed for at inception and redeem
+    /// for now, both rounded down as Morpho rounds a withdrawal. `shortfall` is a market
+    /// shortfall nobody has realised yet (0 for `claim`). Writing it off would take it
+    /// from `totalSupplyAssets`, so the shares would bear
+    ///
+    ///     unrealised = shortfall * shares / (totalSupplyShares + VIRTUAL_SHARES)
+    ///
+    /// rounded down, which is how much less they would redeem for. Then
+    ///
+    ///     loss = max(0, atStart + unrealised - atNow)
+    ///     due  = min(loss - deductible, limit), or 0 while loss <= deductible
+    ///
+    /// Interest earned since inception absorbs an unrealised loss first, as it does a
+    /// realised one. When Morpho later realises the shortfall, `unrealised` moves into
+    /// `atStart - atNow`, usually growing on the way: liquidation books the debt less
+    /// the collateral divided by the incentive, which is more than the debt less the
+    /// collateral. The same loss is counted once, in whichever form it takes at the time.
+    function _due(
+        Policy storage p,
+        uint256 supplyAssets,
+        uint256 supplyShares,
+        uint256 held,
+        uint256 shortfall
+    ) internal view returns (uint256 loss, uint256 unrealised, uint256 due) {
         uint256 shares = Math.min(p.coveredShares, held);
         uint256 atStart =
             SharesMathLib.toAssetsDown(shares, p.startSupplyAssets, p.startSupplyShares);
         uint256 atNow = SharesMathLib.toAssetsDown(shares, supplyAssets, supplyShares);
-        if (atNow >= atStart) return (0, 0);
-        loss = atStart - atNow;
-        if (loss <= p.deductible) return (loss, 0);
+        unrealised = Math.mulDiv(shortfall, shares, supplyShares + SharesMathLib.VIRTUAL_SHARES);
+        if (atNow >= atStart + unrealised) return (0, unrealised, 0);
+        loss = atStart + unrealised - atNow;
+        if (loss <= p.deductible) return (loss, unrealised, 0);
         due = Math.min(loss - p.deductible, p.limit);
+    }
+
+    /// @dev Pays policy `policyId` the increase of `due` over what it has been paid,
+    /// capped by free capital. `paid` only grows, so over its life a policy is paid the
+    /// most it was ever due, on either claim path, and never the sum of the two.
+    function _pay(uint256 policyId, Policy storage p, uint256 due)
+        internal
+        returns (uint256 amount)
+    {
+        if (due <= p.paid) revert NoLoss(policyId);
+        amount = due - p.paid;
+        if (amount < dustThreshold) revert BelowDust(amount, dustThreshold);
+        amount = Math.min(amount, totalPrincipal);
+        if (amount == 0) revert NoFreeCapital();
+
+        p.paid += amount;
+        activeLimit -= amount;
+        totalPrincipal -= amount;
+        paidOut += amount;
+        asset.safeTransfer(p.holder, amount);
+    }
+
+    /// @dev Market `id`'s unrealised shortfall over `borrowers`: the sum, over each
+    /// borrower, of its debt less its collateral at the oracle price, where that is
+    /// positive. This is the bad debt Morpho would book if the collateral were sold at the
+    /// oracle price, and a lower bound on what `liquidate` books, since a liquidator
+    /// seizes collateral worth the repaid debt times the incentive. Both sides round
+    /// against the claimant: the debt is `toAssetsDown` of the borrow shares (Morpho's
+    /// health check rounds it up, against the borrower) and the collateral value is
+    /// rounded up. `borrowers` must be strictly increasing, so no position counts twice.
+    function _shortfall(
+        Id id,
+        address oracle,
+        address[] calldata borrowers,
+        uint256 totalBorrowAssets,
+        uint256 totalBorrowShares
+    ) internal view returns (uint256 shortfall) {
+        if (borrowers.length == 0) return 0;
+        uint256 price = IOracle(oracle).price();
+        address prev;
+        for (uint256 i; i < borrowers.length; ++i) {
+            address b = borrowers[i];
+            if (b <= prev) revert BorrowersNotSorted(i);
+            prev = b;
+            Position memory pos = morpho.position(id, b);
+            uint256 debt =
+                SharesMathLib.toAssetsDown(pos.borrowShares, totalBorrowAssets, totalBorrowShares);
+            uint256 value =
+                Math.mulDiv(pos.collateral, price, ORACLE_PRICE_SCALE, Math.Rounding.Ceil);
+            if (debt > value) shortfall += debt - value;
+        }
     }
 
     /// @dev Moves every premium stream forward to now, retiring streams as they end.

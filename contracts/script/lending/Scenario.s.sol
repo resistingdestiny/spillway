@@ -10,10 +10,13 @@ import {MorphoCoverVault} from "../../src/lending/MorphoCoverVault.sol";
 import {MorphoReplay} from "./MorphoReplay.sol";
 
 /// @title Scenario
-/// @notice Replay, step two. Breaks the collateral, clears the book and claims. Moves
-/// the market's MockOracle down by `DROP_BPS`, liquidates every unhealthy borrower as a
-/// funded liquidator, then calls `claim` on the policy SeedMarket bought. Prints the bad
-/// debt Morpho wrote off, the holder's loss and what the cover paid.
+/// @notice Replay, step two. Breaks the collateral and claims. Moves the market's
+/// MockOracle down by `DROP_BPS`. In the default mode it then liquidates every unhealthy
+/// borrower as a funded liquidator and calls `claim` on the policy SeedMarket bought,
+/// printing the bad debt Morpho wrote off, the holder's loss and what the cover paid.
+/// In `MODE=unrealised` nobody liquidates, as on Monad when the collateral cannot be
+/// sold: it lists the unhealthy borrowers and calls `claimShortfall`, printing the
+/// market's unrealised shortfall and what the cover paid on it.
 /// @dev Reads the state file SeedMarket wrote. The broadcaster must own the oracle (it
 /// does if it ran SeedMarket). It funds the liquidations from the tUSD faucet. Anyone
 /// could call `claim`; here the broadcaster does.
@@ -21,6 +24,7 @@ import {MorphoReplay} from "./MorphoReplay.sol";
 /// Settings come from the environment.
 ///   REPLAY_STATE  SeedMarket's state file    default replay/state-<chain id>.json
 ///   DROP_BPS      oracle move, in bps down   default 3000 (30%)
+///   MODE          liquidate or unrealised    default liquidate
 contract Scenario is Script {
     struct State {
         IMorpho morpho;
@@ -41,6 +45,8 @@ contract Scenario is Script {
         uint256 holderLoss;
         uint256 claimable;
         uint256 paid;
+        uint256 unhealthy;
+        uint256 shortfall;
     }
 
     function run() external returns (Result memory r) {
@@ -51,6 +57,11 @@ contract Scenario is Script {
         );
         uint256 dropBps = vm.envOr("DROP_BPS", uint256(3000));
         require(dropBps < 10_000, "DROP_BPS must be under 10000");
+        bytes32 mode = keccak256(bytes(vm.envOr("MODE", string("liquidate"))));
+        bool unrealised = mode == keccak256("unrealised");
+        require(
+            unrealised || mode == keccak256("liquidate"), "MODE must be liquidate or unrealised"
+        );
 
         vm.startBroadcast();
         (, address me,) = vm.readCallers();
@@ -61,22 +72,35 @@ contract Scenario is Script {
         r.newPrice = r.oldPrice * (10_000 - dropBps) / 10_000;
         oracle.setPrice(r.newPrice);
 
-        _liquidateAll(s, me, r);
+        if (unrealised) {
+            _claimUnrealised(s, r);
+        } else {
+            _liquidateAll(s, me, r);
+        }
 
         uint256 valueAfter = _assetsOf(s, s.holder);
         r.holderLoss = valueBefore > valueAfter ? valueBefore - valueAfter : 0;
-        r.claimable = s.vault.claimable(s.policyId);
-        if (r.claimable >= s.vault.dustThreshold() && s.vault.totalPrincipal() > 0) {
-            r.paid = s.vault.claim(s.policyId);
+        if (!unrealised) {
+            r.claimable = s.vault.claimable(s.policyId);
+            if (r.claimable >= s.vault.dustThreshold() && s.vault.totalPrincipal() > 0) {
+                r.paid = s.vault.claim(s.policyId);
+            }
         }
         vm.stopBroadcast();
 
         console.log("oracle price  ", r.oldPrice, "->", r.newPrice);
-        console.log("liquidated    ", r.liquidated, "of", s.borrowers.length);
-        console.log("repaid        ", r.repaid);
-        console.log("bad debt      ", r.badDebt);
-        console.log("holder loss   ", r.holderLoss);
-        console.log("claimable     ", r.claimable);
+        if (unrealised) {
+            console.log("mode           unrealised, nobody liquidates");
+            console.log("unhealthy     ", r.unhealthy, "of", s.borrowers.length);
+            console.log("shortfall     ", r.shortfall);
+            console.log("claimable     ", r.claimable);
+        } else {
+            console.log("liquidated    ", r.liquidated, "of", s.borrowers.length);
+            console.log("repaid        ", r.repaid);
+            console.log("bad debt      ", r.badDebt);
+            console.log("holder loss   ", r.holderLoss);
+            console.log("claimable     ", r.claimable);
+        }
         console.log("cover paid    ", r.paid);
     }
 
@@ -96,6 +120,34 @@ contract Scenario is Script {
             ++r.liquidated;
             r.repaid += repaid;
             r.badDebt += badDebt;
+        }
+    }
+
+    /// @dev Liquidates nobody. Lists the borrowers that are unhealthy at the new price,
+    /// in increasing address order as the vault requires, and claims the holder's share
+    /// of their shortfall. The holder's Morpho balance does not move: the loss is
+    /// unrealised.
+    function _claimUnrealised(State memory s, Result memory r) internal {
+        s.morpho.accrueInterest(s.params);
+        address[] memory list = new address[](s.borrowers.length);
+        for (uint256 i; i < s.borrowers.length; ++i) {
+            address b = s.borrowers[i];
+            if (MorphoReplay.isHealthy(s.morpho, s.params, b)) continue;
+            // Insertion sort: the book is small.
+            uint256 j = r.unhealthy++;
+            for (; j > 0 && list[j - 1] > b; --j) {
+                list[j] = list[j - 1];
+            }
+            list[j] = b;
+        }
+        address[] memory unhealthy = new address[](r.unhealthy);
+        for (uint256 i; i < r.unhealthy; ++i) {
+            unhealthy[i] = list[i];
+        }
+        r.shortfall = s.vault.marketShortfall(s.id, unhealthy);
+        r.claimable = s.vault.claimableShortfall(s.policyId, unhealthy);
+        if (r.claimable >= s.vault.dustThreshold() && s.vault.totalPrincipal() > 0) {
+            r.paid = s.vault.claimShortfall(s.policyId, unhealthy);
         }
     }
 

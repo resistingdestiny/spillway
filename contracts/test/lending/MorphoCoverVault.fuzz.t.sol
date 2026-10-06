@@ -88,4 +88,62 @@ contract MorphoCoverVaultFuzzTest is MorphoFixture {
         vm.expectRevert(abi.encodeWithSelector(MorphoCoverVault.NoLoss.selector, policyId));
         vault.claim(policyId);
     }
+
+    /// @dev A borrower goes under water and nobody liquidates. `claimShortfall` pays the
+    /// unrealised due. Then the loss is realised and `claim` pays only the increase. In
+    /// total the policy is paid the larger of the two dues, never their sum, and never
+    /// more than its limit.
+    function testFuzz_bothPathsPayTheMostEverDueOnce(
+        uint256 holderSupply,
+        uint256 otherSupply,
+        uint256 ltvBps,
+        uint256 dropBps,
+        uint256 limit,
+        uint256 deductible
+    ) public {
+        holderSupply = bound(holderSupply, 10_000e6, 5_000_000e6);
+        otherSupply = bound(otherSupply, 0, 5_000_000e6);
+        ltvBps = bound(ltvBps, 5_000, 8_500);
+        dropBps = bound(dropBps, 100, 9_000);
+        limit = bound(limit, 1e6, 10_000_000e6);
+        deductible = bound(deductible, 0, holderSupply / 10);
+
+        uint256 holderShares = _supply(holder, holderSupply);
+        if (otherSupply > 0) _supply(otherSupplier, otherSupply);
+        _deposit(alice, 10_000_000e6);
+        // One borrower takes 90% of the market at `ltvBps` of its collateral.
+        uint256 debt = (holderSupply + otherSupply) * 9 / 10;
+        _borrow(borrower, debt * 10_000 / ltvBps * 1e36 / PRICE + 1, debt);
+        uint256 policyId = _buy(holder, holderShares, limit, deductible);
+        _drop(dropBps);
+
+        address[] memory list = new address[](1);
+        list[0] = borrower;
+        uint256 unrealisedDue = vault.claimableShortfall(policyId, list);
+        if (unrealisedDue >= LendingConfig.DUST_THRESHOLD) {
+            assertEq(vault.claimShortfall(policyId, list), unrealisedDue);
+        } else {
+            vm.expectRevert();
+            vault.claimShortfall(policyId, list);
+        }
+        uint256 first = vault.policy(policyId).paid;
+        assertLe(first, limit, "unrealised payout > limit");
+
+        _liquidate(borrower);
+        uint256 loss = _lossSince(policyId, holderShares);
+        uint256 realisedDue = loss > deductible ? Math.min(loss - deductible, limit) : 0;
+        // Liquidation books at least the shortfall at the oracle, to a unit of rounding.
+        assertGe(realisedDue + 1, unrealisedDue, "realised < unrealised");
+        if (realisedDue > first && realisedDue - first >= LendingConfig.DUST_THRESHOLD) {
+            assertEq(vault.claim(policyId), realisedDue - first);
+        }
+
+        uint256 total = vault.policy(policyId).paid;
+        uint256 most = Math.max(unrealisedDue, realisedDue);
+        assertLe(total, most, "paid > most ever due");
+        assertLe(total, limit, "paid > limit");
+        assertGe(total + LendingConfig.DUST_THRESHOLD, most, "a payable due went unpaid");
+        assertEq(usd.balanceOf(holder), total);
+        _assertSolvent();
+    }
 }

@@ -26,10 +26,14 @@ contract MorphoCoverVaultUnderwritingTest is MorphoFixture {
         vm.expectRevert(
             abi.encodeWithSelector(MorphoCoverVault.NoticeTooShort.selector, 1 days, 1 days)
         );
-        new MorphoCoverVault(usd, morpho, owner, 30 days, 1 days, 1 days, 1 days, 0);
+        new MorphoCoverVault(usd, morpho, owner, 30 days, 0, 1 days, 1 days, 1 days, 0);
         vm.expectRevert(MorphoCoverVault.ZeroAddress.selector);
-        new MorphoCoverVault(usd, IMorpho(address(0)), owner, 30 days, 1 days, 2 days, 1 days, 0);
+        new MorphoCoverVault(usd, IMorpho(address(0)), owner, 30 days, 0, 1 days, 2 days, 1 days, 0);
         assertGt(vault.withdrawalNotice(), vault.claimWindow());
+        vm.expectRevert(
+            abi.encodeWithSelector(MorphoCoverVault.WaitingPeriodTooLong.selector, 30 days, 30 days)
+        );
+        new MorphoCoverVault(usd, morpho, owner, 30 days, 30 days, 1 days, 2 days, 1 days, 0);
     }
 
     // ------------------------------------------------------------- deposits
@@ -158,7 +162,7 @@ contract MorphoCoverVaultUnderwritingTest is MorphoFixture {
                 MorphoCoverVault.CapacityExceeded.selector, 400_000e6 + 1, 400_000e6
             )
         );
-        vault.buyPolicy(id, holder, holderShares, 400_000e6 + 1, 0);
+        vault.buyPolicy(id, holder, holderShares, 400_000e6 + 1, 0, _none());
     }
 
     // ---------------------------------------------------------------- premium
