@@ -5,6 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IMorpho, Id, MarketParams, Market} from "morpho-blue/src/interfaces/IMorpho.sol";
 import {MarketParamsLib} from "morpho-blue/src/libraries/MarketParamsLib.sol";
+import {SharesMathLib} from "morpho-blue/src/libraries/SharesMathLib.sol";
 import {MockUSD} from "../../src/MockUSD.sol";
 import {TestToken} from "../../src/lending/TestToken.sol";
 import {MockOracle} from "../../src/lending/MockOracle.sol";
@@ -13,8 +14,10 @@ import {MorphoReplay} from "../../script/lending/MorphoReplay.sol";
 
 /// @dev Drives the cover vault and a live Morpho market with random but valid actions
 /// for the invariant suite. Every call is shaped so it should not revert, so a revert is
-/// a bug. The one exception is `claim`, which is expected to refuse when there is no
-/// loss, and is checked against what the vault said it would pay.
+/// a bug. The exceptions are `claim` and `claimShortfall`, which are expected to refuse
+/// when there is nothing to pay, and are checked against what the vault said it would
+/// pay. Borrowers opened by `borrow` stay in the market, so oracle moves leave some under
+/// water with nobody liquidating, until `liquidate` realises their loss.
 contract MorphoVaultHandler is Test {
     using MarketParamsLib for MarketParams;
 
@@ -29,6 +32,12 @@ contract MorphoVaultHandler is Test {
     address[] public underwriters;
     address[] public suppliers;
     uint256[] public policyIds;
+    /// @notice Borrowers opened by `borrow`, in increasing address order.
+    address[] public borrowers;
+    /// @notice The most each policy was ever due, as `paid` plus what the vault said a
+    /// claim on either path would pay, seen before every claim.
+    mapping(uint256 policyId => uint256) public maxDueSeen;
+    uint256 internal immutable basePrice;
 
     /// @notice All principal ever deposited and withdrawn.
     uint256 public ghostDeposited;
@@ -37,6 +46,7 @@ contract MorphoVaultHandler is Test {
     bool public payoutTooLarge;
     /// @notice Count of claims that paid, and of bad debt write-offs.
     uint256 public claims;
+    uint256 public shortfallClaims;
     uint256 public writeOffs;
     uint256 internal borrowerCount;
 
@@ -55,6 +65,7 @@ contract MorphoVaultHandler is Test {
         wsteth = wsteth_;
         oracle = oracle_;
         vault = vault_;
+        basePrice = oracle_.price();
         underwriters.push(makeAddr("uw-1"));
         underwriters.push(makeAddr("uw-2"));
         underwriters.push(makeAddr("uw-3"));
@@ -167,6 +178,52 @@ contract MorphoVaultHandler is Test {
         ++writeOffs;
     }
 
+    /// @dev A borrower opens a healthy position at 50% to 85% of its collateral at the
+    /// oracle price now, and keeps it. Addresses grow with the count, so `borrowers`
+    /// stays in increasing order.
+    function borrow(uint256 amount, uint256 ltvBps) external {
+        morpho.accrueInterest(params);
+        Market memory m = morpho.market(id);
+        uint256 liquidity = m.totalSupplyAssets - m.totalBorrowAssets;
+        if (liquidity < 4e6) return;
+        amount = bound(amount, 1e6, liquidity / 2);
+        ltvBps = bound(ltvBps, 5_000, 8_500);
+
+        address b = address(uint160(0xB000 + ++borrowerCount));
+        uint256 collateral = amount * 10_000 / ltvBps * 1e36 / oracle.price() + 1;
+        wsteth.mint(b, collateral);
+        vm.startPrank(b);
+        wsteth.approve(address(morpho), collateral);
+        morpho.supplyCollateral(params, collateral, b, "");
+        morpho.borrow(params, amount, 0, b, b);
+        vm.stopPrank();
+        borrowers.push(b);
+    }
+
+    /// @dev The issuer moves the oracle to between a tenth of and 1.2 times its start.
+    function setPrice(uint256 bps) external {
+        oracle.setPrice(basePrice * bound(bps, 1_000, 12_000) / 10_000);
+    }
+
+    /// @dev A liquidator clears one of the open borrowers if it is unhealthy, realising
+    /// any bad debt.
+    function liquidate(uint256 seed) external {
+        if (borrowers.length == 0) return;
+        address b = borrowers[seed % borrowers.length];
+        morpho.accrueInterest(params);
+        if (MorphoReplay.isHealthy(morpho, params, b)) return;
+        Market memory m = morpho.market(id);
+        uint256 debt = SharesMathLib.toAssetsUp(
+            morpho.position(id, b).borrowShares, m.totalBorrowAssets, m.totalBorrowShares
+        );
+        address liquidator = makeAddr("liquidator");
+        _mint(liquidator, debt + 1e6);
+        vm.startPrank(liquidator);
+        usd.approve(address(morpho), type(uint256).max);
+        MorphoReplay.liquidate(morpho, params, b);
+        vm.stopPrank();
+    }
+
     // ---------------------------------------------------------- policyholders
 
     function buyPolicy(uint256 seed, uint256 bps, uint256 limit, uint256 deductible) external {
@@ -194,28 +251,65 @@ contract MorphoVaultHandler is Test {
         if (policyIds.length == 0) return;
         uint256 policyId = policyIds[seed % policyIds.length];
         uint256 due = vault.claimable(policyId);
+        _see(policyId, due);
         uint256 principal = vault.totalPrincipal();
         try vault.claim(policyId) returns (uint256 paid) {
             if (paid > Math.min(due, principal)) payoutTooLarge = true;
             ++claims;
         } catch (bytes memory reason) {
-            bytes4 sel = bytes4(reason);
-            // The only acceptable refusals.
-            if (
-                sel != MorphoCoverVault.NoLoss.selector
-                    && sel != MorphoCoverVault.BelowDust.selector
-                    && sel != MorphoCoverVault.NoFreeCapital.selector
-                    && sel != MorphoCoverVault.ClaimWindowClosed.selector
-            ) {
-                revert("unexpected claim revert");
-            }
-            // And a refusal with a payable amount on the table is a bug.
-            if (
-                sel != MorphoCoverVault.ClaimWindowClosed.selector && due >= vault.dustThreshold()
-                    && principal > 0
-            ) {
-                revert("claim refused a payable loss");
-            }
+            _checkRefusal(reason, due, principal);
+        }
+    }
+
+    /// @dev Claims the unrealised loss over every borrower `borrow` opened, healthy or not.
+    function claimShortfall(uint256 seed) external {
+        if (policyIds.length == 0) return;
+        uint256 policyId = policyIds[seed % policyIds.length];
+        address[] memory list = borrowers;
+        uint256 due = vault.claimableShortfall(policyId, list);
+        _see(policyId, due);
+        uint256 principal = vault.totalPrincipal();
+        try vault.claimShortfall(policyId, list) returns (uint256 paid) {
+            if (paid > Math.min(due, principal)) payoutTooLarge = true;
+            ++shortfallClaims;
+        } catch (bytes memory reason) {
+            _checkRefusal(reason, due, principal);
+        }
+    }
+
+    function attach(uint256 seed) external {
+        if (policyIds.length == 0) return;
+        uint256 policyId = policyIds[seed % policyIds.length];
+        MorphoCoverVault.Policy memory p = vault.policy(policyId);
+        if (p.attached || block.timestamp > p.end) return;
+        if (block.timestamp < p.attachesAt) vm.warp(p.attachesAt);
+        vault.attach(policyId);
+    }
+
+    /// @dev Records the most `policyId` has been due: what it has been paid plus what a
+    /// claim would pay now.
+    function _see(uint256 policyId, uint256 claimable) internal {
+        uint256 due = vault.policy(policyId).paid + claimable;
+        if (due > maxDueSeen[policyId]) maxDueSeen[policyId] = due;
+    }
+
+    /// @dev A claim may refuse only for these reasons, and never with a payable amount on
+    /// the table.
+    function _checkRefusal(bytes memory reason, uint256 due, uint256 principal) internal view {
+        bytes4 sel = bytes4(reason);
+        if (
+            sel != MorphoCoverVault.NoLoss.selector && sel != MorphoCoverVault.BelowDust.selector
+                && sel != MorphoCoverVault.NoFreeCapital.selector
+                && sel != MorphoCoverVault.ClaimWindowClosed.selector
+                && sel != MorphoCoverVault.NotAttached.selector
+        ) {
+            revert("unexpected claim revert");
+        }
+        if (
+            sel != MorphoCoverVault.ClaimWindowClosed.selector && due >= vault.dustThreshold()
+                && principal > 0
+        ) {
+            revert("claim refused a payable loss");
         }
     }
 
