@@ -14,6 +14,7 @@ Built for the Monad Metropolis hackathon on [Perpl](https://perpl.xyz).
 | `engine/` | Risk engine: liquidation maths, cascade simulation, stress, replay and Monte Carlo runs |
 | `contracts/` | Cover vault, mock backstop adapter and trigger (Foundry) |
 | `web/` | The flood picture: stress slider, replay and deposit flow |
+| `lending/` | Stress test of every Morpho Blue market on Monad, position by position, and the price of cover for vault depositors |
 
 ## On Monad testnet
 
@@ -34,6 +35,7 @@ pnpm install
 pnpm -r test                                   # engine tests
 (cd contracts && forge test)                   # vault tests
 pnpm --filter @spillway/engine cli stress fixtures/snapshots/btc-mainnet.json --move 0.1
+pnpm --filter @spillway/lending run report fixtures/morpho/monad-2026-10-06.json --out lending-bundle.json
 pnpm --filter @spillway/web data               # bundle the engine output for the app
 pnpm --filter @spillway/web dev
 ```
