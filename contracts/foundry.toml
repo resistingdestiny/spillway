@@ -4,13 +4,24 @@ test = "test"
 script = "script"
 out = "out"
 libs = ["lib"]
-solc_version = "0.8.28"
+# Our code builds with 0.8.28. Morpho Blue pins 0.8.19 and is built with that, with
+# Morpho's own settings (via-IR, 999,999 runs), so one solc version cannot be forced.
+auto_detect_solc = true
 evm_version = "cancun"
 optimizer = true
 optimizer_runs = 200
 remappings = [
     "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
     "forge-std/=lib/forge-std/src/",
+    "morpho-blue/=lib/morpho-blue/",
+]
+additional_compiler_profiles = [
+    { name = "morpho", via_ir = true, optimizer_runs = 999999, evm_version = "paris" },
+]
+compilation_restrictions = [
+    { paths = "script/morpho/MorphoBlue.sol", version = "=0.8.19", via_ir = true, optimizer_runs = 999999, evm_version = "paris" },
+    { paths = "lib/morpho-blue/src/Morpho.sol", version = "=0.8.19", via_ir = true, optimizer_runs = 999999, evm_version = "paris" },
+    { paths = "src/**", version = "=0.8.28" },
 ]
 
 [fuzz]
@@ -30,3 +41,5 @@ line_length = 100
 [lint]
 # The vault runs on a fixed term measured in days. A few seconds of drift does not matter.
 exclude_lints = ["block-timestamp"]
+# The shim only imports Morpho Blue, which is linted upstream.
+ignore = ["script/morpho/**"]
