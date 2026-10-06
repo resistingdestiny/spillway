@@ -18,6 +18,12 @@ remappings = [
 additional_compiler_profiles = [
     { name = "morpho", via_ir = true, optimizer_runs = 999999, evm_version = "paris" },
 ]
+# The replay scripts read their input from replay/ and write their state there.
+# deployCode reads Morpho Blue's artifact from out/.
+fs_permissions = [
+    { access = "read-write", path = "./replay" },
+    { access = "read", path = "./out" },
+]
 compilation_restrictions = [
     { paths = "script/morpho/MorphoBlue.sol", version = "=0.8.19", via_ir = true, optimizer_runs = 999999, evm_version = "paris" },
     { paths = "lib/morpho-blue/src/Morpho.sol", version = "=0.8.19", via_ir = true, optimizer_runs = 999999, evm_version = "paris" },

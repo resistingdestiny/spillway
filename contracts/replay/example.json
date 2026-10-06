@@ -1,0 +1,25 @@
+{
+  "schema": "spillway.morpho-replay/1",
+  "source": {
+    "note": "Illustrative book, not copied from a real market. The engine writes real ones from fixtures/morpho.",
+    "chainId": 143,
+    "block": 0,
+    "marketId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "scale": 1
+  },
+  "collateral": { "name": "Test wstETH", "symbol": "twstETH", "decimals": 18 },
+  "lltv": "860000000000000000",
+  "oraclePrice": "4000000000000000000000000000",
+  "holderIndex": 0,
+  "suppliers": [
+    { "assets": "1500000000000" },
+    { "assets": "1000000000000" },
+    { "assets": "500000000000" }
+  ],
+  "borrowers": [
+    { "collateral": "300000000000000000000", "borrowAssets": "1020000000000" },
+    { "collateral": "250000000000000000000", "borrowAssets": "800000000000" },
+    { "collateral": "200000000000000000000", "borrowAssets": "560000000000" },
+    { "collateral": "100000000000000000000", "borrowAssets": "200000000000" }
+  ]
+}

@@ -12,3 +12,5 @@ broadcast/*/31337/
 data/live/
 web/public/data/
 contracts/broadcast/**/run-[0-9]*.json
+contracts/replay/state-test.json
+contracts/replay/state-31337.json
