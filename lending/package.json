@@ -10,7 +10,8 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "report": "tsx scripts/report.ts"
+    "report": "tsx scripts/report.ts",
+    "replay": "tsx scripts/replay-json.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",
