@@ -3,7 +3,9 @@ import { mountPerpl } from "./views/perpl.js";
 import { mountVerify } from "./views/verify.js";
 
 type Mount = (root: HTMLElement) => Promise<() => void>;
-const VIEWS: Record<string, Mount> = { lending: mountLending, perpl: mountPerpl, verify: mountVerify };
+// Cover loads on demand, so viem is only fetched by visitors who open it.
+const mountCover: Mount = (root) => import("./views/cover.js").then((m) => m.mountCover(root));
+const VIEWS: Record<string, Mount> = { lending: mountLending, cover: mountCover, perpl: mountPerpl, verify: mountVerify };
 
 const root = document.getElementById("view") as HTMLElement;
 let unmount: (() => void) | null = null;
