@@ -1,5 +1,5 @@
 // Tests for the keeper on the CRE SDK's test runtime, with the vault mocked at its address.
-// The live read path on Monad testnet is checked by scripts/read-live.ts.
+// The live read path on Monad testnet is checked by keeper.live.test.ts.
 
 import { describe, expect } from "bun:test"
 import { readFileSync } from "node:fs"
