@@ -2,6 +2,7 @@
 //   tsx scripts/build-data.ts [snapshot.json]
 // Defaults to the committed mainnet BTC fixture.
 
+import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -29,5 +30,12 @@ mkdirSync(lendingOut, { recursive: true });
 for (const f of ["monad-2026-10-06.json", "monad-2026-10-06.adapters.json"]) {
   writeFileSync(join(lendingOut, f), readFileSync(join(root, "fixtures", "morpho", f)));
 }
+// The lending bundle (cover prices, oracle kinds, exit depths), from the lending CLI so it matches what
+// anyone gets by rerunning it.
+execFileSync(
+  "npx",
+  ["tsx", join(root, "lending", "scripts", "report.ts"), join(root, "fixtures", "morpho", "monad-2026-10-06.json"), "--out", join(lendingOut, "bundle.json")],
+  { stdio: "ignore", env: { ...process.env, INIT_CWD: root } },
+);
 console.log(`wrote ${out} from ${input}`);
 console.table(bundle.summary);

@@ -3,12 +3,13 @@
 
 import {
   type AdaptersFile,
+  type LendingBundle,
   type PreparedMarket,
   type RawSnapshot,
   DEFAULT_CONFIG,
   loadBook,
-  positionOutcome,
   prepare,
+  runScenario,
   thresholds,
 } from "@spillway/lending";
 import { layout } from "../layout.js";
@@ -18,6 +19,7 @@ import { COLORS, Picture, type PictureLedge, type Scene } from "../picture.js";
 
 const SNAPSHOT = "data/lending/monad-2026-10-06.json";
 const ADAPTERS = "data/lending/monad-2026-10-06.adapters.json";
+const BUNDLE = "data/lending/bundle.json";
 /** Cover is sized to keep depositors whole up to this sudden fall. */
 const COVER_SHOCK = 0.25;
 /** Ledge height, as a fall in the collateral price. */
@@ -34,28 +36,41 @@ const VIEW = `
   <p class="sentence" id="lend-sentence"></p>
   <section class="controls">
     <label class="slider" for="lend-shock">
-      <span class="slider-label">Collateral falls at once by <b id="lend-shock-value">0%</b></span>
+      <span class="slider-label"><span id="lend-shock-what">Collateral falls at once by</span> <b id="lend-shock-value">0%</b></span>
       <input type="range" id="lend-shock" min="0" max="40" step="0.5" value="0" />
     </label>
   </section>`;
 
+/** What each kind of oracle reads, in words. */
+const ORACLE_READS: Record<string, string> = {
+  "exchange-rate": "an exchange rate",
+  "vault-share-price": "a vault's own share price",
+  "issuer-nav": "the issuer's reported value",
+  "pt-twap": "a time-weighted market price",
+};
+
 const pair = (pm: PreparedMarket) => `${pm.market.collateral?.symbol ?? "?"}/${pm.market.loan.symbol}`;
 const pct = (x: number) => `${(x * 100).toFixed(1).replace(/\.0$/, "")}%`;
 
-/** Loss to suppliers at a sudden fall, in USD, with the oracle following the price. */
-function lossAt(pm: PreparedMarket, shock: number): { total: number; byLedge: Map<number, number> } {
+/**
+ * Loss to suppliers when the collateral is marked down at once, with liquidators limited to what Monad's
+ * exchanges can absorb inside their incentive (the thin exit). Split into written off and not.
+ */
+function lossAt(pm: PreparedMarket, prep: ReturnType<typeof prepare>, shock: number) {
+  const token = pm.market.collateral?.address ?? "";
+  const run = runScenario(prep, DEFAULT_CONFIG, { kind: "thin", token, shock }).find((r) => r.marketId === pm.market.id);
   const byLedge = new Map<number, number>();
-  let total = 0;
-  for (const b of pm.borrowers) {
-    const value = b.value * (1 - shock);
-    const r = positionOutcome({ debt: b.debt, oracleValue: value, marketValue: value, lltv: pm.market.lltv, lif: pm.lif, fill: 1 });
-    const loss = (r.realised + r.unrealised) * pm.loanUsd;
+  if (!run) return { total: 0, realised: 0, unrealised: 0, byLedge };
+  const value = new Map(pm.borrowers.map((b) => [b.user, b] as const));
+  for (const p of run.positions) {
+    const loss = (p.result.realised + p.result.unrealised) * pm.loanUsd;
     if (loss <= 0) continue;
-    total += loss;
+    const b = value.get(p.user);
+    if (!b) continue;
     const k = Math.floor(thresholds(b.debt, b.value, pm.market.lltv, pm.lif).liquidation / BUCKET);
     byLedge.set(k, (byLedge.get(k) ?? 0) + loss);
   }
-  return { total, byLedge };
+  return { total: (run.realised + run.unrealised) * pm.loanUsd, realised: run.realised * pm.loanUsd, unrealised: run.unrealised * pm.loanUsd, byLedge };
 }
 
 /** The largest named vault supplying the market, and its share. */
@@ -73,7 +88,9 @@ export async function mountLending(root: HTMLElement): Promise<() => void> {
   root.innerHTML = VIEW;
   const $ = <T extends HTMLElement>(id: string) => root.querySelector(`#${id}`) as T;
 
-  const [raw, adapters] = await Promise.all([load<RawSnapshot>(SNAPSHOT), load<AdaptersFile>(ADAPTERS)]);
+  const [raw, adapters, bundle] = await Promise.all([load<RawSnapshot>(SNAPSHOT), load<AdaptersFile>(ADAPTERS), load<LendingBundle>(BUNDLE)]);
+  const facts = new Map(bundle.markets.map((m) => [m.marketId, m] as const));
+  const prices = new Map(bundle.pricing.map((p) => [p.name, p] as const));
   const book = loadBook(raw, adapters);
   const prep = prepare(book, DEFAULT_CONFIG);
   const debtUsd = (pm: PreparedMarket) => pm.borrowers.reduce((a, b) => a + b.debt, 0) * pm.loanUsd;
@@ -108,8 +125,10 @@ export async function mountLending(root: HTMLElement): Promise<() => void> {
 
   function draw(): void {
     const pm = current;
-    const cover = Math.max(lossAt(pm, COVER_SHOCK).total, 1);
-    const { total, byLedge } = lossAt(pm, shock);
+    const cover = Math.max(lossAt(pm, prep, COVER_SHOCK).total, 1);
+    const { total, unrealised, byLedge } = lossAt(pm, prep, shock);
+    const fact = facts.get(pm.market.id);
+    const marksDown = fact?.shockMeans === "issuer marks down";
     const coverPaid = Math.min(total, cover);
     const depositors = total - coverPaid;
     const vault = mainVault(pm);
@@ -135,20 +154,24 @@ export async function mountLending(root: HTMLElement): Promise<() => void> {
       tick: (mv) => `−${Math.round(mv * 100)}%`,
     });
 
-    const first = pm.borrowers.map((b) => thresholds(b.debt, b.value, pm.market.lltv, pm.lif).badDebt).filter((x) => x > 0);
-    const firstLoss = first.length ? Math.min(...first) : null;
+    // First loss under the thin exit, as published in the bundle.
+    const firstLoss = fact?.firstLoss ?? null;
+    const price = prices.get(vault.name);
+    const depth = fact?.exit?.depthUsd;
+    const what = marksDown ? `${coll} marked down at once by` : `${coll} falls at once by`;
+    $("lend-shock-what").textContent = what;
     $("lend-headline").innerHTML =
       shock <= 0
-        ? `<b>${usdShort(totalDebt)}</b> is borrowed across ${borrowed} Morpho markets on Monad. In ${pair(pm)}, ${firstLoss === null ? "no sudden fall up to 100% costs depositors anything" : `a sudden <b>${pct(firstLoss)}</b> fall in ${coll} is the smallest that costs depositors money`}.`
-        : `A sudden ${pct(shock)} fall in ${coll} leaves <b>${usdShort(total)}</b> unpaid. ${vault.name} supplies ${pct(vault.share)} of this market.`;
+        ? `In ${pair(pm)}, ${firstLoss === null ? "no sudden fall up to 100% costs depositors anything" : `a sudden <b>${pct(firstLoss)}</b> ${marksDown ? "markdown" : "fall"} of ${coll} is the smallest that costs depositors money`}.` +
+          (price ? ` Cover for ${vault.name}'s depositors costs <b>${pct(price.premiumOnSupply)}</b> of supply a year.` : "")
+        : `A ${pct(shock)} ${marksDown ? "markdown" : "fall"} of ${coll} leaves <b>${usdShort(total)}</b> unpaid. ${vault.name} supplies ${pct(vault.share)} of this market.`;
+    const oracleNote = fact?.oracleKind && !fact.oracleKind.depegReachesOracle ? ` Its oracle reads ${ORACLE_READS[fact.oracleKind.kind] ?? "a reported figure"}, so a market sell-off alone would not move it.` : "";
     $("lend-sentence").textContent =
       shock <= 0
-        ? "Each ledge is borrowing that gets liquidated if the collateral falls that far. Water is debt the collateral can not repay."
+        ? `Each ledge is borrowing liquidated if ${coll} is ${marksDown ? "marked down" : "falls"} that far.${oracleNote}`
         : total <= 0
-          ? `Liquidators can sell every position's collateral for more than its debt, so depositors lose nothing.`
-          : depositors <= 0
-            ? `Spillway's cover pays all ${usd(total)}, and depositors are made whole.`
-            : `Spillway's cover pays ${usd(coverPaid)} and depositors lose the other ${usd(depositors)}.`;
+          ? "Every position's collateral still covers its debt, so depositors lose nothing."
+          : `${depth !== undefined && depth !== null ? `Liquidators can sell only ${usdShort(depth)} of ${coll} on Monad inside their incentive, so ${usdShort(unrealised)} is never written off. ` : ""}${depositors <= 0 ? `Spillway proves the shortfall from Morpho's positions and pays all ${usdShort(total)}.` : `Spillway pays ${usdShort(coverPaid)} and depositors lose ${usdShort(depositors)}.`}`;
     $("lend-shock-value").textContent = pct(shock);
   }
 
