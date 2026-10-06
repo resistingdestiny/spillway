@@ -14,26 +14,13 @@
     <main class="app">
       <header class="top">
         <div class="brand">Spillway</div>
-        <div class="market" id="market"></div>
+        <nav class="tabs" aria-label="Sections">
+          <a href="#/lending" data-view="lending">Lending</a>
+          <a href="#/perpl" data-view="perpl">Perpl</a>
+          <a href="#/verify" data-view="verify">Verify</a>
+        </nav>
       </header>
-      <p class="headline" id="headline"></p>
-      <section class="stage" id="stage" aria-label="The flood picture">
-        <div class="canvas" id="canvas"></div>
-        <div class="overlay" id="overlay"></div>
-      </section>
-      <p class="sentence" id="sentence"></p>
-      <section class="controls">
-        <div class="scenario" id="scenario" role="group" aria-label="Open interest">
-          <span>Open interest</span>
-          <button data-k="1" aria-pressed="true">Today</button>
-          <button data-k="3" aria-pressed="false">3x</button>
-          <button data-k="10" aria-pressed="false">10x</button>
-        </div>
-        <label class="slider" for="drop">
-          <span class="slider-label">Price gap while liquidations are paused <b id="drop-value">0%</b></span>
-          <input type="range" id="drop" min="0" max="40" step="0.5" value="0" />
-        </label>
-      </section>
+      <div id="view"></div>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>

@@ -71,6 +71,10 @@ export class Picture {
     this.app.stage.addChild(this.g);
   }
 
+  destroy(): void {
+    this.app.destroy(true, { children: true });
+  }
+
   /** Match the canvas to its container and return the size in CSS pixels. */
   fit(): { W: number; H: number } {
     const W = this.el.clientWidth;

@@ -110,3 +110,11 @@ html, body {
 .slider { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
 .slider b { color: var(--ink); font-variant-numeric: tabular-nums; }
 .slider input { width: 100%; accent-color: var(--ink); height: 28px; }
+
+.tabs { display: flex; gap: 14px; font-size: 14px; }
+.tabs a { color: var(--muted); text-decoration: none; padding-bottom: 2px; }
+.tabs a[aria-current="true"] { color: var(--ink); border-bottom: 2px solid var(--ink); }
+.market { color: var(--muted); font-size: 13px; margin-bottom: 4px; }
+.manifest { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; font-size: 14px; }
+.manifest dt { color: var(--muted); }
+.manifest dd { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
