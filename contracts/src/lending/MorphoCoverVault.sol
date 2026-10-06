@@ -435,28 +435,12 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
     /// @dev Covered shares are capped at what the holder still supplies, so a holder who
     /// withdrew before the loss is not paid for it. Claims can repeat as losses grow.
     function claim(uint256 policyId) external nonReentrant returns (uint256 amount) {
-        Policy storage p = _policies[policyId];
-        if (p.holder == address(0)) revert UnknownPolicy(policyId);
-        uint256 closesAt = uint256(p.end) + claimWindow;
-        if (block.timestamp > closesAt) revert ClaimWindowClosed(policyId, closesAt);
-
+        Policy storage p = _openPolicy(policyId);
         morpho.accrueInterest(_marketParams[p.marketId]);
         Market memory m = morpho.market(p.marketId);
         uint256 held = morpho.position(p.marketId, p.holder).supplyShares;
-        (uint256 loss, uint256 due) = _due(p, m.totalSupplyAssets, m.totalSupplyShares, held);
-        if (due <= p.paid) revert NoLoss(policyId);
-
-        amount = due - p.paid;
-        if (amount < dustThreshold) revert BelowDust(amount, dustThreshold);
-        amount = Math.min(amount, totalPrincipal);
-        if (amount == 0) revert NoFreeCapital();
-
-        p.paid += amount;
-        activeLimit -= amount;
-        totalPrincipal -= amount;
-        paidOut += amount;
-
-        asset.safeTransfer(p.holder, amount);
+        (uint256 loss,, uint256 due) = _due(p, m.totalSupplyAssets, m.totalSupplyShares, held, 0);
+        amount = _pay(policyId, p, due);
         emit Claimed(
             policyId,
             p.holder,
@@ -514,7 +498,7 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
         uint256 held = morpho.position(p.marketId, p.holder).supplyShares;
         (uint256 assets, uint256 shares,,) =
             morpho.expectedMarketBalances(_marketParams[p.marketId]);
-        (, uint256 due) = _due(p, assets, shares, held);
+        (,, uint256 due) = _due(p, assets, shares, held, 0);
         return due > p.paid ? due - p.paid : 0;
     }
 
@@ -632,23 +616,71 @@ contract MorphoCoverVault is ReentrancyGuard, Ownable {
         premiumUnallocated += premium * PRECISION - rate * policyTerm;
     }
 
-    /// @dev The policy's loss on the covered shares the holder still supplies, at the
-    /// market's supply totals now, and what the policy owes in total for it. The loss is
-    /// what the shares redeemed for at inception less what they redeem for now, both
-    /// rounded down as Morpho rounds a withdrawal.
-    function _due(Policy storage p, uint256 supplyAssets, uint256 supplyShares, uint256 held)
-        internal
-        view
-        returns (uint256 loss, uint256 due)
-    {
+    /// @dev A live policy: known, and its claim window not yet closed.
+    function _openPolicy(uint256 policyId) internal view returns (Policy storage p) {
+        p = _policies[policyId];
+        if (p.holder == address(0)) revert UnknownPolicy(policyId);
+        uint256 closesAt = uint256(p.end) + claimWindow;
+        if (block.timestamp > closesAt) revert ClaimWindowClosed(policyId, closesAt);
+    }
+
+    /// @dev The policy's loss on the covered shares the holder still supplies, and what
+    /// the policy owes in total for it, at the market's supply totals now.
+    ///
+    /// `shares` is the lower of the covered shares and what the holder still supplies.
+    /// `atStart` and `atNow` are what those shares redeemed for at inception and redeem
+    /// for now, both rounded down as Morpho rounds a withdrawal. `shortfall` is a market
+    /// shortfall nobody has realised yet (0 for `claim`). Writing it off would take it
+    /// from `totalSupplyAssets`, so the shares would bear
+    ///
+    ///     unrealised = shortfall * shares / (totalSupplyShares + VIRTUAL_SHARES)
+    ///
+    /// rounded down, which is how much less they would redeem for. Then
+    ///
+    ///     loss = max(0, atStart + unrealised - atNow)
+    ///     due  = min(loss - deductible, limit), or 0 while loss <= deductible
+    ///
+    /// Interest earned since inception absorbs an unrealised loss first, as it does a
+    /// realised one. When Morpho later realises the shortfall, `unrealised` moves into
+    /// `atStart - atNow`, usually growing on the way: liquidation books the debt less
+    /// the collateral divided by the incentive, which is more than the debt less the
+    /// collateral. The same loss is counted once, in whichever form it takes at the time.
+    function _due(
+        Policy storage p,
+        uint256 supplyAssets,
+        uint256 supplyShares,
+        uint256 held,
+        uint256 shortfall
+    ) internal view returns (uint256 loss, uint256 unrealised, uint256 due) {
         uint256 shares = Math.min(p.coveredShares, held);
         uint256 atStart =
             SharesMathLib.toAssetsDown(shares, p.startSupplyAssets, p.startSupplyShares);
         uint256 atNow = SharesMathLib.toAssetsDown(shares, supplyAssets, supplyShares);
-        if (atNow >= atStart) return (0, 0);
-        loss = atStart - atNow;
-        if (loss <= p.deductible) return (loss, 0);
+        unrealised = Math.mulDiv(shortfall, shares, supplyShares + SharesMathLib.VIRTUAL_SHARES);
+        if (atNow >= atStart + unrealised) return (0, unrealised, 0);
+        loss = atStart + unrealised - atNow;
+        if (loss <= p.deductible) return (loss, unrealised, 0);
         due = Math.min(loss - p.deductible, p.limit);
+    }
+
+    /// @dev Pays policy `policyId` the increase of `due` over what it has been paid,
+    /// capped by free capital. `paid` only grows, so over its life a policy is paid the
+    /// most it was ever due, on either claim path, and never the sum of the two.
+    function _pay(uint256 policyId, Policy storage p, uint256 due)
+        internal
+        returns (uint256 amount)
+    {
+        if (due <= p.paid) revert NoLoss(policyId);
+        amount = due - p.paid;
+        if (amount < dustThreshold) revert BelowDust(amount, dustThreshold);
+        amount = Math.min(amount, totalPrincipal);
+        if (amount == 0) revert NoFreeCapital();
+
+        p.paid += amount;
+        activeLimit -= amount;
+        totalPrincipal -= amount;
+        paidOut += amount;
+        asset.safeTransfer(p.holder, amount);
     }
 
     /// @dev Market `id`'s unrealised shortfall over `borrowers`: the sum, over each
