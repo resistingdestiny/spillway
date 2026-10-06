@@ -37,6 +37,7 @@ export function buildLendingBundle(book: LendingBook, cfg: LendingConfig, manife
   const vaults = vaultExposure(prep, cfg, curves);
   const cover = coverTable(vaults, cfg, curves.shocks);
   const pricing = vaults.map((v) => priceVault(prep, cfg, v));
+  const positions = topPositions(prep, cfg);
   const biggest = [...markets].sort((a, b) => b.debtUsd - a.debtUsd || (a.marketId < b.marketId ? -1 : 1));
   const at = (xs: number[], s: number) => xs[curves.shocks.indexOf(s)] ?? 0;
   return {
@@ -65,14 +66,14 @@ export function buildLendingBundle(book: LendingBook, cfg: LendingConfig, manife
         lossUsd: cfg.reportShocks.map((s) => ({ shock: s, lossUsd: at(m.depeg.realisedUsd, s) + at(m.depeg.unrealisedUsd, s) })),
       })),
       pml: pml.slice(0, 5),
-      positions: topPositions(prep, cfg).slice(0, 5),
+      positions: positions.slice(0, 5),
     },
     markets,
     pml,
     vaults,
     cover,
     pricing,
-    positions: topPositions(prep, cfg),
+    positions,
   };
 }
 

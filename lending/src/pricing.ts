@@ -11,9 +11,8 @@
 // is replaced by research.
 
 import { type LendingConfig, classOf } from "./config.js";
-import { usd, frac } from "./report.js";
+import { type VaultExposure, frac, usd } from "./report.js";
 import { type PreparedBook, runScenario } from "./scenarios.js";
-import type { VaultExposure } from "./report.js";
 
 export interface TokenRisk {
   token: string;
