@@ -1,0 +1,9 @@
+# CRE workflow settings for the Spillway keeper. One target: Monad testnet.
+# Simulate from cre/ with: cre workflow simulate keeper --target monad-testnet
+monad-testnet:
+  user-workflow:
+    workflow-name: "spillway-keeper"
+  workflow-artifacts:
+    workflow-path: "./main.ts"
+    config-path: "./config.json"
+    secrets-path: ""

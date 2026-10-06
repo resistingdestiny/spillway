@@ -56,6 +56,7 @@ Its first payout (transaction `0x9d033418e9f67bc6faaadd095dcfc3aefc1cf48f83ce8c8
 | `engine/` | Perpl risk engine and the Morpho snapshot script |
 | `snapshot/` | Rust reader for Perpl through its SDK |
 | `watcher/` | Keeper and scenario runner for the Perpl vault |
+| `cre/` | Chainlink CRE workflow that claims the Morpho cover's losses on Monad testnet, unwritten ones included |
 | `web/` | The app: a flood picture per market, the Perpl tab and a verify page |
 
 ## Run it
