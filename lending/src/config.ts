@@ -69,10 +69,17 @@ export interface LendingConfig {
 
   thinExit: {
     /**
+     * Research, docs/RESEARCH.md section 3: the best quote found on Monad for selling each collateral
+     * token (by symbol) into its loan asset, as [sale size in USD, output / (input x reference) - 1].
+     * null is no route at that size, read as receiving nothing. The reference is the market's oracle
+     * price for the eight largest markets and the API's USD price ratio for the rest, so a quote
+     * includes any premium of oracle over market. Quotes taken 6 Oct 2026, 14:43 to 14:47 UTC.
+     */
+    quotes: Record<string, [number, number | null][]>;
+    /**
      * Dollars of each collateral token (by address) that liquidators can sell within the liquidation
-     * incentive, that is with slippage below 1 - 1/LIF. A token not listed has unlimited depth:
-     * liquidators always act, and the thin exit scenario equals the depeg. Assumption: none listed
-     * until exit depth on Monad's exchanges is measured.
+     * incentive, in every market that takes it. Wins over the quotes. Empty by default: it is the
+     * lever for what-if runs and tests.
      */
     exitDepthUsd: Record<string, number>;
   };
@@ -139,7 +146,24 @@ export const DEFAULT_CONFIG: LendingConfig = {
   morpho: { liquidationCursor: 0.3, maxLiquidationIncentive: 1.15 },
   shockGrid: grid(0, 1, 0.01),
   reportShocks: [0.05, 0.1, 0.25, 0.5, 1],
-  thinExit: { exitDepthUsd: {} },
+  thinExit: {
+    quotes: {
+      wstETH: [[1_000, -0.0072], [100_000, -0.1861], [1_000_000, -0.6885], [10_000_000, -0.9566]],
+      aHYPER: [[1_000, -0.6984], [100_000, -0.9494], [1_000_000, -0.9996], [10_000_000, -1.0]],
+      "PT-USDat-14JAN2027": [[1_000, -0.0006], [100_000, -0.0011], [1_000_000, -0.0083], [10_000_000, null]],
+      earnAUSD: [[1_000, -0.0138], [100_000, -0.91], [1_000_000, -0.9877], [10_000_000, -0.9987]],
+      strUSD: [[1_000, null], [100_000, null], [1_000_000, null], [10_000_000, null]],
+      mROX: [[1_000, null], [100_000, null], [1_000_000, null], [10_000_000, null]],
+      mHyperBTC: [[1_000, null], [100_000, null], [1_000_000, null], [10_000_000, null]],
+      "PT-AUSD-8OCT2026": [[1_000, -0.0001], [100_000, -0.0001], [1_000_000, -0.0008], [10_000_000, -0.6667]],
+      syrupUSDC: [[1_000, -0.001], [100_000, -0.0011], [1_000_000, -0.0023], [10_000_000, -0.5169]],
+      USDe: [[1_000, -0.7774], [100_000, -0.9438], [1_000_000, -0.9897], [10_000_000, -0.9989]],
+      vUSD: [[1_000, null], [100_000, null], [1_000_000, null], [10_000_000, null]],
+      wsrUSD: [[1_000, -0.9442], [100_000, -0.9976], [1_000_000, -0.9998], [10_000_000, -1.0]],
+      savUSD: [[1_000, -0.7831], [100_000, -0.9506], [1_000_000, -0.9953], [10_000_000, -0.9997]],
+    },
+    exitDepthUsd: {},
+  },
   pml: { rankShock: 1 },
   pricing: {
     classes: {
