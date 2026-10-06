@@ -54,7 +54,7 @@ Headline figures are the thin exit: liquidators sell only what Monad's exchanges
 | wstETH / WETH | 94.5% | $35.4M | the stETH per wstETH rate is marked down | $6,146 | the rate is marked down 6% or more | $5.91M, all unrealised, $5.76M of it to Steakhouse Prime ETH | $6.39M |
 | aHYPER / USDC | 77% | $34.4M | the vault reports a lower share price | 0 | the share price is marked down 24% or more | $0.03M; a 50% markdown, $9.53M | $0.59M |
 | PT-USDat-14JAN2027 / USDC | 91.5% | $21.4M | the PT's market price falls against USDat (15 minute TWAP) | $1.16M | the PT falls 7% or more | $2.71M, $2.30M of it to Hyperithm USDC Apex | $3.11M |
-| earnAUSD / USDC | 91.5% | $7.3M | the operator reports a lower share price | $2,292 | the share price is marked down 11% or more | $0.92M, $0.91M of it to August USDC V2 | $1.09M |
+| earnAUSD / USDC | 91.5% | $7.3M | the vault manager reports a lower share price | $2,292 | the share price is marked down 11% or more | $0.92M, $0.91M of it to August USDC V2 | $1.09M |
 | strUSD / AUSD | 86% | $6.1M | the issuer's exchange rate is marked down | 0 (no route) | the rate is marked down 15% or more | $0.56M, $0.46M of it to SharpByte AUSD Tori Ecosystem | $0.77M |
 
 Six of the eight markets whose oracles were read, $92.5M of the $117.5M they lend, price collateral from an issuer or vault figure. A fall in the collateral's market price does not reach those oracles. Their losses arrive when the issuer marks down, in one step, so the jump is the right model for them.
