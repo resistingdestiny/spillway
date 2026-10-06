@@ -4,3 +4,6 @@ export * from "./config.js";
 export * from "./model.js";
 export * from "./attribution.js";
 export * from "./scenarios.js";
+export * from "./report.js";
+export * from "./pricing.js";
+export * from "./bundle.js";
