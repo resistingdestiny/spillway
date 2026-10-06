@@ -71,6 +71,9 @@ importers:
       pixi.js:
         specifier: ^8.22.0
         version: 8.22.0
+      viem:
+        specifier: ^2.57.2
+        version: 2.57.2(typescript@7.0.2)
     devDependencies:
       '@types/node':
         specifier: ^26.6.4
