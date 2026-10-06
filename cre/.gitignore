@@ -1,2 +1,3 @@
 # cre workflow build writes the compiled workflow here by default.
 *.wasm
+.cre_build_tmp.js

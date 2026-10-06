@@ -82,6 +82,13 @@ export function onCron(runtime: Runtime<Config>): string {
     throw new Error(`report write failed with status ${write.txStatus}: ${write.errorMessage ?? ""}`)
   }
   const tx = bytesToHex(write.txHash ?? new Uint8Array(32))
+  // The forwarder does not revert when the receiver does. It records the failure, and the
+  // capability reports it here (ReceiverContractExecutionStatus.REVERTED is 1). The
+  // receiver catches failed claims itself, so a revert means the report was refused: a
+  // wrong forwarder or workflow identity.
+  if (write.receiverContractExecutionStatus === 1) {
+    throw new Error(`receiver refused the report in ${tx}`)
+  }
   runtime.log(`report sent: ${claims.length} claim(s) in ${tx}`)
   return `sent ${claims.length} claim(s): ${tx}`
 }
