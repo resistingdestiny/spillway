@@ -1,0 +1,28 @@
+{
+  "name": "@spillway/indexer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "fetch": "tsx scripts/fetch.ts",
+    "snapshot": "tsx scripts/snapshot.ts",
+    "reconcile": "tsx scripts/reconcile.ts"
+  },
+  "dependencies": {
+    "@envio-dev/hypersync-client": "^1.4.1",
+    "@spillway/lending": "workspace:*",
+    "viem": "^2.57.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
+  }
+}
