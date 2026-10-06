@@ -1,5 +1,9 @@
 // Everything the lending stress test publishes, from one book and one config.
 //
+// Headline numbers are the thin exit: liquidators act only as far as Monad's exit depth lets them
+// (src/exit.ts). "Liquidators always act" (the depeg scenario) is kept next to it for comparison, and
+// the hidden loss (oracle holds) as a third view.
+//
 // - markets:   each market's stress curve when its collateral token falls, 0 to 100%.
 // - pml:       collateral tokens ranked by the loss their failure would put on depositors, across
 //              every market that takes them.
@@ -12,6 +16,7 @@
 
 import { lossByVault } from "./attribution.js";
 import { type CollateralClass, type LendingConfig, classOf } from "./config.js";
+import { exitDepth } from "./exit.js";
 import { thresholds } from "./model.js";
 import { type PreparedBook, type PreparedMarket, type ScenarioKind, runScenario } from "./scenarios.js";
 
@@ -53,13 +58,13 @@ export interface Curves {
   thin: Map<string, Map<string, Curve>>;
 }
 
-/** Run every token through every scenario on the grid. Thin exit only for tokens with a set depth. */
+/** Run every token through the thin exit, the depeg and the hidden loss on the grid. */
 export function allCurves(prep: PreparedBook, cfg: LendingConfig, shocks: number[] = cfg.shockGrid): Curves {
   const out: Curves = { shocks, depeg: new Map(), hidden: new Map(), thin: new Map() };
   for (const token of prep.byToken.keys()) {
+    out.thin.set(token, tokenCurves(prep, cfg, token, "thin", shocks));
     out.depeg.set(token, tokenCurves(prep, cfg, token, "depeg", shocks));
     out.hidden.set(token, tokenCurves(prep, cfg, token, "hidden", shocks));
-    if (cfg.thinExit.exitDepthUsd[token] !== undefined) out.thin.set(token, tokenCurves(prep, cfg, token, "thin", shocks));
   }
   return out;
 }
@@ -84,8 +89,9 @@ export function marketCurves(prep: PreparedBook, cfg: LendingConfig, curves: Cur
       const token = tokenOf(pm).address;
       const d = curves.depeg.get(token)?.get(m.id) as Curve;
       const h = curves.hidden.get(token)?.get(m.id) as Curve;
-      const t = curves.thin.get(token)?.get(m.id);
+      const t = curves.thin.get(token)?.get(m.id) as Curve;
       const toUsd = (xs: number[]) => xs.map((x) => usd(x * pm.loanUsd));
+      const exit = exitDepth(tokenOf(pm), pm.lif, cfg);
       return {
         marketId: m.id,
         collateral: { address: token, symbol: tokenOf(pm).symbol },
@@ -98,16 +104,20 @@ export function marketCurves(prep: PreparedBook, cfg: LendingConfig, curves: Cur
         suppliers: pm.suppliers.length,
         debtUsd: usd(debtUsd(pm)),
         supplyUsd: usd(supplyUsd(pm)),
+        /** What liquidators can sell on Monad within this market's incentive. Null depth: not measured, no limit. */
+        exit: { source: exit.source, maxLoss: frac(exit.maxLoss), depthUsd: exit.depthUsd === null ? null : usd(exit.depthUsd) },
         /** Smallest fall at which more than a dollar of debt is liquidatable, and at which suppliers lose more than a dollar. */
         firstLiquidation: firstAbove(d.liquidatable.map((x) => x * pm.loanUsd), shocks, 1),
-        firstLoss: firstAbove(d.realised.map((_, i) => loss(d, i) * pm.loanUsd), shocks, 1),
+        firstLoss: firstAbove(t.realised.map((_, i) => loss(t, i) * pm.loanUsd), shocks, 1),
+        /** The same with liquidators always acting. */
+        firstLossAlwaysAct: firstAbove(d.realised.map((_, i) => loss(d, i) * pm.loanUsd), shocks, 1),
+        thin: { realisedUsd: toUsd(t.realised), unrealisedUsd: toUsd(t.unrealised) },
         depeg: { liquidatableUsd: toUsd(d.liquidatable), realisedUsd: toUsd(d.realised), unrealisedUsd: toUsd(d.unrealised) },
         hidden: { unrealisedUsd: toUsd(h.unrealised) },
-        thin: t ? { realisedUsd: toUsd(t.realised), unrealisedUsd: toUsd(t.unrealised) } : null,
         supplierShares: pm.suppliers.map((s) => ({ supplier: s.supplier, vault: s.vault, vaultName: s.vaultName, share: frac(s.share) })),
-        /** The depeg loss split across suppliers at each report shock, by vault, the rest as "others". */
+        /** The thin exit loss split across suppliers at each report shock, by vault, the rest as "others". */
         split: at.map((i) => {
-          const byVault = vaultSplit(pm, d, i);
+          const byVault = vaultSplit(pm, t, i);
           return {
             shock: shocks[i] as number,
             vaults: [...byVault].filter(([v]) => v !== null).map(([v, l]) => ({ vault: v, name: prep.book.vaults.get(v as string)?.name ?? null, lossUsd: usd(l) })),
@@ -133,9 +143,11 @@ export function pmlTable(prep: PreparedBook, cfg: LendingConfig, curves: Curves)
   const rankAt = shocks.indexOf(cfg.pml.rankShock);
   const rows = [...prep.byToken].map(([token, pms]) => {
     const symbol = tokenOf(pms[0] as PreparedMarket).symbol;
+    const t = curves.thin.get(token);
     const d = curves.depeg.get(token);
     const h = curves.hidden.get(token);
-    const total = shocks.map((_, i) => tokenLossUsd(prep, d, i));
+    const total = shocks.map((_, i) => tokenLossUsd(prep, t, i));
+    const alwaysAct = shocks.map((_, i) => tokenLossUsd(prep, d, i));
     return {
       token,
       symbol,
@@ -145,9 +157,11 @@ export function pmlTable(prep: PreparedBook, cfg: LendingConfig, curves: Curves)
       supplyUsd: usd(pms.reduce((a, pm) => a + supplyUsd(pm), 0)),
       /** The loss its failure would put on depositors, at the ranking fall. */
       pmlUsd: usd(total[rankAt] ?? 0),
-      /** Smallest fall at which depositors lose more than a dollar. */
+      /** Smallest fall at which depositors lose more than a dollar, in the thin exit and with liquidators always acting. */
       firstLoss: firstAbove(total, shocks, 1),
-      depegUsd: cfg.reportShocks.map((s) => ({ shock: s, lossUsd: usd(total[shocks.indexOf(s)] ?? 0) })),
+      firstLossAlwaysAct: firstAbove(alwaysAct, shocks, 1),
+      lossUsd: cfg.reportShocks.map((s) => ({ shock: s, lossUsd: usd(total[shocks.indexOf(s)] ?? 0) })),
+      alwaysActUsd: cfg.reportShocks.map((s) => ({ shock: s, lossUsd: usd(alwaysAct[shocks.indexOf(s)] ?? 0) })),
       hiddenUsd: cfg.reportShocks.map((s) => ({ shock: s, lossUsd: usd(tokenLossUsd(prep, h, shocks.indexOf(s))) })),
     };
   });
@@ -187,7 +201,9 @@ export function vaultExposure(prep: PreparedBook, cfg: LendingConfig, curves: Cu
           token,
           symbol,
           class: classOf(symbol, cfg),
-          depegUsd: shocks.map((_, i) => usd(vaultLossUsd(prep, curves.depeg.get(token), address, i))),
+          /** Thin exit loss on the shock grid. */
+          lossUsd: shocks.map((_, i) => usd(vaultLossUsd(prep, curves.thin.get(token), address, i))),
+          alwaysActUsd: shocks.map((_, i) => usd(vaultLossUsd(prep, curves.depeg.get(token), address, i))),
           hiddenUsd: shocks.map((_, i) => usd(vaultLossUsd(prep, curves.hidden.get(token), address, i))),
         };
       });
@@ -210,12 +226,17 @@ export type VaultExposure = ReturnType<typeof vaultExposure>[number];
  * The cover limit that keeps a vault's depositors whole when any one collateral token falls by
  * `shock`: the largest loss any single token's fall would cause, and which token that is.
  */
-export function coverLimit(v: VaultExposure, shocks: number[], shock: number, kind: "depeg" | "hidden" = "depeg"): { limitUsd: number; token: string | null; symbol: string | null } {
+export function coverLimit(
+  v: VaultExposure,
+  shocks: number[],
+  shock: number,
+  kind: "thin" | "depeg" | "hidden" = "thin",
+): { limitUsd: number; token: string | null; symbol: string | null } {
   const i = shocks.indexOf(shock);
   if (i < 0) throw new Error(`shock ${shock} is not on the grid`);
   let best = { limitUsd: 0, token: null as string | null, symbol: null as string | null };
   for (const t of v.byToken) {
-    const l = (kind === "depeg" ? t.depegUsd : t.hiddenUsd)[i] ?? 0;
+    const l = (kind === "thin" ? t.lossUsd : kind === "depeg" ? t.alwaysActUsd : t.hiddenUsd)[i] ?? 0;
     if (l > best.limitUsd) best = { limitUsd: l, token: t.token, symbol: t.symbol };
   }
   return best;
@@ -227,6 +248,7 @@ export function coverTable(vaults: VaultExposure[], cfg: LendingConfig, shocks: 
     name: v.name,
     supplyUsd: v.supplyUsd,
     limits: cfg.reportShocks.map((s) => ({ shock: s, ...coverLimit(v, shocks, s) })),
+    alwaysActLimits: cfg.reportShocks.map((s) => ({ shock: s, ...coverLimit(v, shocks, s, "depeg") })),
   }));
 }
 

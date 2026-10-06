@@ -64,8 +64,10 @@ describe("probable maximum loss", () => {
     const markets = marketCurves(prep, cfg, curves);
     for (const r of pml) {
       const at = shocks.indexOf(0.25);
-      const sum = markets.filter((m) => m.collateral.address === r.token).reduce((a, m) => a + (m.depeg.realisedUsd[at] ?? 0) + (m.depeg.unrealisedUsd[at] ?? 0), 0);
-      expect(r.depegUsd.find((d) => d.shock === 0.25)?.lossUsd).toBeCloseTo(sum, 0);
+      const sum = markets.filter((m) => m.collateral.address === r.token).reduce((a, m) => a + (m.thin.realisedUsd[at] ?? 0) + (m.thin.unrealisedUsd[at] ?? 0), 0);
+      expect(r.lossUsd.find((d) => d.shock === 0.25)?.lossUsd).toBeCloseTo(sum, 0);
+      const always = markets.filter((m) => m.collateral.address === r.token).reduce((a, m) => a + (m.depeg.realisedUsd[at] ?? 0) + (m.depeg.unrealisedUsd[at] ?? 0), 0);
+      expect(r.alwaysActUsd.find((d) => d.shock === 0.25)?.lossUsd).toBeCloseTo(always, 0);
     }
   });
 });
@@ -82,7 +84,7 @@ describe("vault exposure and cover", () => {
     for (const m of markets) {
       for (const s of m.split) {
         const i = shocks.indexOf(s.shock);
-        const loss = (m.depeg.realisedUsd[i] ?? 0) + (m.depeg.unrealisedUsd[i] ?? 0);
+        const loss = (m.thin.realisedUsd[i] ?? 0) + (m.thin.unrealisedUsd[i] ?? 0);
         const split = s.vaults.reduce((a, v) => a + v.lossUsd, 0) + s.othersUsd;
         expect(Math.abs(split - loss)).toBeLessThan(0.01 * (s.vaults.length + 2));
       }
@@ -94,14 +96,14 @@ describe("vault exposure and cover", () => {
       for (const shock of cfg.reportShocks) {
         const i = shocks.indexOf(shock);
         const { limitUsd, token } = coverLimit(v, shocks, shock);
-        for (const t of v.byToken) expect(limitUsd).toBeGreaterThanOrEqual(t.depegUsd[i] as number);
-        if (limitUsd > 0) expect(v.byToken.find((t) => t.token === token)?.depegUsd[i]).toBe(limitUsd);
+        for (const t of v.byToken) expect(limitUsd).toBeGreaterThanOrEqual(t.lossUsd[i] as number);
+        if (limitUsd > 0) expect(v.byToken.find((t) => t.token === token)?.lossUsd[i]).toBe(limitUsd);
       }
     }
   });
 
   it("never needs more cover than the vault supplies", () => {
-    for (const v of vaults) for (const t of v.byToken) for (const l of t.depegUsd) expect(l).toBeLessThanOrEqual(v.supplyUsd + 0.01);
+    for (const v of vaults) for (const t of v.byToken) for (const l of [...t.lossUsd, ...t.alwaysActUsd]) expect(l).toBeLessThanOrEqual(v.supplyUsd + 0.01);
   });
 });
 

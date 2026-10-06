@@ -6,7 +6,7 @@
 import { createHash } from "node:crypto";
 import type { LendingConfig } from "./config.js";
 import { priceVault } from "./pricing.js";
-import { allCurves, coverTable, marketCurves, pmlTable, topPositions, vaultExposure } from "./report.js";
+import { allCurves, coverTable, marketCurves, pmlTable, topPositions, usd, vaultExposure } from "./report.js";
 import { prepare } from "./scenarios.js";
 import type { LendingBook } from "./snapshot.js";
 
@@ -62,8 +62,11 @@ export function buildLendingBundle(book: LendingBook, cfg: LendingConfig, manife
         oracle: m.oracle?.type ?? null,
         debtUsd: m.debtUsd,
         firstLiquidation: m.firstLiquidation,
+        exit: m.exit,
         firstLoss: m.firstLoss,
-        lossUsd: cfg.reportShocks.map((s) => ({ shock: s, lossUsd: at(m.depeg.realisedUsd, s) + at(m.depeg.unrealisedUsd, s) })),
+        firstLossAlwaysAct: m.firstLossAlwaysAct,
+        lossUsd: cfg.reportShocks.map((s) => ({ shock: s, lossUsd: usd(at(m.thin.realisedUsd, s) + at(m.thin.unrealisedUsd, s)) })),
+        alwaysActUsd: cfg.reportShocks.map((s) => ({ shock: s, lossUsd: usd(at(m.depeg.realisedUsd, s) + at(m.depeg.unrealisedUsd, s)) })),
       })),
       pml: pml.slice(0, 5),
       positions: positions.slice(0, 5),
