@@ -36,6 +36,9 @@ contract ReplayTest is Test {
 
         (Id id, uint256 policyId) = new SeedMarket().run();
         assertTrue(vault.isListed(id));
+        // The annual rate comes from the book, not the config's placeholder.
+        assertEq(vault.premiumBps(id), 300);
+        assertTrue(vault.premiumBps(id) != LendingConfig.PREMIUM_BPS);
         // The holder is supplier 0, with 1.5M of the book's 3M.
         MorphoCoverVault.Policy memory p = vault.policy(policyId);
         assertEq(p.limit, 1_500_000e6);

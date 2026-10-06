@@ -16,7 +16,8 @@ import {LendingConfig} from "./LendingConfig.sol";
 /// @title SeedMarket
 /// @notice Replay, step one. Creates a Morpho Blue market with a MockOracle at the
 /// book's price, copies the book's suppliers and borrowers into it, lists it in the
-/// cover vault, puts up underwriting capital and buys cover for one supplier.
+/// cover vault at the book's annual premium rate, puts up underwriting capital and buys
+/// cover for one supplier.
 /// @dev The input is a `spillway.morpho-replay/1` JSON file (see replay/example.json and
 /// the README). Amounts are already scaled to testnet tokens, in base units, as decimal
 /// strings. The broadcaster must own the vault. It pays for everything: it mints tUSD
@@ -111,7 +112,12 @@ contract SeedMarket is Script {
             lltv: vm.parseJsonUint(json, ".lltv")
         });
         env.morpho.createMarket(s.params);
-        env.vault.listMarket(s.params, LendingConfig.PREMIUM_BPS);
+        // The engine prices each market and writes the rate into the book. A book
+        // without one is listed at the config's placeholder.
+        uint256 premiumBps = vm.keyExistsJson(json, ".premiumBps")
+            ? vm.parseJsonUint(json, ".premiumBps")
+            : LendingConfig.PREMIUM_BPS;
+        env.vault.listMarket(s.params, premiumBps);
     }
 
     function _seedSuppliers(Env memory env, string memory json, Seeded memory s) internal {

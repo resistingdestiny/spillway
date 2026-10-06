@@ -53,8 +53,9 @@ library LendingConfig {
     uint256 internal constant WITHDRAWAL_WINDOW = 2 days;
     /// @dev Assumption: claims under one dollar (six-decimal loan token) are not paid.
     uint256 internal constant DUST_THRESHOLD = 1e6;
-    /// @dev Assumption: 2% a year of the limit, a placeholder until the engine prices
-    /// each market from its scenarios (docs/LENDING.md, "Premium").
+    /// @dev Assumption: 2% a year of the limit, a placeholder for a replay book with no
+    /// `premiumBps` of its own. The engine prices each market from its scenarios
+    /// (docs/LENDING.md, "Premium") and writes the rate into the book.
     uint256 internal constant PREMIUM_BPS = 200;
 
     // ------------------------------------------------------------- the replay
