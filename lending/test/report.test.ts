@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 import { configHash } from "../src/bundle.js";
-import { DEFAULT_CONFIG as cfg } from "../src/config.js";
+import { type CollateralClass, DEFAULT_CONFIG as cfg, severityQuantile, tokenRate } from "../src/config.js";
 import { priceVault } from "../src/pricing.js";
 import { allCurves, coverLimit, marketCurves, pmlTable, vaultExposure } from "../src/report.js";
 import { prepare } from "../src/scenarios.js";
@@ -108,15 +108,47 @@ describe("vault exposure and cover", () => {
 });
 
 describe("pricing", () => {
-  it("prices at expected loss rate x (1 + risk load) + capital charge, flagging placeholder tokens", () => {
-    for (const v of vaults.slice(0, 5)) {
-      const p = priceVault(prep, cfg, v);
+  const priced = vaults.slice(0, 8).map((v) => priceVault(prep, cfg, v));
+
+  it("sums p(class) x the mean loss over the class's incident falls, under the thin exit", () => {
+    for (const p of priced) {
+      for (const t of p.tokens) {
+        const rate = tokenRate(t.symbol, cfg);
+        expect(t.falls.map((f) => f.fall)).toEqual(rate.incidents.map((i) => i.fall));
+        const meanLoss = t.falls.reduce((a, f) => a + f.lossUsd, 0) / t.falls.length;
+        expect(t.lossUsd).toBeCloseTo(meanLoss, 1);
+        expect(t.expectedLossUsd).toBeCloseTo(t.annualProbability * t.lossUsd, 0);
+      }
+      expect(p.expectedLossUsd).toBeCloseTo(p.tokens.reduce((a, t) => a + t.expectedLossUsd, 0), 0);
+      expect(p.expectedLossRangeUsd[0]).toBeLessThanOrEqual(p.expectedLossUsd);
+      expect(p.expectedLossRangeUsd[1]).toBeGreaterThanOrEqual(p.expectedLossUsd);
+    }
+  });
+
+  it("sets the limit at the worst token's loss at its class's 90th percentile fall", () => {
+    for (const p of priced) {
+      for (const t of p.tokens) expect(t.limitFall).toBeCloseTo(severityQuantile(cfg.pricing.classes[t.class as CollateralClass], 0.9), 9);
+      expect(p.limitUsd).toBe(Math.max(0, ...p.tokens.map((t) => t.limitLossUsd)));
+      // The cover pays at most the limit, so its expected loss is no more than the depositors'.
+      expect(p.coverExpectedLossUsd).toBeLessThanOrEqual(p.expectedLossUsd + 0.01);
+    }
+  });
+
+  it("prices at the cover's expected loss rate x (1 + risk load) + capital charge", () => {
+    for (const p of priced) {
+      if (p.limitUsd === 0) continue;
+      expect(p.rate).toBeCloseTo((p.coverExpectedLossUsd / p.limitUsd) * (1 + cfg.pricing.riskLoad) + cfg.pricing.capitalCharge, 6);
+      expect(p.rateHigh).toBeGreaterThanOrEqual(p.rate);
+      expect(p.annualPremiumUsd).toBeCloseTo(p.rate * p.limitUsd, 0);
+    }
+  });
+
+  it("flags only the vaults that lend against a token the research does not cover", () => {
+    for (const p of priced) {
       expect(p.placeholder).toBe(p.tokens.some((t) => t.placeholder));
       expect(p.placeholderTokens).toEqual(p.tokens.filter((t) => t.placeholder).map((t) => t.symbol));
-      const el = p.tokens.reduce((a, t) => a + t.annualProbability * t.lossUsd, 0);
-      expect(p.expectedLossUsd).toBeCloseTo(el, 0);
-      if (p.limitUsd > 0) expect(p.rate).toBeCloseTo((el / p.limitUsd) * (1 + cfg.pricing.riskLoad) + cfg.pricing.capitalCharge, 6);
-      expect(p.limitUsd).toBe(Math.max(0, ...p.tokens.map((t) => t.lossUsd)));
     }
+    const steakhouse = priced.find((p) => p.name === "Steakhouse Prime ETH");
+    expect(steakhouse?.placeholder).toBe(false);
   });
 });

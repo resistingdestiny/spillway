@@ -128,6 +128,11 @@ export interface LendingConfig {
     ptTerm: { annualProbability: number; source: string };
     /** Class of each collateral token, by symbol, with the reason. A symbol not listed is unclassified. */
     tokenClass: Record<string, TokenClass>;
+    /**
+     * The cover limit keeps depositors whole up to this quantile of each class's incident falls.
+     * Assumption: the 90th percentile.
+     */
+    limitQuantile: number;
     /** Multiple of expected loss added for the risk that the model is wrong. Assumption, as in engine/src/config.ts. */
     riskLoad: number;
     /**
@@ -353,6 +358,7 @@ export const DEFAULT_CONFIG: LendingConfig = {
       COLLAT: { class: "unclassified", reason: "Test token with no USD price." },
       UNKNOWN: { class: "unclassified", reason: "No symbol in the API and no USD price. No borrowers." },
     },
+    limitQuantile: 0.9,
     riskLoad: 1.0,
     capitalCharge: 0.04,
   },
