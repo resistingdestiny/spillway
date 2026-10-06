@@ -1,0 +1,2 @@
+# cre workflow build writes the compiled workflow here by default.
+*.wasm

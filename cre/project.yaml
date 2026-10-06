@@ -1,0 +1,6 @@
+# CRE project settings. The keeper reads and writes on Monad testnet only.
+# RPC: Monad's public testnet endpoint, as in contracts/deployments/monad-testnet-lending.json.
+monad-testnet:
+  rpcs:
+    - chain-name: monad-testnet
+      url: https://testnet-rpc.monad.xyz

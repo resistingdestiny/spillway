@@ -1,0 +1,48 @@
+{
+  "schedule": "0 */10 * * * *",
+  "chainSelectorName": "monad-testnet",
+  "readAt": "finalized",
+  "vault": "0x8af0Cc6D3bD243509F3c7cBaF4993456E9cd1653",
+  "receiver": "",
+  "gasLimit": "1500000",
+  "readLimit": 15,
+  "policies": [
+    {
+      "id": 1,
+      "borrowers": [
+        "0x0030f4f3047D7373c754a3E09dfa00Cd150Fd565",
+        "0x0c640BC4457B6eD31947f0891509563206386DA1",
+        "0x33aDB44D39f6bB9c72c7A2662133c0e67647A33e",
+        "0x3eCb30ca0F280A3de471BDA6f02756AD6110DdbA",
+        "0x6C9d1EdA651B43d5989d98a1A09ED2DC9C45E145",
+        "0x79d16e195C64e75d132520F0b94a3cf595B18255",
+        "0x82e6354cfC08a642F6C65Ad2E876c2685aB9f214",
+        "0x9e4a2a72e85e93a7d7aaA93d0b7A3c25f3d08c7F",
+        "0xAD13e530F7E8ab1B9460F148E93F08fAbaBb81D1",
+        "0xaeaC3dE474AAd1AA4C7F596cd0e5bE60bc859bE3",
+        "0xB31AFc3431EA347181137929B6B4c1246e692228",
+        "0xB56e77D56eB126585517a3EADAD3657d8e0366A6",
+        "0xD89769e37794DF84fF0A90774aD2F336bD907643",
+        "0xdFFc8956F448Fb9Fd025962422e0b7ECE9E934F3",
+        "0xEC459693ba542322D683E30da94BA6552C1531dA",
+        "0xF8adCB07c0AeA6c64564c51955A6f82A189816C7",
+        "0xFed9Cd92C824437217c47d24ab750Ae67E514a1b"
+      ]
+    }
+  ],
+  "forwarders": {
+    "simulation": "0xB9F79d863261869B234c481D1f9A7af84AeAd192",
+    "production": "0xF8344CFd5c43616a4366C34E3EEE75af79a74482"
+  },
+  "sources": {
+    "schedule": "Assumption. Every 10 minutes. A policy can be claimed until one day after it ends (LendingConfig.CLAIM_WINDOW), so any cadence well inside a day catches a loss in time. CRE allows one cron fire per 30 seconds at most (docs.chain.link/cre, service quotas).",
+    "chainSelectorName": "CRE chain name for Monad testnet, chain 10143 (docs.chain.link/cre, supported networks: CLI v1.30.0+, TS SDK v1.19.0+).",
+    "readAt": "Assumption. Reads at the last finalized block, so every node in the DON reads the same state. 'latest' is the alternative: fresher by a block or two, at the risk of a reorg.",
+    "vault": "MorphoCoverVault on Monad testnet, contracts/deployments/monad-testnet-lending.json (contracts.vault).",
+    "receiver": "CoverKeeperReceiver address. Empty until one is deployed: the workflow then logs the report it would send and writes nothing.",
+    "gasLimit": "claimShortfall over the 17 listed borrowers used 807,026 gas on Monad testnet (tx 0x78d33f221e1a5512211d2bc830ca0ab1236cab0816ed7940fa5f0477580bba1a). Add the forwarder's signature checks, its ERC165 probe and headroom for one report. Monad charges the gas limit, not the gas used (docs.monad.xyz, gas pricing), so it is not set higher than needed. CRE caps one write at 10,000,000.",
+    "readLimit": "CRE allows 15 EVM reads per workflow execution (docs.chain.link/cre, service quotas, PerWorkflow.ChainRead.CallLimit). One read for the dust threshold and two per policy, so at most 7 policies per run.",
+    "policies": "Policy ids and borrower lists from contracts/deployments/monad-testnet-lending.json (policy.id, borrowers). Borrowers are strictly increasing, as claimShortfall requires. keeper.test.ts checks they match.",
+    "forwarders": "Monad testnet forwarders from docs.chain.link/cre, forwarder directory: MockKeystoneForwarder for `cre workflow simulate --broadcast`, KeystoneForwarder for deployed workflows. Both answer typeAndVersion on Monad testnet. A receiver is deployed with one of them."
+  }
+}
