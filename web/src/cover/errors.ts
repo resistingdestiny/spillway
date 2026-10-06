@@ -48,7 +48,7 @@ export function plain(err: unknown): string {
   if (!(err instanceof BaseError)) return err instanceof Error ? err.message : "Something went wrong.";
   const found = (cls: new (...a: never[]) => Error) => err.walk((e) => e instanceof cls);
   const code = (c: number) => err.walk((e) => (e as { code?: unknown }).code === c) !== null;
-  // EIP-1193: 4001 is a request the user turned down, -32002 one already waiting in the wallet.
+  // EIP-1193: 4001 is a request turned down in the wallet, -32002 one already waiting there.
   if (found(UserRejectedRequestError) || code(4001)) return "Cancelled in the wallet.";
   const revert = found(ContractFunctionRevertedError) as ContractFunctionRevertedError | null;
   if (revert) {
