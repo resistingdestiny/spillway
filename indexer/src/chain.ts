@@ -93,7 +93,15 @@ export interface StorageDiff {
   field: string;
   storage: string;
   replay: string;
+  /** Why they differ, when the cause is known. */
+  cause?: string;
 }
+
+/**
+ * Anyone may call Morpho.accrueInterest(). In a market with no IRM it moves lastUpdate and emits
+ * nothing, so no log records it. Such a market never accrues interest, so no amount depends on it.
+ */
+const SILENT_ACCRUAL = "accrueInterest() on a market with no IRM moves lastUpdate without an event; no amount depends on it";
 
 /**
  * Read Morpho's own storage at `block` for every market and every open position, and compare it with
@@ -112,8 +120,11 @@ export async function checkStorage(book: Book, block: number): Promise<{ markets
       ["lastUpdate", lastUpdate, BigInt(m.lastUpdate)],
       ["fee", fee, m.fee],
     ];
-    for (const [field, storage, replay] of pairs)
-      if (storage !== replay) diffs.push({ marketId: m.id, user: null, field, storage: String(storage), replay: String(replay) });
+    for (const [field, storage, replay] of pairs) {
+      if (storage === replay) continue;
+      const cause = field === "lastUpdate" && m.irm === ZERO ? SILENT_ACCRUAL : undefined;
+      diffs.push({ marketId: m.id, user: null, field, storage: String(storage), replay: String(replay), ...(cause ? { cause } : {}) });
+    }
   });
   const open = [...book.positions].flatMap(([id, byUser]) => [...byUser].filter(([, p]) => p.supplyShares || p.borrowShares || p.collateral).map(([user, p]) => ({ id, user, p })));
   await pool(open, async ({ id, user, p }) => {
