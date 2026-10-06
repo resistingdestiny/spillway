@@ -1,7 +1,9 @@
-// What the snapshot needs beyond the events, read on chain at the snapshot block: each token's
-// decimals and symbol, and each market's oracle price as Morpho reads it.
+// What the replay reads on chain at the snapshot block, beyond the events: each token's decimals and
+// symbol, each market's oracle price as Morpho reads it, each IRM's current rate, and Morpho's own
+// storage for every market and position, to check the replay against.
 
-import { decodeAbiParameters, hexToString, type Hex } from "viem";
+import { decodeAbiParameters, decodeFunctionResult, encodeFunctionData, hexToString, parseAbi, type Hex } from "viem";
+import { indexerConfig } from "./config.js";
 import type { Book } from "./replay.js";
 import { call } from "./rpc.js";
 
@@ -44,7 +46,7 @@ async function price(oracle: string, block: number): Promise<bigint | null> {
 }
 
 /** Run `fn` over `items`, a few at a time, so the public RPC is not flooded. */
-async function pool<T, R>(items: T[], fn: (t: T) => Promise<R>, width = 6): Promise<R[]> {
+export async function pool<T, R>(items: T[], fn: (t: T) => Promise<R>, width = 6): Promise<R[]> {
   const out: R[] = new Array(items.length);
   let next = 0;
   await Promise.all(
@@ -68,4 +70,90 @@ export async function readMetadata(book: Book, block: number): Promise<ChainMeta
     tokens: new Map(addresses.map((a, i) => [a, infos[i] ?? null])),
     prices: new Map(markets.map((m, i) => [m.id, prices[i] ?? null])),
   };
+}
+
+const MORPHO_ABI = parseAbi([
+  "function market(bytes32 id) view returns (uint128 totalSupplyAssets, uint128 totalSupplyShares, uint128 totalBorrowAssets, uint128 totalBorrowShares, uint128 lastUpdate, uint128 fee)",
+  "function position(bytes32 id, address user) view returns (uint256 supplyShares, uint128 borrowShares, uint128 collateral)",
+]);
+const IRM_ABI = parseAbi([
+  "function borrowRateView((address loanToken, address collateralToken, address oracle, address irm, uint256 lltv) marketParams, (uint128 totalSupplyAssets, uint128 totalSupplyShares, uint128 totalBorrowAssets, uint128 totalBorrowShares, uint128 lastUpdate, uint128 fee) market) view returns (uint256)",
+]);
+
+async function morpho<F extends "market" | "position">(functionName: F, args: readonly unknown[], block: number) {
+  const data = encodeFunctionData({ abi: MORPHO_ABI, functionName, args } as never);
+  const r = await call(indexerConfig.morpho.address, data, block);
+  if (!r) throw new Error(`Morpho.${functionName}(${args.join(", ")}) failed at block ${block}`);
+  return decodeFunctionResult({ abi: MORPHO_ABI, functionName, data: r as Hex } as never) as unknown as readonly bigint[];
+}
+
+export interface StorageDiff {
+  marketId: string;
+  user: string | null;
+  field: string;
+  storage: string;
+  replay: string;
+}
+
+/**
+ * Read Morpho's own storage at `block` for every market and every open position, and compare it with
+ * the replay. Equal everywhere means the events, replayed, give exactly what the contract holds.
+ */
+export async function checkStorage(book: Book, block: number): Promise<{ markets: number; positions: number; diffs: StorageDiff[] }> {
+  const diffs: StorageDiff[] = [];
+  const markets = [...book.markets.values()];
+  await pool(markets, async (m) => {
+    const [tsa, tss, tba, tbs, lastUpdate, fee] = await morpho("market", [m.id], block);
+    const pairs: [string, bigint | undefined, bigint][] = [
+      ["totalSupplyAssets", tsa, m.totalSupplyAssets],
+      ["totalSupplyShares", tss, m.totalSupplyShares],
+      ["totalBorrowAssets", tba, m.totalBorrowAssets],
+      ["totalBorrowShares", tbs, m.totalBorrowShares],
+      ["lastUpdate", lastUpdate, BigInt(m.lastUpdate)],
+      ["fee", fee, m.fee],
+    ];
+    for (const [field, storage, replay] of pairs)
+      if (storage !== replay) diffs.push({ marketId: m.id, user: null, field, storage: String(storage), replay: String(replay) });
+  });
+  const open = [...book.positions].flatMap(([id, byUser]) => [...byUser].filter(([, p]) => p.supplyShares || p.borrowShares || p.collateral).map(([user, p]) => ({ id, user, p })));
+  await pool(open, async ({ id, user, p }) => {
+    const [supplyShares, borrowShares, collateral] = await morpho("position", [id, user], block);
+    const pairs: [string, bigint | undefined, bigint][] = [
+      ["supplyShares", supplyShares, p.supplyShares],
+      ["borrowShares", borrowShares, p.borrowShares],
+      ["collateral", collateral, p.collateral],
+    ];
+    for (const [field, storage, replay] of pairs) if (storage !== replay) diffs.push({ marketId: id, user, field, storage: String(storage), replay: String(replay) });
+  });
+  return { markets: markets.length, positions: open.length, diffs };
+}
+
+/** Each market's IRM borrowRateView at `block`: the mean per-second rate since the market's last update. */
+export async function borrowRates(book: Book, block: number): Promise<Map<string, bigint>> {
+  const markets = [...book.markets.values()].filter((m) => m.irm !== ZERO);
+  const rates = await pool(markets, async (m) => {
+    const data = encodeFunctionData({
+      abi: IRM_ABI,
+      functionName: "borrowRateView",
+      args: [
+        { loanToken: m.loanToken as Hex, collateralToken: m.collateralToken as Hex, oracle: m.oracle as Hex, irm: m.irm as Hex, lltv: m.lltv },
+        {
+          totalSupplyAssets: m.totalSupplyAssets,
+          totalSupplyShares: m.totalSupplyShares,
+          totalBorrowAssets: m.totalBorrowAssets,
+          totalBorrowShares: m.totalBorrowShares,
+          lastUpdate: BigInt(m.lastUpdate),
+          fee: m.fee,
+        },
+      ],
+    });
+    const r = await call(m.irm, data, block);
+    return r && r !== "0x" ? BigInt(r) : null;
+  });
+  const out = new Map<string, bigint>();
+  markets.forEach((m, i) => {
+    const r = rates[i];
+    if (r !== null && r !== undefined) out.set(m.id, r);
+  });
+  return out;
 }
