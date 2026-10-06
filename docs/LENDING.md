@@ -49,4 +49,4 @@ A policy covers one holder's supply in one whitelisted Morpho market.
 
 ## Testnet replay
 
-Live markets on Monad have recorded no bad debt so far. The demo copies the largest positions of a real market from a cited mainnet block into a Morpho Blue deployment on Monad testnet, with a mock oracle we control. It then breaks the collateral, liquidates, and shows the cover paying depositors the amount the engine predicted. The app labels it as a replay.
+Live markets on Monad have recorded no bad debt so far. The demo copies the largest positions of a real market from a cited mainnet block into a Morpho Blue deployment on Monad testnet, with a mock oracle we control. It then breaks the collateral, liquidates, and shows the cover paying depositors the amount the engine predicted. The app labels it as a replay. Morpho Blue has no deployment on Monad testnet, so the replay deploys the official contracts itself, pinned in `contracts/lib/morpho-blue`. `contracts/README.md` has the scripts and the input format.
