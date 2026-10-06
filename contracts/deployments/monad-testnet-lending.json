@@ -16,6 +16,7 @@
     "id": "0x358fd5d917fc952f7fded4eb818aa8d9c44f5e954f7edc21805bb907f822cc71",
     "lltv": "945000000000000000",
     "pair": "twstETH/tUSD",
+    "oracleStartPrice": "3384503610498851000000000000",
     "replayOf": {
       "chainId": 143,
       "block": 111058632,

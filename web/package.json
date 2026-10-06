@@ -8,12 +8,14 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "data": "tsx scripts/build-data.ts",
+    "abi": "tsx scripts/abi.ts",
     "test": "echo no web tests yet"
   },
   "dependencies": {
     "@spillway/engine": "workspace:*",
     "@spillway/lending": "workspace:*",
-    "pixi.js": "^8.22.0"
+    "pixi.js": "^8.22.0",
+    "viem": "^2.57.2"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",
