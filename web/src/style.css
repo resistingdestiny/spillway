@@ -139,3 +139,10 @@ html, body {
 .muted { color: var(--muted); font-size: 12px; }
 .manifest code { font-size: 12px; overflow-wrap: anywhere; }
 .manifest a { color: var(--ink); }
+
+/* Cover */
+.note { font-size: 13px; line-height: 1.4; color: var(--muted); margin: 0 0 6px; }
+.explain { font-size: 14px; line-height: 1.4; margin: 0 0 8px; }
+.status { font-size: 13px; color: var(--danger); margin: 8px 0 0; }
+.paid { background: var(--accent); padding: 0 4px; border-radius: 2px; font-weight: 600; }
+.manifest dd .muted { display: inline-block; margin-top: 2px; }
