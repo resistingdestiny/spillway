@@ -135,3 +135,7 @@ html, body {
   cursor: pointer;
 }
 .chips button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.section { font-size: 14px; font-weight: 600; margin: 18px 0 8px; }
+.muted { color: var(--muted); font-size: 12px; }
+.manifest code { font-size: 12px; overflow-wrap: anywhere; }
+.manifest a { color: var(--ink); }
