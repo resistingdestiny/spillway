@@ -20,6 +20,8 @@ import { COLORS, Picture, type PictureLedge, type Scene } from "../picture.js";
 const SNAPSHOT = "data/lending/monad-2026-10-06.json";
 const ADAPTERS = "data/lending/monad-2026-10-06.adapters.json";
 const BUNDLE = "data/lending/bundle.json";
+/** The mainnet market replayed on Monad testnet (contracts/deployments/monad-testnet-lending.json). */
+const REPLAYED_MARKET = "0x8bdb7d2c5024d349772884afb3c5c409bc8de58ed63d79618bf48fb57b595060";
 /** Cover is sized to keep depositors whole up to this sudden fall. */
 const COVER_SHOCK = 0.25;
 /** Ledge height, as a fall in the collateral price. */
@@ -39,6 +41,10 @@ const VIEW = `
       <span class="slider-label"><span id="lend-shock-what">Collateral falls at once by</span> <b id="lend-shock-value">0%</b></span>
       <input type="range" id="lend-shock" min="0" max="40" step="0.5" value="0" />
     </label>
+    <div class="play-row">
+      <button id="lend-play" class="play">Play</button>
+      <a id="lend-proof" href="#/cover" hidden>See a 25% markdown paid on Monad testnet</a>
+    </div>
   </section>`;
 
 /** What each kind of oracle reads, in words. */
@@ -173,15 +179,63 @@ export async function mountLending(root: HTMLElement): Promise<() => void> {
           ? "Every position's collateral still covers its debt, so depositors lose nothing."
           : `${depth !== undefined && depth !== null ? `Liquidators can sell only ${usdShort(depth)} of ${coll} on Monad inside their incentive, so ${usdShort(unrealised)} is never written off. ` : ""}${depositors <= 0 ? `Spillway proves the shortfall from Morpho's positions and pays all ${usdShort(total)}.` : `Spillway pays ${usdShort(coverPaid)} and depositors lose ${usdShort(depositors)}.`}`;
     $("lend-shock-value").textContent = pct(shock);
+    // The replay on testnet is of this market.
+    ($("lend-proof") as HTMLAnchorElement).hidden = pm.market.id !== REPLAYED_MARKET;
   }
 
+  // ---------------------------------------------------------------- play: the story in one go
+  // Today, then the smallest markdown that costs depositors money, then 25%, where liquidators can
+  // not sell and the cover pays. With reduced motion it jumps between those stills.
+  let playing = 0;
+  let active = false;
+  const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+  function setShock(x: number): void {
+    shock = Math.round(x * 2000) / 2000;
+    ($("lend-shock") as HTMLInputElement).value = String(shock * 100);
+    draw();
+  }
+  function stop(): void {
+    playing++;
+    active = false;
+    $("lend-play").textContent = "Play";
+  }
+  async function play(): Promise<void> {
+    const run = ++playing;
+    active = true;
+    $("lend-play").textContent = "Stop";
+    const first = facts.get(current.market.id)?.firstLoss ?? 0.06;
+    const stops = [0, first, 0.25];
+    const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    setShock(0);
+    await wait(2500);
+    for (const to of stops.slice(1)) {
+      if (run !== playing) return;
+      const from = shock;
+      const ms = reduced ? 0 : 2500;
+      const t0 = performance.now();
+      while (!reduced && run === playing) {
+        const k = Math.min(1, (performance.now() - t0) / ms);
+        setShock(from + (to - from) * (k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2));
+        if (k >= 1) break;
+        await new Promise((r) => requestAnimationFrame(r));
+      }
+      if (run !== playing) return;
+      setShock(to);
+      await wait(3500);
+    }
+    if (run === playing) stop();
+  }
+  $("lend-play").addEventListener("click", () => (active ? stop() : void play()));
+
   const onShock = (e: Event) => {
+    stop();
     shock = Number((e.target as HTMLInputElement).value) / 100;
     draw();
   };
   const onMarket = (e: Event) => {
     const b = (e.target as HTMLElement).closest("button");
     if (!b) return;
+    stop();
     current = markets[Number(b.dataset.i)] as PreparedMarket;
     root.querySelectorAll<HTMLButtonElement>("#lend-markets button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
     draw();
@@ -192,6 +246,7 @@ export async function mountLending(root: HTMLElement): Promise<() => void> {
   resize.observe($("lend-stage"));
   draw();
   return () => {
+    stop();
     resize.disconnect();
     picture.destroy();
   };

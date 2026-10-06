@@ -165,3 +165,16 @@ html, body {
 .steps .step.done { color: var(--ink); }
 .steps .step.failed { color: var(--danger); }
 .steps .step.waiting, .steps .step.sent { color: var(--muted); }
+
+.play-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.play {
+  font: inherit;
+  font-size: 14px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: #fff;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+.play-row a { color: var(--ink); font-size: 14px; }
