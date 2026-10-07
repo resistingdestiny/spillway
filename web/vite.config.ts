@@ -1,7 +1,7 @@
 import { execSync } from "node:child_process";
 import { defineConfig } from "vite";
 
-// The commit the site was built from, shown on the Verify page.
+// The commit the site was built from, shown in the Verify drawer.
 const commit = (() => {
   try {
     return execSync("git rev-parse HEAD").toString().trim();

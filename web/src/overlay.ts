@@ -30,7 +30,8 @@ export function renderOverlay(el: HTMLElement, geo: Geometry, scene: Scene, text
   const parts: string[] = [];
   const label = (x: number, y: number, t: string, cls = "") => parts.push(`<div class="label ${cls}" style="left:${x}px;top:${y}px">${t}</div>`);
 
-  label(geo.rightX, geo.priceY(1) - 6, text.now, "now right above");
+  const crowded = scene.ghostRatio !== null && !!text.ghost && geo.priceY(scene.ghostRatio) - geo.priceY(1) < 24;
+  if (!crowded) label(geo.rightX, geo.priceY(1) - 6, text.now, "now right above");
   if (scene.ghostRatio !== null && text.ghost) label(geo.rightX, geo.priceY(scene.ghostRatio) - 6, text.ghost(scene.ghostRatio), "pill right above");
   if (scene.realRatio !== null && scene.ghostRatio !== null && scene.realRatio < scene.ghostRatio - 1e-4 && text.real) {
     label(geo.rightX, geo.priceY(scene.realRatio) + 6, text.real(scene.realRatio), "pill solid right");

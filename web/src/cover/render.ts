@@ -1,4 +1,4 @@
-// Each block of the Cover view as one plain sentence and its figures, from live state.
+// Each block of the testnet proof as one plain sentence and its figures, from live state.
 
 import { COLLATERAL_DECIMALS, FRESH_SHARE_PRICE, ORACLE_START, REPLAY, USD_DECIMALS, VIRTUAL_ASSETS, VIRTUAL_SHARES } from "./config.js";
 import type { ClaimEvent } from "./events.js";

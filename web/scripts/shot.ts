@@ -1,7 +1,7 @@
 // Screenshots of the app at phone size, one per drop. For reviewing the picture.
 //   tsx scripts/shot.ts <url> <outDir> [drop%...]
-// For a view with no slider (Cover, Verify), pass `page` for one full-page shot:
-//   tsx scripts/shot.ts http://127.0.0.1:5179/#/cover shots page
+// For the landing page, or any full-page view, pass `page` for one full-page shot:
+//   tsx scripts/shot.ts http://127.0.0.1:5179/#/ shots page
 // Set WIDTH and HEIGHT for another viewport, e.g. WIDTH=1280 HEIGHT=800.
 
 import { mkdirSync } from "node:fs";

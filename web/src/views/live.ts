@@ -1,15 +1,15 @@
 // The live cover on Monad testnet: the replay market on our Morpho Blue, the vault, policy 1
-// and its claims, read from the chain every 10 seconds.
+// and its claims, read from the chain every 10 seconds. Fills the testnet part of the app's
+// cover card (the payout and the wallet actions) and the proof drawer. Loaded on demand, so
+// viem is only fetched by visitors who open the app.
 
-import { LOG_RANGE, POLL_MS } from "../cover/config.js";
-import { type ClaimEvent, claimsBetween, knownClaims, latest } from "../cover/events.js";
-import { plain } from "../cover/errors.js";
-import { int } from "../cover/format.js";
-import { type Live, publicClient, readLive } from "../cover/read.js";
-import { type Block, REPLAY_NOTE, claimsBlock, dl, headline, heroStats, marketBlock, policyBlock, vaultBlock } from "../cover/render.js";
 import { type Step, claimForDepositor, getTestDollars, underwrite } from "../cover/actions.js";
-import { CHAIN, DEFAULT_DEPOSIT, MON_FAUCET, USD_DECIMALS } from "../cover/config.js";
-import { shortAddr, txLink } from "../cover/format.js";
+import { CHAIN, DEFAULT_DEPOSIT, LOG_RANGE, MON_FAUCET, POLL_MS, USD_DECIMALS } from "../cover/config.js";
+import { plain } from "../cover/errors.js";
+import { type ClaimEvent, claimsBetween, knownClaims, latest } from "../cover/events.js";
+import { int, shortAddr, tusd, txLink } from "../cover/format.js";
+import { type Live, publicClient, readLive } from "../cover/read.js";
+import { type Block, REPLAY_NOTE, claimsBlock, dl, heroStats, marketBlock, policyBlock, vaultBlock } from "../cover/render.js";
 import { type Wallet, connect, injected, reconnect, switchToMonad } from "../cover/wallet.js";
 
 // The proof first: what was paid, then the loss behind it, the policy and the capital.
@@ -21,37 +21,40 @@ const BLOCKS = [
 ] as const;
 
 const SKELETON_ROWS = `<div class="row"><dt><span class="skeleton" style="width:7em"></span></dt><dd><span class="skeleton" style="width:9em"></span></dd></div>`.repeat(3);
+const small = (v: string) => v.replace(/ tUSD$/, "<small>tUSD</small>");
 
-const VIEW = `
-  <div class="page">
-    <div class="overline live" id="cov-sub">Reading Monad testnet</div>
-    <h1 class="headline" id="cov-headline"><span class="skeleton" style="width:90%"></span><span class="skeleton" style="width:55%"></span></h1>
-    <div class="hero stats" id="cov-hero" aria-live="polite">
-      ${["Paid to the depositor", "Shortfall at the oracle", "Unhealthy borrowers"].map((k, i) => `<div class="stat${i === 0 ? " lime" : ""}"><span class="k">${k}</span><span class="v"><span class="skeleton"></span></span><span class="sub">&nbsp;</span></div>`).join("")}
-    </div>
-    <p class="note">${REPLAY_NOTE}</p>
-    <p class="status" id="cov-error" role="status" hidden></p>
-    ${BLOCKS.map(([id, title]) => `<section class="card" aria-labelledby="cov-${id}-h"><h2 class="section" id="cov-${id}-h">${title}</h2><p class="explain" id="cov-${id}-s"><span class="skeleton" style="width:80%"></span></p><dl class="rows" id="cov-${id}">${SKELETON_ROWS}</dl></section>`).join("")}
-    <section class="card try" aria-labelledby="cov-try-h">
-      <h2 class="section" id="cov-try-h">Try it</h2>
-      <p class="explain">With a browser wallet on Monad testnet you can underwrite the cover with test dollars, or claim for the depositor. A claim pays the depositor, never the caller. Gas needs testnet MON from <a href="${MON_FAUCET}" target="_blank" rel="noopener">Monad's faucet</a>.</p>
-      <p class="explain wallet" id="cov-wallet"></p>
-      <div class="actions">
-        <button type="button" id="cov-connect">Connect wallet</button>
-        <button type="button" class="secondary" id="cov-faucet" disabled>Get 10,000 test dollars</button>
-      </div>
-      <div class="actions">
-        <label class="amount">Deposit <input id="cov-amount" type="number" min="1" step="1" inputmode="numeric" value="${DEFAULT_DEPOSIT}" /> tUSD</label>
-        <button type="button" class="secondary" id="cov-underwrite" disabled>Underwrite</button>
-        <button type="button" class="secondary" id="cov-claim" disabled>Claim for the depositor</button>
-      </div>
-      <ol class="steps" id="cov-steps"></ol>
-    </section>
-  </div>`;
+const CARD = `
+  <div class="live-head">
+    <span class="overline live" id="live-sub">Reading Monad testnet</span>
+  </div>
+  <div class="live-paid">
+    <span class="k">Paid to the depositor</span>
+    <span class="v" id="live-paid"><span class="skeleton" style="width:6em"></span></span>
+  </div>
+  <p class="status" id="live-error" role="status" hidden></p>
+  <div class="actions">
+    <button type="button" id="live-connect">Connect wallet</button>
+    <button type="button" class="secondary" id="live-faucet" disabled>Get 10,000 test dollars</button>
+  </div>
+  <div class="actions">
+    <label class="amount">Deposit <input id="live-amount" type="number" min="1" step="1" inputmode="numeric" value="${DEFAULT_DEPOSIT}" /> tUSD</label>
+    <button type="button" class="secondary" id="live-underwrite" disabled>Underwrite</button>
+    <button type="button" class="secondary" id="live-claim" disabled>Claim for the depositor</button>
+  </div>
+  <p class="muted" id="live-wallet"></p>
+  <ol class="steps" id="live-steps"></ol>`;
 
-export async function mountCover(root: HTMLElement): Promise<() => void> {
-  root.innerHTML = VIEW;
-  const $ = <T extends HTMLElement>(id: string) => root.querySelector(`#${id}`) as T;
+const PROOF = `
+  <div class="hero stats" id="proof-hero" aria-live="polite">
+    ${["Paid to the depositor", "Shortfall at the oracle", "Unhealthy borrowers"].map((k, i) => `<div class="stat${i === 0 ? " lime" : ""}"><span class="k">${k}</span><span class="v"><span class="skeleton"></span></span><span class="sub">&nbsp;</span></div>`).join("")}
+  </div>
+  <p class="note">${REPLAY_NOTE}</p>
+  ${BLOCKS.map(([id, title]) => `<section class="card" aria-labelledby="proof-${id}-h"><h3 class="section" id="proof-${id}-h">${title}</h3><p class="explain" id="proof-${id}-s"><span class="skeleton" style="width:80%"></span></p><dl class="rows" id="proof-${id}">${SKELETON_ROWS}</dl></section>`).join("")}`;
+
+export async function mountLive(card: HTMLElement, proof: HTMLElement): Promise<() => void> {
+  card.innerHTML = CARD;
+  proof.innerHTML = PROOF;
+  const $ = <T extends HTMLElement>(id: string) => (card.querySelector(`#${id}`) ?? proof.querySelector(`#${id}`)) as T;
   const pub = publicClient();
 
   let live: Live | null = null;
@@ -62,21 +65,21 @@ export async function mountCover(root: HTMLElement): Promise<() => void> {
   let busy = false;
 
   function block(id: string, b: Block): void {
-    $(`cov-${id}-s`).textContent = b.sentence;
-    $(`cov-${id}`).innerHTML = dl(b.rows);
+    $(`proof-${id}-s`).textContent = b.sentence;
+    $(`proof-${id}`).innerHTML = dl(b.rows);
   }
 
   function age(): void {
     if (!live) return;
     const s = Math.round((Date.now() - readAt) / 1000);
-    $("cov-sub").textContent = `Live from Monad testnet, block ${int(live.block)}, read ${s < 2 ? "just now" : `${s} s ago`}`;
+    $("live-sub").textContent = `Live on Monad testnet, block ${int(live.block)}, ${s < 2 ? "just now" : `${s} s ago`}`;
   }
 
   function draw(): void {
     if (!live) return;
-    $("cov-headline").innerHTML = headline(live);
-    $("cov-hero").innerHTML = heroStats(live)
-      .map(([k, v, sub], i) => `<div class="stat${i === 0 && live && live.policy.paid > 0n ? " lime" : ""}"><span class="k">${k}</span><span class="v">${v.replace(/ tUSD$/, "<small>tUSD</small>")}</span><span class="sub">${sub}</span></div>`)
+    $("live-paid").innerHTML = small(tusd(live.policy.paid));
+    $("proof-hero").innerHTML = heroStats(live)
+      .map(([k, v, sub], i) => `<div class="stat${i === 0 && live && live.policy.paid > 0n ? " lime" : ""}"><span class="k">${k}</span><span class="v">${small(v)}</span><span class="sub">${sub}</span></div>`)
       .join("");
     block("market", marketBlock(live));
     block("vault", vaultBlock(live));
@@ -86,10 +89,10 @@ export async function mountCover(root: HTMLElement): Promise<() => void> {
   }
 
   function fail(message: string | null): void {
-    const el = $("cov-error");
+    const el = $("live-error");
     el.hidden = message === null;
     el.textContent = message ?? "";
-    if (message !== null && !live) $("cov-sub").textContent = "Monad testnet did not answer. Trying again shortly";
+    if (message !== null && !live) $("live-sub").textContent = "Monad testnet did not answer. Trying again shortly";
   }
 
   // Two requests a poll, a multicall and a log query over the blocks since the last one.
@@ -116,29 +119,29 @@ export async function mountCover(root: HTMLElement): Promise<() => void> {
   // ---------------------------------------------------------------- the wallet and its actions
   let wallet: Wallet | null = null;
   let acting = false;
-  const buttons = ["cov-faucet", "cov-underwrite", "cov-claim"] as const;
+  const buttons = ["live-faucet", "live-underwrite", "live-claim"] as const;
 
   function walletLine(): void {
-    const el = $("cov-wallet");
+    const el = $("live-wallet");
     if (!injected()) {
-      el.textContent = "No browser wallet found. Install one such as MetaMask to try the actions.";
-      ($("cov-connect") as HTMLButtonElement).disabled = true;
+      el.innerHTML = "Install a browser wallet such as MetaMask to act.";
+      ($("live-connect") as HTMLButtonElement).disabled = true;
       return;
     }
     if (!wallet) {
-      el.textContent = "Wallet not connected.";
+      el.innerHTML = `Gas is testnet MON from <a href="${MON_FAUCET}" target="_blank" rel="noopener">Monad's faucet</a>.`;
       return;
     }
     const onMonad = wallet.chainId === CHAIN.id;
     el.innerHTML = `Connected as <code>${shortAddr(wallet.account)}</code>${onMonad ? " on Monad testnet." : ". Switch to Monad testnet to act."}`;
-    $("cov-connect").textContent = onMonad ? "Connected" : "Switch to Monad testnet";
+    $("live-connect").textContent = onMonad ? "Connected" : "Switch to Monad testnet";
     for (const id of buttons) ($(id) as HTMLButtonElement).disabled = acting || !onMonad;
-    ($("cov-connect") as HTMLButtonElement).disabled = acting || onMonad;
+    ($("live-connect") as HTMLButtonElement).disabled = acting || onMonad;
   }
 
   function showSteps(steps: Step[]): void {
     const word = { waiting: "Waiting for the wallet", sent: "Sent, waiting for a block", done: "Done", failed: "Failed" };
-    $("cov-steps").innerHTML = steps
+    $("live-steps").innerHTML = steps
       .map((s) => `<li class="step ${s.state}">${s.label}: ${word[s.state]}${s.hash ? ` (${txLink(s.hash)})` : ""}</li>`)
       .join("");
   }
@@ -171,11 +174,11 @@ export async function mountCover(root: HTMLElement): Promise<() => void> {
     }
     walletLine();
   };
-  $("cov-connect").addEventListener("click", () => void onConnect());
-  $("cov-faucet").addEventListener("click", () => void act(() => getTestDollars(pub, wallet as Wallet, showSteps)));
-  $("cov-claim").addEventListener("click", () => void act(() => claimForDepositor(pub, wallet as Wallet, showSteps)));
-  $("cov-underwrite").addEventListener("click", () => {
-    const whole = Math.floor(Number(($("cov-amount") as HTMLInputElement).value));
+  $("live-connect").addEventListener("click", () => void onConnect());
+  $("live-faucet").addEventListener("click", () => void act(() => getTestDollars(pub, wallet as Wallet, showSteps)));
+  $("live-claim").addEventListener("click", () => void act(() => claimForDepositor(pub, wallet as Wallet, showSteps)));
+  $("live-underwrite").addEventListener("click", () => {
+    const whole = Math.floor(Number(($("live-amount") as HTMLInputElement).value));
     if (!(whole > 0)) {
       fail("Enter a deposit of at least 1 tUSD.");
       return;
@@ -201,7 +204,7 @@ export async function mountCover(root: HTMLElement): Promise<() => void> {
   document.addEventListener("visibilitychange", onVisible);
   const timer = setInterval(() => void poll(), POLL_MS);
   const ticker = setInterval(age, 1000);
-  await poll();
+  void poll();
   return () => {
     clearInterval(timer);
     clearInterval(ticker);

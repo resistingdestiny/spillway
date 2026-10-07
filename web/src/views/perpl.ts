@@ -101,17 +101,17 @@ export async function mountPerpl(root: HTMLElement): Promise<() => void> {
 
   function headline(): string {
     const longOi = today.positions.filter((p) => p.side === "long").reduce((a, p) => a + p.entryPrice * p.size, 0);
-    if (move <= 0) return `Today Perpl's ${m.symbol} market holds <b>${usdShort(longOi)}</b> of open interest behind a <b>${usdShort(m.insuranceFund)}</b> insurance fund`;
+    if (move <= 0) return `<b>${usdShort(longOi)}</b> of ${m.symbol} open interest behind a <b>${usdShort(m.insuranceFund)}</b> fund`;
     const rows = bundle.capacity ?? [];
     const row = rows.reduce<(typeof rows)[number] | undefined>((best, r) => (!best || Math.abs(r.gap - move) < Math.abs(best.gap - move) ? r : best), undefined);
     const g = `${(move * 100).toFixed(1).replace(/\.0$/, "")}%`;
-    if (!row || move < (rows[0]?.gap ?? 0) - 0.005) return `A ${g} gap is too small to empty the fund at any size Perpl allows`;
+    if (!row || move < (rows[0]?.gap ?? 0) - 0.005) return `A ${g} gap cannot empty the fund`;
     const amount = (c: typeof row.fundOnly) => (c.atSearchLimit ? `more than ${usdShort(c.openInterest)}` : usdShort(c.openInterest));
-    return `Through a ${g} gap, the fund alone can carry <b>${amount(row.fundOnly)}</b> of open interest, and with Spillway <b>${amount(row.withSpillway)}</b>`;
+    return `A ${g} gap: fund carries <b>${amount(row.fundOnly)}</b>, with Spillway <b>${amount(row.withSpillway)}</b>`;
   }
 
   function sentence(): string {
-    if (!run) return "Each ledge is traders' money that gets sold if the price falls that far. The basin is dry.";
+    if (!run) return "Each ledge is traders' money sold if the price falls that far.";
     const t = run.totals;
     const d = `A ${(move * 100).toFixed(1).replace(/\.0$/, "")}% gap`;
     if (t.liquidations === 0) return `${d} reaches no ledge, so nothing is sold.`;

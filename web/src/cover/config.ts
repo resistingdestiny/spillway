@@ -1,4 +1,4 @@
-// Everything the Cover view assumes about Monad testnet and our lending deployment, with its
+// Everything the app's testnet cover assumes about Monad testnet and our lending deployment, with its
 // source. Addresses come from the deployment file the contracts scripts publish.
 
 import { type Address, type Hex, defineChain } from "viem";

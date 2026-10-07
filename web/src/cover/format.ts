@@ -1,4 +1,4 @@
-// Numbers and links as the Cover view shows them.
+// Numbers and links as the testnet cover shows them.
 
 import { type Address, type Hex, formatUnits } from "viem";
 import { EXPLORER, USD_DECIMALS } from "./config.js";
