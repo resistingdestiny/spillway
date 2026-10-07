@@ -27,25 +27,45 @@ const COVER_SHOCK = 0.25;
 /** Ledge height, as a fall in the collateral price. */
 const BUCKET = 0.005;
 
+const PLAY = `<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.8v8.4a.6.6 0 0 0 .9.5l6.6-4.2a.6.6 0 0 0 0-1L3.9 1.3a.6.6 0 0 0-.9.5z" fill="currentColor"/></svg>Play`;
+const STOP = `<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="2" width="8" height="8" rx="1.5" fill="currentColor"/></svg>Stop`;
+
 const VIEW = `
-  <div class="market" id="lend-sub"></div>
-  <p class="headline" id="lend-headline"></p>
-  <div class="chips" id="lend-markets" role="group" aria-label="Market"></div>
-  <section class="stage" id="lend-stage" aria-label="The flood picture">
-    <div class="canvas" id="lend-canvas"></div>
-    <div class="overlay" id="lend-overlay"></div>
-  </section>
-  <p class="sentence" id="lend-sentence"></p>
-  <section class="controls">
-    <label class="slider" for="lend-shock">
-      <span class="slider-label"><span id="lend-shock-what">Collateral falls at once by</span> <b id="lend-shock-value">0%</b></span>
-      <input type="range" id="lend-shock" min="0" max="40" step="0.5" value="0" />
-    </label>
-    <div class="play-row">
-      <button id="lend-play" class="play">Play</button>
-      <a id="lend-proof" href="#/cover" hidden>See a 25% markdown paid on Monad testnet</a>
+  <div class="explore">
+    <div class="intro">
+      <div class="overline" id="lend-sub"><span class="skeleton" style="width:220px"></span></div>
+      <h1 class="headline" id="lend-headline"><span class="skeleton" style="width:90%"></span><span class="skeleton" style="width:60%"></span></h1>
     </div>
-  </section>`;
+    <div class="chips" id="lend-markets" role="group" aria-label="Market"></div>
+    <div class="stats" id="lend-stats" aria-live="polite">
+      <div class="stat"><span class="k">Borrowed</span><span class="v"><span class="skeleton"></span></span></div>
+      <div class="stat"><span class="k">First loss at</span><span class="v"><span class="skeleton"></span></span></div>
+      <div class="stat"><span class="k">Cover a year</span><span class="v"><span class="skeleton"></span></span></div>
+    </div>
+    <section class="card stage" id="lend-stage" aria-label="Borrowers as ledges on a cliff, and losses as water in a basin">
+      <div class="plot">
+        <div class="canvas" id="lend-canvas"></div>
+        <div class="overlay" id="lend-overlay"></div>
+        <div class="loading" id="lend-loading">Running the stress test</div>
+      </div>
+      <div class="legend" id="lend-legend"></div>
+    </section>
+    <div class="story">
+      <p class="sentence" id="lend-sentence"></p>
+      <p class="aside" id="lend-aside"></p>
+    </div>
+    <section class="controls" aria-label="Markdown">
+      <label class="slider" for="lend-shock">
+        <span class="slider-label"><span id="lend-shock-what">Collateral falls at once by</span> <b id="lend-shock-value">0%</b></span>
+        <input type="range" id="lend-shock" min="0" max="40" step="0.5" value="0" />
+        <span class="scale" aria-hidden="true"><span>0%</span><span>10%</span><span>20%</span><span>30%</span><span>40%</span></span>
+      </label>
+      <div class="play-row">
+        <button id="lend-play" class="btn play" type="button">${PLAY}</button>
+        <a id="lend-proof" class="proof" href="#/cover" hidden>See a 25% markdown paid on Monad testnet&nbsp;<span aria-hidden="true">&rarr;</span></a>
+      </div>
+    </section>
+  </div>`;
 
 /** What each kind of oracle reads, in words. */
 const ORACLE_READS: Record<string, string> = {
@@ -114,6 +134,7 @@ export async function mountLending(root: HTMLElement): Promise<() => void> {
 
   const picture = new Picture();
   await picture.mount($("lend-canvas"));
+  $("lend-loading").remove();
 
   function ledges(pm: PreparedMarket, losses: Map<number, number>): PictureLedge[] {
     const groups = new Map<number, number>();
@@ -146,8 +167,8 @@ export async function mountLending(root: HTMLElement): Promise<() => void> {
       realRatio: null,
       water: total,
       bands: [
-        { label: `Spillway cover (${usdShort(cover)}) pays`, dollars: cover, paid: coverPaid, color: COLORS.accent },
-        { label: `Depositors (${usdShort(supply)} supplied) lose`, dollars: cover * 0.6, paid: depositors, color: COLORS.danger, wetOnly: true },
+        { label: `Spillway cover (${usdShort(cover)}) pays`, tag: `Spillway cover ${usdShort(cover)}`, dollars: cover, paid: coverPaid, color: COLORS.accent },
+        { label: `Depositors (${usdShort(supply)} supplied) lose`, tag: "Depositors", dollars: cover * 0.6, paid: depositors, color: COLORS.danger, wetOnly: true },
       ],
     };
     const { W, H } = picture.fit();
@@ -158,7 +179,7 @@ export async function mountLending(root: HTMLElement): Promise<() => void> {
       now: `${pair(pm)}, ${usdShort(debtUsd(pm))} borrowed`,
       ghost: (r) => `${coll} −${pct(1 - r)} at once`,
       tick: (mv) => `−${Math.round(mv * 100)}%`,
-    });
+    }, $("lend-legend"));
 
     // First loss under the thin exit, as published in the bundle.
     const firstLoss = fact?.firstLoss ?? null;
@@ -168,17 +189,35 @@ export async function mountLending(root: HTMLElement): Promise<() => void> {
     $("lend-shock-what").textContent = what;
     $("lend-headline").innerHTML =
       shock <= 0
-        ? `In ${pair(pm)}, ${firstLoss === null ? "no sudden fall up to 100% costs depositors anything" : `a sudden <b>${pct(firstLoss)}</b> ${marksDown ? "markdown" : "fall"} of ${coll} is the smallest that costs depositors money`}.` +
-          (price ? ` Cover for ${vault.name}'s depositors costs <b>${pct(price.premiumOnSupply)}</b> of supply a year.` : "")
-        : `A ${pct(shock)} ${marksDown ? "markdown" : "fall"} of ${coll} leaves <b>${usdShort(total)}</b> unpaid. ${vault.name} supplies ${pct(vault.share)} of this market.`;
-    const oracleNote = fact?.oracleKind && !fact.oracleKind.depegReachesOracle ? ` Its oracle reads ${ORACLE_READS[fact.oracleKind.kind] ?? "a reported figure"}, so a market sell-off alone would not move it.` : "";
+        ? firstLoss === null
+          ? `In ${pair(pm)}, no sudden ${marksDown ? "markdown" : "fall"} of ${coll} up to 100% costs depositors anything`
+          : `In ${pair(pm)}, a sudden <b>${pct(firstLoss)}</b> ${marksDown ? "markdown" : "fall"} of ${coll} is the smallest that costs depositors money`
+        : `A ${pct(shock)} ${marksDown ? "markdown" : "fall"} of ${coll} leaves <b>${usdShort(total)}</b> unpaid`;
+    const stat = (k: string, v: string, sub: string, cls = "") =>
+      `<div class="stat ${cls}"><span class="k">${k}</span><span class="v">${v}</span><span class="sub" title="${sub}">${sub}</span></div>`;
+    $("lend-stats").innerHTML =
+      stat("Borrowed", usdShort(debtUsd(pm)), `${pm.borrowers.length.toLocaleString("en-US")} borrowers`) +
+      stat("First loss at", firstLoss === null ? "None" : pct(firstLoss), firstLoss === null ? "up to 100%" : `${marksDown ? "markdown" : "fall"} at once`, "first") +
+      stat("Cover a year", price ? pct(price.premiumOnSupply) : "Not priced", price ? `of supply in ${vault.name}` : vault.name, "price");
+    const oracleNote = fact?.oracleKind && !fact.oracleKind.depegReachesOracle ? `Its oracle reads ${ORACLE_READS[fact.oracleKind.kind] ?? "a reported figure"}, so a market sell-off alone would not move it.` : "";
+    const thin = depth !== undefined && depth !== null;
     $("lend-sentence").textContent =
       shock <= 0
-        ? `Each ledge is borrowing liquidated if ${coll} is ${marksDown ? "marked down" : "falls"} that far.${oracleNote}`
+        ? `Each ledge is borrowing liquidated if ${coll} is ${marksDown ? "marked down" : "falls"} that far.`
         : total <= 0
           ? "Every position's collateral still covers its debt, so depositors lose nothing."
-          : `${depth !== undefined && depth !== null ? `Liquidators can sell only ${usdShort(depth)} of ${coll} on Monad inside their incentive, so ${usdShort(unrealised)} is never written off. ` : ""}${depositors <= 0 ? `Spillway proves the shortfall from Morpho's positions and pays all ${usdShort(total)}.` : `Spillway pays ${usdShort(coverPaid)} and depositors lose ${usdShort(depositors)}.`}`;
+          : thin
+            ? `Liquidators can sell only ${usdShort(depth)} of ${coll} on Monad inside their incentive, so ${usdShort(unrealised)} is never written off.`
+            : `${depositors <= 0 ? `Spillway proves the shortfall from Morpho's positions and pays all ${usdShort(total)}.` : `Spillway pays ${usdShort(coverPaid)} and depositors lose ${usdShort(depositors)}.`}`;
+    $("lend-aside").textContent =
+      shock <= 0
+        ? oracleNote
+        : total <= 0
+          ? `${vault.name} supplies ${pct(vault.share)} of this market.`
+          : `${thin ? (depositors <= 0 ? `Spillway proves the shortfall from Morpho's positions and pays all ${usdShort(total)}. ` : `Spillway pays ${usdShort(coverPaid)} and depositors lose ${usdShort(depositors)}. `) : ""}${vault.name} supplies ${pct(vault.share)} of this market.`;
     $("lend-shock-value").textContent = pct(shock);
+    $("lend-shock").style.setProperty("--fill", `${(shock / 0.4) * 100}%`);
+    $("lend-stage").classList.toggle("loss", depositors > 0);
     // The replay on testnet is of this market.
     ($("lend-proof") as HTMLAnchorElement).hidden = pm.market.id !== REPLAYED_MARKET;
   }
@@ -197,12 +236,12 @@ export async function mountLending(root: HTMLElement): Promise<() => void> {
   function stop(): void {
     playing++;
     active = false;
-    $("lend-play").textContent = "Play";
+    $("lend-play").innerHTML = PLAY;
   }
   async function play(): Promise<void> {
     const run = ++playing;
     active = true;
-    $("lend-play").textContent = "Stop";
+    $("lend-play").innerHTML = STOP;
     const first = facts.get(current.market.id)?.firstLoss ?? 0.06;
     const stops = [0, first, 0.25];
     const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
