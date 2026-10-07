@@ -60,11 +60,9 @@ const VIEW = `
         <input type="range" id="lend-shock" min="0" max="40" step="0.5" value="0" />
         <span class="scale" aria-hidden="true"><span>0%</span><span>10%</span><span>20%</span><span>30%</span><span>40%</span></span>
       </label>
-      <div class="play-row">
-        <button id="lend-play" class="btn play" type="button">${PLAY}</button>
-        <a id="lend-proof" class="proof" href="#/cover" hidden>See a 25% markdown paid on Monad testnet&nbsp;<span aria-hidden="true">&rarr;</span></a>
-      </div>
+      <button id="lend-play" class="btn play" type="button">${PLAY}</button>
     </section>
+    <a id="lend-proof" class="proof" href="#/cover" hidden>See a 25% markdown paid on Monad testnet&nbsp;<span aria-hidden="true">&rarr;</span></a>
   </div>`;
 
 /** What each kind of oracle reads, in words. */
@@ -190,8 +188,8 @@ export async function mountLending(root: HTMLElement): Promise<() => void> {
     $("lend-headline").innerHTML =
       shock <= 0
         ? firstLoss === null
-          ? `In ${pair(pm)}, no sudden ${marksDown ? "markdown" : "fall"} of ${coll} up to 100% costs depositors anything`
-          : `In ${pair(pm)}, a sudden <b>${pct(firstLoss)}</b> ${marksDown ? "markdown" : "fall"} of ${coll} is the smallest that costs depositors money`
+          ? `No sudden ${marksDown ? "markdown" : "fall"} of ${coll}, even to zero, costs depositors anything`
+          : `Depositors first lose money at a sudden <b>${pct(firstLoss)}</b> ${marksDown ? "markdown" : "fall"} of ${coll}`
         : `A ${pct(shock)} ${marksDown ? "markdown" : "fall"} of ${coll} leaves <b>${usdShort(total)}</b> unpaid`;
     const stat = (k: string, v: string, sub: string, cls = "") =>
       `<div class="stat ${cls}"><span class="k">${k}</span><span class="v">${v}</span><span class="sub" title="${sub}">${sub}</span></div>`;

@@ -9,12 +9,12 @@
   --hair: #e7e9ed;
   --hair-2: #d5d9df;
   --water: #0a5cff;
-  --water-tint: #eaf1ff;
   --accent: #c6f432;
   --danger: #e5322d;
   --radius: 16px;
   --radius-s: 12px;
   --header: 60px;
+  --bar: calc(96px + env(safe-area-inset-bottom));
   --pad: 16px;
   --font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -33,12 +33,13 @@ html, body {
   text-rendering: optimizeLegibility;
 }
 
-a { color: var(--ink); text-underline-offset: 3px; text-decoration-thickness: 1px; text-decoration-color: var(--hair-2); }
-a:hover { text-decoration-color: var(--ink); }
+/* Links are ink with an underline. Blue is kept for water. */
+a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; text-decoration-color: var(--ink); }
+a:hover { text-decoration-thickness: 2px; }
 code { font-family: var(--mono); font-size: 0.86em; }
 h1, h2, h3 { margin: 0; }
 
-:focus-visible { outline: 2px solid var(--water); outline-offset: 2px; border-radius: 6px; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 6px; }
 
 .app {
   max-width: 1200px;
@@ -92,7 +93,7 @@ h1, h2, h3 { margin: 0; }
   align-items: center;
   gap: 8px;
 }
-.overline::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--water); flex: 0 0 auto; }
+.overline::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--ink); flex: 0 0 auto; }
 .overline.live::before { background: var(--accent); box-shadow: 0 0 0 1px #9cc21a inset; }
 
 .headline {
@@ -167,7 +168,7 @@ h1, h2, h3 { margin: 0; }
 .explore {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "intro" "chips" "stats" "stage" "story" "controls";
+  grid-template-areas: "intro" "chips" "stats" "stage" "story" "proof" "controls";
 }
 .intro { grid-area: intro; }
 .explore > .chips { grid-area: chips; }
@@ -175,26 +176,30 @@ h1, h2, h3 { margin: 0; }
 .explore > .stage { grid-area: stage; }
 .story { grid-area: story; margin: 14px 2px 4px; min-height: 4.4em; }
 .explore > .controls { grid-area: controls; }
+.explore > .proof { grid-area: proof; justify-self: start; margin: 4px 2px 0; }
 
 @media (min-width: 960px) {
   :root { --pad: 32px; }
   .app { padding-top: 28px; }
   .explore {
     grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
-    grid-template-rows: auto auto auto auto auto 1fr;
-    grid-template-areas: "intro stage" "chips stage" "stats stage" "story stage" "controls stage" ". stage";
+    grid-template-rows: auto auto auto auto auto auto 1fr;
+    grid-template-areas: "intro stage" "chips stage" "stats stage" "story stage" "controls stage" "proof stage" ". stage";
     column-gap: 40px;
   }
   .headline { font-size: 28px; margin-bottom: 18px; min-height: 3.6em; }
   .explore > .chips { flex-wrap: wrap; margin: 0 0 14px; padding: 0; overflow: visible; }
   .explore > .chips button { height: 30px; padding: 0 12px; font-size: 12.5px; }
   .story { margin: 4px 0 14px; min-height: 0; }
+  .explore > .proof { margin: 18px 0 0; }
 }
 
 /* ------------------------------------------------------------------ the picture */
 
 .stage { position: relative; display: flex; flex-direction: column; width: 100%; }
-.plot { position: relative; height: clamp(380px, calc(100svh - 440px), 620px); }
+.plot { position: relative; height: clamp(320px, calc(100svh - 440px), 620px); }
+/* On a phone, leave the legend clear of the controls bar on the first screen. */
+@media (max-width: 959px) { .plot { height: clamp(320px, calc(100svh - 440px - var(--bar) + 24px), 560px); } }
 @media (min-width: 960px) {
   .explore > .stage { height: max(600px, min(880px, calc(100svh - var(--header) - 56px))); position: sticky; top: calc(var(--header) + 28px); }
   .plot { flex: 1; height: auto; }
@@ -212,7 +217,7 @@ h1, h2, h3 { margin: 0; }
   font-size: 13px;
   color: var(--muted);
 }
-.loading::before { content: ""; width: 40px; height: 4px; border-radius: 2px; background: var(--water-tint); margin-bottom: 40px; grid-area: 1 / 1; animation: pulse 1.4s ease-in-out infinite; }
+.loading::before { content: ""; width: 40px; height: 4px; border-radius: 2px; background: var(--hair); margin-bottom: 40px; grid-area: 1 / 1; animation: pulse 1.4s ease-in-out infinite; }
 
 .label {
   position: absolute;
@@ -269,7 +274,8 @@ h1, h2, h3 { margin: 0; }
 
 /* ------------------------------------------------------------------ controls */
 
-.controls { display: flex; flex-direction: column; gap: 14px; margin-top: 6px; }
+.controls { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; margin-top: 6px; }
+.controls .slider { align-self: stretch; }
 
 .slider { display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--ink-2); }
 .slider-label { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
@@ -307,8 +313,8 @@ input[type="range"]::-webkit-slider-thumb {
 input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.08); }
 input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: var(--bg); border: 2px solid var(--ink); }
 input[type="range"]:focus-visible { outline: none; }
-input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px rgba(10, 92, 255, 0.25); border-color: var(--water); }
-input[type="range"]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px rgba(10, 92, 255, 0.25); border-color: var(--water); }
+input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px rgba(11, 13, 16, 0.16); }
+input[type="range"]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px rgba(11, 13, 16, 0.16); }
 
 .btn, .actions button {
   font: inherit;
@@ -334,10 +340,37 @@ input[type="range"]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px rgba
 .btn:disabled, .actions button:disabled { background: var(--surface); color: var(--muted); border-color: var(--surface); cursor: default; }
 .play { min-width: 96px; }
 
-.play-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.proof { font-size: 13.5px; font-weight: 500; color: var(--water); text-decoration: none; }
-.proof:hover { text-decoration: underline; }
+.proof { font-size: 13.5px; font-weight: 500; }
 .proof[hidden] { display: none; }
+
+/* On a phone the controls are a bar fixed to the bottom, so the basin and the slider share the screen. */
+@media (max-width: 959px) {
+  .explore { padding-bottom: var(--bar); }
+  .explore > .controls {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    margin: 0;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: "label label" "play range";
+    align-items: center;
+    column-gap: 14px;
+    row-gap: 2px;
+    padding: 10px max(var(--pad), calc((100% - 720px) / 2)) calc(12px + env(safe-area-inset-bottom));
+    background: var(--bg);
+    border-top: 1px solid var(--hair);
+  }
+  .controls .slider { display: contents; }
+  .controls .slider-label { grid-area: label; font-size: 13px; color: var(--muted); }
+  .controls .slider b { font-size: 20px; line-height: 1.2; }
+  .controls input[type="range"] { grid-area: range; height: 36px; }
+  .controls .scale { display: none; }
+  .controls .play { grid-area: play; height: 36px; min-width: 84px; padding: 0 14px; font-size: 13.5px; }
+  .controls:not(:has(.play)) input[type="range"] { grid-column: 1 / -1; }
+}
 
 .chips { display: flex; flex-wrap: nowrap; gap: 6px; margin: 0 calc(-1 * var(--pad)) 14px; padding: 0 var(--pad); overflow-x: auto; scrollbar-width: none; align-items: center; }
 .chips::-webkit-scrollbar { display: none; }
@@ -428,7 +461,7 @@ input[type="range"]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px rgba
   font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
-.actions .amount input:focus-visible { outline: 2px solid var(--water); outline-offset: 1px; border-color: var(--water); }
+.actions .amount input:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; border-color: var(--ink); }
 .steps { list-style: none; font-size: 13.5px; padding: 0; margin: 0 0 10px; }
 .steps:empty { display: none; }
 .steps li { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
@@ -437,10 +470,17 @@ input[type="range"]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px rgba
 .steps .step.failed { color: var(--danger); }
 .steps .step.failed::before { background: var(--danger); }
 .steps .step.waiting, .steps .step.sent { color: var(--muted); }
-.steps .step.sent::before { background: var(--water); }
+.steps .step.sent::before { background: var(--ink); }
 
 .failure { max-width: 520px; margin: 40px auto; text-align: center; }
 .failure .headline { min-height: 0; }
+
+/* On a phone the wallet actions fill their row, so the buttons line up. */
+@media (max-width: 639px) {
+  .actions > button { flex: 1 1 auto; }
+  .actions .amount { flex: 1 0 100%; }
+  .actions .amount input { flex: 1; }
+}
 
 @media (max-width: 380px) {
   .tabs a { padding: 6px 7px; }
