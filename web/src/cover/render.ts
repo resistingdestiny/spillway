@@ -10,7 +10,7 @@ export interface Block {
   rows: [label: string, value: string][];
 }
 
-export const dl = (rows: Block["rows"]): string => rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+export const dl = (rows: Block["rows"]): string => rows.map(([k, v]) => `<div class="row"><dt>${k}</dt><dd>${v}</dd></div>`).join("");
 
 /** tUSD per twstETH from a Morpho oracle price. */
 const oracleTusd = (price: bigint) => Number(price) / 10 ** (36 + USD_DECIMALS - COLLATERAL_DECIMALS);
@@ -20,8 +20,17 @@ const paid = (s: string) => `<span class="paid">${s}</span>`;
 
 export function headline(live: Live): string {
   return live.policy.paid > 0n
-    ? `Spillway has paid the main depositor <b>${tusd(live.policy.paid)}</b> for a loss Morpho has not written off.`
-    : "Spillway covers the main depositor of a Morpho market on Monad testnet.";
+    ? `Spillway has paid the main depositor <b>${tusd(live.policy.paid)}</b> for a loss Morpho has not written off`
+    : "Spillway covers the main depositor of a Morpho market on Monad testnet";
+}
+
+/** The three figures at the top of the view: paid, the shortfall behind it, and who is underwater. */
+export function heroStats(live: Live): [label: string, value: string, sub: string][] {
+  return [
+    ["Paid to the depositor", tusd(live.policy.paid), "by policy 1, on chain"],
+    ["Shortfall at the oracle", tusd(live.shortfall), "debt above collateral value"],
+    ["Unhealthy borrowers", `${live.unhealthy} of ${live.borrowing}`, live.unhealthy > 0 ? "none liquidated" : "all healthy"],
+  ];
 }
 
 export const REPLAY_NOTE = `This market is a replay of Monad's real ${REPLAY.pair} book at mainnet block ${int(REPLAY.block)}, at ${pct(REPLAY.scale, 0)} scale, on our own Morpho Blue with an oracle we control.`;
