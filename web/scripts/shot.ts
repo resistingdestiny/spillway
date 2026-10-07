@@ -2,6 +2,7 @@
 //   tsx scripts/shot.ts <url> <outDir> [drop%...]
 // For a view with no slider (Cover, Verify), pass `page` for one full-page shot:
 //   tsx scripts/shot.ts http://127.0.0.1:5179/#/cover shots page
+// Set WIDTH and HEIGHT for another viewport, e.g. WIDTH=1280 HEIGHT=800.
 
 import { mkdirSync } from "node:fs";
 import { chromium } from "playwright";
@@ -9,7 +10,7 @@ import { chromium } from "playwright";
 const [url = "http://127.0.0.1:5179/", out = "shots", ...drops] = process.argv.slice(2);
 mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || undefined, args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
-const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+const page = await browser.newPage({ viewport: { width: Number(process.env.WIDTH) || 390, height: Number(process.env.HEIGHT) || 844 }, deviceScaleFactor: 2 });
 page.on("console", (m) => m.type() === "error" && console.error("console:", m.text()));
 page.on("pageerror", (e) => console.error("pageerror:", e.message));
 await page.goto(url, { waitUntil: "networkidle", timeout: 120_000 });
