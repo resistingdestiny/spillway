@@ -6,10 +6,11 @@ import type { Geometry } from "./layout.js";
 
 export const COLORS = {
   bg: 0xffffff,
-  ink: 0x0e0f11,
+  ink: 0x0b0d10,
   muted: 0x9aa0a8,
-  hair: 0xd9dce1,
-  rock: 0xf1f2f4,
+  hair: 0xe7e9ed,
+  guide: 0xeef0f3,
+  ghost: 0xdfe2e7,
   water: 0x0a5cff,
   accent: 0xc6f432,
   danger: 0xe5322d,
@@ -20,6 +21,8 @@ export const COLORS = {
 export interface BandSpec {
   /** Counter text, e.g. "Insurance fund ($178k) pays". */
   label: string;
+  /** Short tag on the band itself, e.g. "Insurance fund $178k". */
+  tag: string;
   /** Size of the band in dollars. */
   dollars: number;
   /** What this band has paid in the current run. */
@@ -86,120 +89,134 @@ export class Picture {
   draw(geo: Geometry, scene: Scene): void {
     const g = this.g;
     g.clear();
-    this.rock(geo);
-    this.ticks(geo);
+    this.guides(geo);
     this.basin(geo, scene);
     this.falls(geo, scene);
     this.ledges(geo, scene);
     this.markers(geo, scene);
-    g.zIndex = 0;
+    this.face(geo);
   }
 
-  private rock(geo: Geometry): void {
+  /** Faint guide lines across the cliff every 10%, and small ticks every 5% on the face. */
+  private guides(geo: Geometry): void {
     const g = this.g;
-    const top = geo.cliffTop - 18;
-    g.rect(0, top, geo.wallX, geo.basinBottom - top).fill({ color: COLORS.rock });
-    // Hatching on the rock.
-    for (let x = -geo.H; x < geo.wallX; x += 9) {
-      g.moveTo(Math.max(0, x), top + Math.max(0, -x)).lineTo(Math.min(geo.wallX, x + (geo.basinBottom - top)), top + Math.min(geo.basinBottom - top, geo.wallX - x));
+    for (let i = 1; i * 0.1 <= geo.maxMove + 1e-9; i++) {
+      const y = Math.round(geo.priceY(1 - i * 0.1)) + 0.5;
+      g.moveTo(geo.wallX, y).lineTo(geo.rightX, y);
     }
-    g.stroke({ width: 1, color: COLORS.hair });
-    // The cliff face runs down into the basin's left wall.
-    g.moveTo(geo.wallX, top).lineTo(geo.wallX, geo.basinBottom).stroke({ width: 2, color: COLORS.ink });
-  }
-
-  private ticks(geo: Geometry): void {
-    const g = this.g;
-    for (let m = 0.05; m <= 0.4 + 1e-9; m += 0.05) {
-      const y = geo.priceY(1 - m);
-      g.moveTo(geo.wallX - 8, y).lineTo(geo.wallX, y);
+    g.stroke({ width: 1, color: COLORS.guide });
+    for (let i = 1; i * 0.05 <= geo.maxMove + 1e-9; i++) {
+      const y = Math.round(geo.priceY(1 - i * 0.05)) + 0.5;
+      g.moveTo(geo.wallX - (i % 2 ? 3 : 6), y).lineTo(geo.wallX, y);
     }
     g.stroke({ width: 1, color: COLORS.ink });
+  }
+
+  /** The cliff face, running down into the basin's left wall. */
+  private face(geo: Geometry): void {
+    this.g.moveTo(geo.wallX, geo.cliffTop - 16).lineTo(geo.wallX, geo.basinBottom - RADIUS).stroke({ width: 1.5, color: COLORS.ink });
   }
 
   private basin(geo: Geometry, scene: Scene): void {
     const g = this.g;
     const { wallX, rightX, basinTop, basinBottom } = geo;
+    const rim = basinTop - 6;
     const level = geo.waterY(scene.water);
 
-    // Water.
+    // Water, following the rounded floor.
     if (scene.water > 0) {
-      const top = Math.max(basinTop - 6, level);
-      g.rect(wallX, top, rightX - wallX, basinBottom - top).fill({ color: COLORS.water });
+      const top = Math.max(rim, level);
+      vessel(g, wallX, top, rightX, basinBottom);
+      g.closePath().fill({ color: COLORS.water });
     }
 
-    // Gauge strip on the wall: one colour per band.
-    const strip = 8;
+    // Gauge strip inside the left wall: one colour per band.
+    const strip = 5;
     let below = 0;
     scene.bands.forEach((b, i) => {
       const { top, bottom } = geo.band(i);
       const wet = scene.water > below + 1e-6;
-      if (!b.wetOnly || wet) g.rect(wallX + 2, top, strip, bottom - top).fill({ color: b.color });
+      const t = Math.max(rim, top);
+      const bt = Math.min(bottom, basinBottom - RADIUS);
+      if ((!b.wetOnly || wet) && bt > t) g.rect(wallX + 3, t + 1, strip, bt - t - 2).fill({ color: b.color });
       below += b.dollars;
     });
 
-    // Band edges across the basin, dashed.
+    // Band edges across the basin.
     for (let i = 0; i < scene.bands.length - 1; i++) {
-      const y = geo.band(i).top;
-      dashed(g, wallX, y, rightX, y, 6, 5);
+      const y = Math.round(geo.band(i).top) + 0.5;
+      const wet = scene.water > 0 && level < y;
+      g.moveTo(wallX + 12, y).lineTo(rightX - 1, y).stroke({ width: 1, color: wet ? 0xffffff : COLORS.muted, alpha: wet ? 0.45 : 0.6 });
     }
-    g.stroke({ width: 1, color: scene.water > 0 ? 0xffffff : COLORS.muted, alpha: 0.9 });
 
     // The vessel.
-    g.moveTo(wallX, basinTop - 6).lineTo(wallX, basinBottom).lineTo(rightX, basinBottom).lineTo(rightX, basinTop - 6);
-    g.stroke({ width: 2, color: COLORS.ink });
+    vessel(g, wallX, rim, rightX, basinBottom);
+    g.stroke({ width: 1.5, color: COLORS.ink });
   }
 
   private falls(geo: Geometry, scene: Scene): void {
     const g = this.g;
-    const surface = scene.water > 0 ? Math.max(geo.basinTop - 6, geo.waterY(scene.water)) : geo.basinBottom;
-    scene.ledges.forEach((l) => {
-      const bd = l.water;
-      if (!l.broken || bd <= 0) return;
-      const y = geo.priceY(l.ratio);
-      const tip = geo.wallX + Math.max(14, l.dollars * geo.ledgeScale);
-      const w = Math.min(10, Math.max(1.5, Math.sqrt(bd) / 15));
-      g.rect(tip - w, y + 3, w, surface - y - 3).fill({ color: COLORS.water, alpha: 0.45 });
-    });
+    const surface = scene.water > 0 ? Math.max(geo.basinTop - 6, geo.waterY(scene.water)) : geo.basinBottom - 1;
+    for (const f of fallsOf(geo, scene)) {
+      g.roundRect(f.x, f.y, f.w, surface - f.y, f.w / 2).fill({ color: COLORS.water, alpha: 0.55 });
+    }
   }
 
   private ledges(geo: Geometry, scene: Scene): void {
     const g = this.g;
-    const h = 5;
-    scene.ledges.forEach((l) => {
-      if (l.ratio < 1 - geo.maxMove) return;
-      const y = geo.priceY(l.ratio) - h / 2;
-      const w = Math.max(14, l.dollars * geo.ledgeScale);
-      if (!l.broken) {
-        g.rect(geo.wallX, y, w, h).fill({ color: COLORS.ink });
-        return;
-      }
-      // A broken ledge: a stub stays in the rock and a dashed outline marks where it was.
-      const stub = 6;
-      g.rect(geo.wallX, y, stub, h).fill({ color: COLORS.ink });
-      dashed(g, geo.wallX + stub, y, geo.wallX + w, y, 3, 3);
-      dashed(g, geo.wallX + stub, y + h, geo.wallX + w, y + h, 3, 3);
-      g.moveTo(geo.wallX + w, y).lineTo(geo.wallX + w, y + h);
-      g.stroke({ width: 1, color: COLORS.muted });
-    });
+    const h = 6;
+    // Broken ledges first, so a whole ledge at the same height draws over its ghost.
+    for (const broken of [true, false]) {
+      scene.ledges.forEach((l) => {
+        if (l.broken !== broken || l.ratio < 1 - geo.maxMove) return;
+        const y = geo.priceY(l.ratio) - h / 2;
+        const w = ledgeWidth(geo, l);
+        g.roundRect(geo.wallX - 1, y, w + 1, h, h / 2).fill({ color: broken ? COLORS.ghost : COLORS.ink });
+      });
+    }
   }
 
   private markers(geo: Geometry, scene: Scene): void {
     const g = this.g;
-    const now = geo.priceY(1);
-    g.moveTo(geo.wallX, now).lineTo(geo.rightX, now).stroke({ width: 2, color: COLORS.ink });
+    const now = Math.round(geo.priceY(1)) + 0.5;
+    g.moveTo(geo.wallX, now).lineTo(geo.rightX, now).stroke({ width: 1.5, color: COLORS.ink });
     if (scene.ghostRatio !== null) {
-      const y = geo.priceY(scene.ghostRatio);
-      dashed(g, geo.wallX, y, geo.rightX, y, 4, 4);
-      g.stroke({ width: 1.5, color: COLORS.ink });
+      const y = Math.round(geo.priceY(scene.ghostRatio)) + 0.5;
+      dashed(g, geo.wallX, y, geo.rightX, y, 5, 4);
+      g.stroke({ width: 1, color: COLORS.ink });
+      g.circle(geo.wallX, y, 3.5).fill({ color: COLORS.ink });
     }
     if (scene.realRatio !== null && scene.ghostRatio !== null && scene.realRatio < scene.ghostRatio - 1e-4) {
-      const y = geo.priceY(scene.realRatio);
-      g.moveTo(geo.wallX, y).lineTo(geo.rightX, y).stroke({ width: 2.5, color: COLORS.ink });
-      // A small pointer on the cliff face.
-      g.poly([geo.wallX, y, geo.wallX - 9, y - 5, geo.wallX - 9, y + 5]).fill({ color: COLORS.ink });
+      const y = Math.round(geo.priceY(scene.realRatio)) + 0.5;
+      g.moveTo(geo.wallX, y).lineTo(geo.rightX, y).stroke({ width: 1.5, color: COLORS.ink });
+      g.poly([geo.wallX, y, geo.wallX - 7, y - 4, geo.wallX - 7, y + 4]).fill({ color: COLORS.ink });
     }
   }
+}
+
+/** Corner radius of the basin's floor. */
+const RADIUS = 12;
+
+export const ledgeWidth = (geo: Geometry, l: PictureLedge): number => Math.max(12, l.dollars * geo.ledgeScale);
+
+/** Where each stream of water leaves its broken ledge: x, top and width, in CSS pixels. */
+export function fallsOf(geo: Geometry, scene: Scene): { x: number; y: number; w: number }[] {
+  return scene.ledges
+    .filter((l) => l.broken && l.water > 0 && l.ratio >= 1 - geo.maxMove)
+    .map((l) => {
+      const w = Math.min(5, Math.max(1.5, Math.sqrt(l.water) / 30));
+      const tip = geo.wallX + ledgeWidth(geo, l);
+      return { x: tip - w - 2, y: geo.priceY(l.ratio) + 2, w };
+    });
+}
+
+/** The basin's outline from the left rim, round the floor, up to the right rim. */
+function vessel(g: Graphics, x0: number, top: number, x1: number, bottom: number): Graphics {
+  const r = Math.min(RADIUS, Math.max(0, bottom - top));
+  g.moveTo(x0, top).lineTo(x0, bottom - r);
+  g.arcTo(x0, bottom, x0 + r, bottom, r).lineTo(x1 - r, bottom);
+  g.arcTo(x1, bottom, x1, bottom - r, r).lineTo(x1, top);
+  return g;
 }
 
 function dashed(g: Graphics, x0: number, y0: number, x1: number, y1: number, on: number, off: number): void {

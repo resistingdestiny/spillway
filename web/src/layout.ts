@@ -34,12 +34,13 @@ export interface Geometry {
 }
 
 export function layout(W: number, H: number, bands: number[], biggestLedge: number, maxMove = MAX_MOVE): Geometry {
-  const wallX = Math.round(Math.min(64, W * 0.15));
-  const rightX = W - 2;
-  const cliffTop = 34;
+  // Margins leave room for the tick labels on the left and the marker pills above each line.
+  const wallX = Math.round(Math.min(60, Math.max(48, W * 0.13)));
+  const rightX = W - 14;
+  const cliffTop = 44;
   const cliffBottom = Math.round(H * 0.5);
-  const basinTop = Math.round(H * 0.56);
-  const basinBottom = H - 2;
+  const basinTop = Math.round(H * 0.57);
+  const basinBottom = H - 14;
 
   const capacity = Math.max(1, bands.reduce((a, b) => a + b, 0));
   const basinScale = (basinBottom - basinTop) / capacity;
