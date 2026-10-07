@@ -19,7 +19,17 @@ async function route(): Promise<void> {
   unmount?.();
   unmount = null;
   document.querySelectorAll<HTMLAnchorElement>(".tabs a").forEach((a) => a.setAttribute("aria-current", String(a.dataset.view === view)));
-  unmount = await (VIEWS[view] as Mount)(root);
+  document.body.dataset.view = view;
+  try {
+    unmount = await (VIEWS[view] as Mount)(root);
+  } catch {
+    if (current !== view) return;
+    root.innerHTML = `<div class="failure"><h1 class="headline">This page could not load</h1><p class="explain">Its data did not arrive. Check the connection and try again.</p><button class="btn" type="button" id="retry">Try again</button></div>`;
+    root.querySelector("#retry")?.addEventListener("click", () => {
+      current = "";
+      void route();
+    });
+  }
 }
 
 window.addEventListener("hashchange", () => void route());

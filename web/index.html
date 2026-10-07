@@ -4,23 +4,35 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Spillway</title>
-    <meta name="description" content="Who pays when a liquidation cascade drains a perp exchange's insurance fund." />
+    <meta name="description" content="Cover for Monad lending depositors, priced from a public stress test anyone can rerun." />
+    <meta name="theme-color" content="#ffffff" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <main class="app">
-      <header class="top">
-        <div class="brand">Spillway</div>
+    <header class="top">
+      <div class="top-inner">
+        <a class="brand" href="#/lending" aria-label="Spillway, home">
+          <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+            <rect width="26" height="26" rx="8" fill="#c6f432" />
+            <path d="M7 5.5v10a4 4 0 0 0 4 4h5a4 4 0 0 0 4-4V12" fill="none" stroke="#0b0d10" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            <rect x="7" y="8" width="9" height="2.6" rx="1.3" fill="#0b0d10" />
+            <rect x="13.4" y="10.6" width="2.2" height="5" fill="#0a5cff" />
+            <path d="M8.9 14.6h9.2v.9a2.6 2.6 0 0 1-2.6 2.6h-4a2.6 2.6 0 0 1-2.6-2.6z" fill="#0a5cff" />
+          </svg>
+          <span>Spillway</span>
+        </a>
         <nav class="tabs" aria-label="Sections">
           <a href="#/lending" data-view="lending">Lending</a>
           <a href="#/cover" data-view="cover">Cover</a>
           <a href="#/perpl" data-view="perpl">Perpl</a>
           <a href="#/verify" data-view="verify">Verify</a>
         </nav>
-      </header>
+      </div>
+    </header>
+    <main class="app">
       <div id="view"></div>
     </main>
     <script type="module" src="/src/main.ts"></script>
