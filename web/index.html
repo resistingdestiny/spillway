@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Spillway</title>
-    <meta name="description" content="Cover for Monad lending, priced in public. Depositors buy cover priced from a public stress test, and claims pay from Morpho's own data." />
+    <title>Spillway: insurance for Monad lending deposits</title>
+    <meta name="description" content="Spillway insures money deposited in Morpho lending vaults on Monad. See what a sudden crash would cost your vault, and cover it. Claims pay out automatically." />
     <meta name="theme-color" content="#0d1b2a" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -12,13 +12,6 @@
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <div class="announce">
-      <div class="wrap announce-inner">
-        <span class="badge">New</span>
-        <span class="announce-text">Ask Spillway answers from the stress test</span>
-        <a href="#/" data-scroll="ask">Try it <span aria-hidden="true">&rarr;</span></a>
-      </div>
-    </div>
     <header class="top">
       <div class="wrap top-inner">
         <a class="brand" href="#/" aria-label="Spillway, home">
@@ -30,15 +23,14 @@
           </svg>
           <span>Spillway</span>
         </a>
-        <nav class="tabs" id="tabs" aria-label="Sections">
-          <a href="#/" data-scroll="product">Product</a>
-          <a href="#/" data-scroll="roles">Who it is for</a>
-          <a href="#/" data-scroll="proof">Proof</a>
-          <a href="#/perpl" data-view="perpl">Perpl</a>
+        <nav class="tabs" id="tabs" aria-label="Main">
+          <a href="#/" data-scroll="how">How it works</a>
+          <a href="#/check" data-view="check">Check a vault</a>
+          <a href="#/" data-scroll="faq">Questions</a>
           <a href="https://github.com/resistingdestiny/spillway" target="_blank" rel="noopener">GitHub</a>
         </nav>
         <div class="top-right">
-          <a href="#/app" class="btn top-cta" data-view="app">Open the app</a>
+          <a href="#/check" class="btn top-cta">Check your vault</a>
           <button type="button" class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="tabs">Menu</button>
         </div>
       </div>

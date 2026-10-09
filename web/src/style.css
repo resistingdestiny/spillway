@@ -67,12 +67,6 @@ h1, h2, h3 { margin: 0; }
   }
 }
 
-.announce { position: relative; z-index: 11; background: var(--navy); color: #dfe8f1; font-size: 13px; }
-.announce-inner { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 38px; text-align: center; }
-.announce .badge { font-size: 10.5px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; background: var(--accent); color: var(--ink); padding: 2px 7px; border-radius: 2px; flex: 0 0 auto; }
-.announce a { color: #fff; text-decoration: none; white-space: nowrap; font-weight: 500; }
-.announce a:hover { text-decoration: underline; }
-@media (max-width: 479px) { .announce-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; } }
 
 .top { position: sticky; top: 0; z-index: 10; background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(8px); border-bottom: 1px solid var(--hair); }
 .top-inner { height: var(--header); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
@@ -385,8 +379,8 @@ a.btn { color: #fff; }
 
 /* On a phone the controls are a bar fixed to the bottom, so the basin and the slider share the screen. */
 @media (max-width: 959px) {
-  .explore, .studio { padding-bottom: var(--bar); }
-  .explore > .controls, .studio > .controls {
+  .explore { padding-bottom: var(--bar); }
+  .explore > .controls {
     position: fixed;
     left: 0;
     right: 0;
@@ -528,64 +522,6 @@ a.btn { color: #fff; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
 
-/* ------------------------------------------------------------------ the app */
-
-.studio {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "chips" "head" "stage" "story" "cover" "ask" "controls";
-}
-.studio > .chips { grid-area: chips; }
-.studio-head { grid-area: head; }
-.studio > .stage { grid-area: stage; }
-.studio > .story { grid-area: story; margin: 12px 2px 18px; min-height: 2.9em; font-size: 14.5px; color: var(--ink-2); }
-.studio > .cover-card { grid-area: cover; }
-.studio > .app-ask { grid-area: ask; margin-top: 16px; }
-.studio > .controls { grid-area: controls; }
-.studio .headline { min-height: 1.2em; font-size: 24px; margin-bottom: 12px; }
-.studio .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.studio .plot { height: clamp(300px, calc(100svh - 470px - var(--bar) + 24px), 520px); }
-
-.cover-card { padding: 16px 16px 14px; align-self: start; }
-.cover-card .price { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin: 6px 0 6px; }
-.cover-card .price .v { font-size: 40px; font-weight: 400; letter-spacing: -0.04em; line-height: 1.1; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 8px; }
-.cover-card .price .v::after { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 1px #9cc21a inset; }
-.cover-card .price .k { font-size: 13.5px; color: var(--muted); }
-.cover-card .rows { margin: 0; }
-.testnet { border-top: 1px solid var(--hair); padding-top: 14px; }
-.testnet[hidden] { display: none; }
-.testnet .overline { margin-bottom: 10px; }
-.live-paid { display: flex; flex-direction: column; gap: 2px; margin-bottom: 12px; }
-.live-paid .k { font-size: 12.5px; color: var(--muted); }
-.live-paid .v { font-size: 28px; font-weight: 400; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; line-height: 1.15; }
-.live-paid .v small { font-size: 0.5em; font-weight: 600; letter-spacing: 0; margin-left: 4px; opacity: 0.6; }
-.testnet .actions { margin: 0 0 8px; }
-.testnet .muted { margin: 2px 0 8px; }
-.elsewhere { margin: 2px 0 12px; font-size: 13.5px; }
-.elsewhere[hidden] { display: none; }
-button.inline { font: inherit; font-weight: 600; color: var(--ink); background: none; border: 0; padding: 0; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
-.links { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13.5px; font-weight: 500; border-top: 1px solid var(--hair); padding-top: 12px; margin-top: 4px; }
-
-@media (min-width: 960px) {
-  .studio {
-    grid-template-columns: minmax(0, 1fr) 360px;
-    grid-template-rows: auto auto auto auto auto 1fr;
-    grid-template-areas: "chips chips" "head cover" "stage cover" "controls cover" "story cover" "ask cover";
-    column-gap: 28px;
-  }
-  .studio > .chips { flex-wrap: wrap; margin: 0 0 18px; padding: 0; overflow: visible; }
-  .studio-head { display: grid; grid-template-columns: minmax(0, 1fr) 280px; column-gap: 24px; align-items: end; margin-bottom: 14px; }
-  .studio-head .overline { grid-column: 1 / -1; }
-  .studio .headline { font-size: 30px; margin: 0; }
-  .studio .stats { margin: 0; }
-  .studio .plot { height: clamp(420px, calc(100svh - 380px), 640px); }
-  .studio > .controls { flex-direction: row; align-items: center; gap: 24px; margin-top: 14px; }
-  .studio > .controls .slider { flex: 1; }
-  .studio > .story { margin: 10px 0 0; min-height: 0; }
-  .studio > .app-ask { margin-top: 24px; }
-  .studio > .cover-card { position: sticky; top: calc(var(--header) + 28px); }
-}
-
 /* ------------------------------------------------------------------ the drawer */
 
 .drawer {
@@ -617,35 +553,69 @@ button.inline { font: inherit; font-weight: 600; color: var(--ink); background: 
 @media (max-width: 639px) {
   .drawer { margin: auto 0 0; width: 100%; height: 90svh; border-left: 0; border-top: 1px solid var(--hair); border-radius: var(--radius) var(--radius) 0 0; }
 }
-/* These plots set their own height, so they must not flex to the stage's. */
-.hero-picture .plot, .studio .plot { flex: none; }
-.module { align-content: start; }
-@media (max-width: 959px) {
-  .studio .stat { padding: 9px 12px 10px; }
-  .studio .stat .v { font-size: 21px; margin-top: 2px; }
-}
+
 
 /* ------------------------------------------------------------------ the app in the landing system */
 
-.stat .v, .counter .amount, .slider b, .live-paid .v, .cover-card .price .v, .figure .v { font-weight: 300; letter-spacing: -0.04em; }
+.stat .v, .counter .amount, .slider b { font-weight: 300; letter-spacing: -0.04em; }
 .stat { border-radius: 2px; }
-.stat .k, .counter .what, .live-paid .k { font-weight: 400; }
-.studio > .chips button, .explore > .chips button { border-color: var(--hair); }
-.studio > .stage, .explore > .stage { border-radius: 2px; }
-.cover-card { background: var(--mist); border-color: var(--mist); border-radius: 2px; padding: 22px 22px 18px; }
-.cover-card .section { font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2); }
-.cover-card .price .v { font-size: 48px; }
-.cover-card .row, .cover-card .testnet, .cover-card .links { border-color: rgba(13, 27, 42, 0.1); }
-.cover-card .actions button:disabled { background: rgba(255, 255, 255, 0.6); border-color: rgba(13, 27, 42, 0.08); }
-.cover-card .actions .amount input, .actions .amount input { border-radius: 2px; }
-.links a, .elsewhere a { text-decoration-color: var(--hair-2); }
-.app-ask .ask { box-shadow: none; }
-.explore .intro .headline, .studio .headline { letter-spacing: -0.04em; }
+.stat .k, .counter .what { font-weight: 400; }
+.explore > .chips button { border-color: var(--hair); }
+.explore > .stage { border-radius: 2px; }
+.explore .intro .headline { letter-spacing: -0.04em; }
 @media (min-width: 960px) {
-  .studio .headline { font-size: 38px; }
   .explore .headline { font-size: 38px; }
 }
 .drawer { border-radius: 0; }
 .drawer .card { border-radius: 2px; }
 .hero .stat.lime .v { font-weight: 300; }
-.cover-card .overline, .live-paid .overline { text-transform: none; letter-spacing: 0; font-size: 12.5px; color: var(--muted); }
+
+/* ------------------------------------------------------------------ the floating Ask button and its panel */
+
+.ask-fab {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 18px;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--navy);
+  border: 1px solid var(--navy);
+  border-radius: 2px;
+  /* A light ring keeps it visible over the navy bands. */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35), 0 8px 24px rgba(13, 27, 42, 0.22);
+  cursor: pointer;
+}
+.ask-fab:hover { background: #1d3550; }
+.ask-open .ask-fab { display: none; }
+.ask-sheet {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 31;
+  width: min(420px, calc(100vw - 32px));
+  max-height: min(640px, calc(100svh - var(--header) - 32px));
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border: 1px solid var(--hair);
+  border-radius: 2px;
+  box-shadow: 0 16px 48px rgba(13, 27, 42, 0.2);
+}
+.ask-sheet[hidden] { display: none; }
+.ask-sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px 10px 18px; border-bottom: 1px solid var(--hair); }
+.ask-sheet-head .section { margin: 0; }
+.ask-sheet-body { overflow-y: auto; }
+.ask-sheet .ask { border: 0; box-shadow: none; border-radius: 0; }
+@media (max-width: 639px) {
+  .ask-sheet { left: 0; right: 0; bottom: 0; width: 100%; max-height: 85svh; border-radius: 0; border-width: 1px 0 0; }
+}
+/* Clear of the Perpl view's controls bar on phones. */
+@media (max-width: 959px) { body[data-view="perpl"] .ask-fab { bottom: calc(var(--bar) + 8px); } }

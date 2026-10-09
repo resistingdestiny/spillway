@@ -66,7 +66,7 @@ export async function underwrite(pub: PublicClient, w: Wallet, amount: bigint, r
  * the policyholder, never the caller. Passes the replayed borrowers in the order the vault requires.
  */
 export async function claimForDepositor(pub: PublicClient, w: Wallet, report: Report): Promise<void> {
-  const steps: Step[] = [{ label: "Claim the proven shortfall for the depositor", state: "waiting" }];
+  const steps: Step[] = [{ label: "Send the claim for the covered depositor", state: "waiting" }];
   await run(pub, steps, 0, report, () =>
     w.client.writeContract({ chain: CHAIN, account: w.account, address: ADDR.vault, abi: vaultAbi, functionName: "claimShortfall", args: [POLICY_ID, BORROWERS] }),
   );

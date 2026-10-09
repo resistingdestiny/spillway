@@ -21,7 +21,7 @@ interface Reply {
 }
 
 const SUGGESTIONS: [label: string, question: string][] = [
-  ["wstETH marked down 20%", "What happens to Steakhouse Prime ETH's depositors if wstETH is marked down 20%?"],
+  ["wstETH drops 20%", "What happens to Steakhouse Prime ETH's depositors if wstETH suddenly drops 20%?"],
   ["Riskiest collateral", "Which collateral would hurt Monad lenders most if it failed?"],
   ["Cover for August USDC V2", "How much does cover cost for August USDC V2?"],
   ["Has the cover paid?", "Has the cover ever paid?"],

@@ -1,7 +1,7 @@
 // The live cover on Monad testnet: the replay market on our Morpho Blue, the vault, policy 1
-// and its claims, read from the chain every 10 seconds. Fills the testnet part of the app's
-// cover card (the payout and the wallet actions) and the proof drawer. Loaded on demand, so
-// viem is only fetched by visitors who open the app.
+// and its claims, read from the chain every 10 seconds. Fills the
+// checker's testnet steps (the payout and the wallet actions) and the proof drawer. Loaded on demand, so
+// viem is only fetched by visitors who open the checker.
 
 import { type Step, claimForDepositor, getTestDollars, underwrite } from "../cover/actions.js";
 import { CHAIN, DEFAULT_DEPOSIT, LOG_RANGE, MON_FAUCET, POLL_MS, USD_DECIMALS } from "../cover/config.js";
@@ -28,20 +28,31 @@ const CARD = `
     <span class="overline live" id="live-sub">Reading Monad testnet</span>
   </div>
   <div class="live-paid">
-    <span class="k">Paid to the depositor</span>
+    <span class="k">Paid to the covered depositor so far</span>
     <span class="v" id="live-paid"><span class="skeleton" style="width:6em"></span></span>
   </div>
   <p class="status" id="live-error" role="status" hidden></p>
-  <div class="actions">
-    <button type="button" id="live-connect">Connect wallet</button>
-    <button type="button" class="secondary" id="live-faucet" disabled>Get 10,000 test dollars</button>
-  </div>
-  <div class="actions">
-    <label class="amount">Deposit <input id="live-amount" type="number" min="1" step="1" inputmode="numeric" value="${DEFAULT_DEPOSIT}" /> tUSD</label>
-    <button type="button" class="secondary" id="live-underwrite" disabled>Underwrite</button>
-    <button type="button" class="secondary" id="live-claim" disabled>Claim for the depositor</button>
-  </div>
-  <p class="muted" id="live-wallet"></p>
+  <ol class="try-steps">
+    <li>
+      <div class="try-text"><b>Connect a wallet</b><span class="muted" id="live-wallet"></span></div>
+      <div class="actions"><button type="button" id="live-connect">Connect wallet</button></div>
+    </li>
+    <li>
+      <div class="try-text"><b>Get test dollars</b><span class="muted">Free tUSD to try the cover with.</span></div>
+      <div class="actions"><button type="button" class="secondary" id="live-faucet" disabled>Get 10,000 test dollars</button></div>
+    </li>
+    <li>
+      <div class="try-text"><b>Back the cover</b><span class="muted">Your tUSD pays claims and earns the premium.</span></div>
+      <div class="actions">
+        <label class="amount">Amount <input id="live-amount" type="number" min="1" step="1" inputmode="numeric" value="${DEFAULT_DEPOSIT}" /> tUSD</label>
+        <button type="button" class="secondary" id="live-underwrite" disabled>Back the cover</button>
+      </div>
+    </li>
+    <li>
+      <div class="try-text"><b>Pay the covered depositor</b><span class="muted">Anyone can send the claim. The contract checks the loss from Morpho's data and pays.</span></div>
+      <div class="actions"><button type="button" class="secondary" id="live-claim" disabled>Send the claim</button></div>
+    </li>
+  </ol>
   <ol class="steps" id="live-steps"></ol>`;
 
 const PROOF = `
@@ -124,16 +135,16 @@ export async function mountLive(card: HTMLElement, proof: HTMLElement): Promise<
   function walletLine(): void {
     const el = $("live-wallet");
     if (!injected()) {
-      el.innerHTML = "Install a browser wallet such as MetaMask to act.";
+      el.innerHTML = "Install a browser wallet such as MetaMask to try it.";
       ($("live-connect") as HTMLButtonElement).disabled = true;
       return;
     }
     if (!wallet) {
-      el.innerHTML = `Gas is testnet MON from <a href="${MON_FAUCET}" target="_blank" rel="noopener">Monad's faucet</a>.`;
+      el.innerHTML = `Gas is free testnet MON from <a href="${MON_FAUCET}" target="_blank" rel="noopener">Monad's faucet</a>.`;
       return;
     }
     const onMonad = wallet.chainId === CHAIN.id;
-    el.innerHTML = `Connected as <code>${shortAddr(wallet.account)}</code>${onMonad ? " on Monad testnet." : ". Switch to Monad testnet to act."}`;
+    el.innerHTML = `Connected as <code>${shortAddr(wallet.account)}</code>${onMonad ? " on Monad testnet." : ". Switch to Monad testnet to go on."}`;
     $("live-connect").textContent = onMonad ? "Connected" : "Switch to Monad testnet";
     for (const id of buttons) ($(id) as HTMLButtonElement).disabled = acting || !onMonad;
     ($("live-connect") as HTMLButtonElement).disabled = acting || onMonad;

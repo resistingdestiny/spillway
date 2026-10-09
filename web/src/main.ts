@@ -1,11 +1,15 @@
-import { mountApp } from "./views/app.js";
+import { mountAskButton, setAskContext } from "./ask.js";
 import { mountLanding } from "./views/landing.js";
-import { mountPerpl } from "./views/perpl.js";
 
 type Mount = (root: HTMLElement) => Promise<() => void>;
-const VIEWS: Record<string, Mount> = { landing: mountLanding, app: mountApp, perpl: mountPerpl };
-/** Routes from before the app was one page, and where they now open. */
-const MOVED: Record<string, string> = { lending: "#/app", cover: "#/app/proof", verify: "#/app/verify" };
+/** The landing page ships in the main bundle; the other views load when first opened. */
+const VIEWS: Record<string, Mount> = {
+  landing: mountLanding,
+  check: async (root) => (await import("./views/check.js")).mountCheck(root),
+  perpl: async (root) => (await import("./views/perpl.js")).mountPerpl(root),
+};
+/** Routes from before the checker was one page, and where they now open. */
+const MOVED: Record<string, string> = { lending: "#/check", cover: "#/check/proof", verify: "#/check/verify" };
 
 const root = document.getElementById("view") as HTMLElement;
 let unmount: (() => void) | null = null;
@@ -22,7 +26,8 @@ function scrollToSection(id: string): void {
 
 async function route(): Promise<void> {
   const name = location.hash.replace(/^#\/?/, "").split(/[/?]/)[0] || "landing";
-  const moved = MOVED[name];
+  // The old app's drawers keep their names under the checker.
+  const moved = name === "app" ? location.hash.replace(/^#\/?app/, "#/check") : MOVED[name];
   if (moved) {
     location.replace(moved);
     return;
@@ -32,6 +37,7 @@ async function route(): Promise<void> {
   current = view;
   unmount?.();
   unmount = null;
+  setAskContext(null);
   document.querySelectorAll<HTMLAnchorElement>(".top a[data-view]").forEach((a) => a.setAttribute("aria-current", String(a.dataset.view === view)));
   document.body.dataset.view = view;
   if (!pendingScroll) window.scrollTo(0, 0);
@@ -76,4 +82,5 @@ document.addEventListener("click", (e) => {
     location.hash = "#/";
   }
 });
+mountAskButton();
 void route();

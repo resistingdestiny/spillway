@@ -21,7 +21,7 @@ const REVERTS: Record<string, (args: readonly unknown[]) => string> = {
   NoLoss: () => "Nothing to pay: the depositor has been paid all it is due.",
   NoFreeCapital: () => "The vault has no capital left to pay with.",
   ClaimWindowClosed: () => "The policy's claim window has closed.",
-  NotAttached: () => "Cover has not attached to this policy yet.",
+  NotAttached: () => "This cover has not started yet.",
   UnknownPolicy: () => "There is no such policy.",
   BorrowersNotSorted: () => "The borrower list is out of order.",
   ZeroAmount: () => "Enter an amount above zero.",

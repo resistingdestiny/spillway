@@ -1,5 +1,5 @@
 // One Morpho market as a picture: runs the lending engine in the browser on the published snapshot,
-// and turns a markdown of the collateral into a scene. Shared by the landing page and the app.
+// and turns a sudden drop in the collateral into a scene. Used by the checker's "See every loan" drawer.
 
 import {
   type AdaptersFile,
@@ -20,10 +20,15 @@ import { COLORS, type Picture, type PictureLedge, type Scene } from "./picture.j
 export const SNAPSHOT = "data/lending/monad-2026-10-06.json";
 const ADAPTERS = "data/lending/monad-2026-10-06.adapters.json";
 const BUNDLE = "data/lending/bundle.json";
-/** The mainnet market replayed on Monad testnet (contracts/deployments/monad-testnet-lending.json). */
-export const REPLAYED_MARKET = "0x8bdb7d2c5024d349772884afb3c5c409bc8de58ed63d79618bf48fb57b595060";
-/** Cover is sized to keep depositors whole up to this sudden fall. */
+/** Fall the cover is sized to when the pricing has none for a collateral. */
 export const COVER_SHOCK = 0.25;
+
+/** The fall a collateral's cover limit is sized to: its class's 90th percentile fall, from the pricing. */
+function limitFall(d: Lending, pm: PreparedMarket): number {
+  const token = pm.market.collateral?.address?.toLowerCase();
+  for (const p of d.bundle.pricing) for (const t of p.tokens) if (t.token.toLowerCase() === token) return t.limitFall;
+  return COVER_SHOCK;
+}
 /** Ledge height, as a fall in the collateral price. */
 const BUCKET = 0.005;
 
@@ -43,8 +48,6 @@ export interface Lending {
 
 export const pair = (pm: PreparedMarket): string => `${pm.market.collateral?.symbol ?? "?"}/${pm.market.loan.symbol}`;
 export const pct = (x: number): string => `${(x * 100).toFixed(1).replace(/\.0$/, "")}%`;
-/** A yearly cover rate, to two places below 1% so 0.71% does not read as 0.7%. */
-export const rate = (x: number): string => (x < 0.01 ? `${(x * 100).toFixed(2)}%` : pct(x));
 export const debtUsd = (pm: PreparedMarket): number => pm.borrowers.reduce((a, b) => a + b.debt, 0) * pm.loanUsd;
 
 let loading: Promise<Lending> | null = null;
@@ -89,17 +92,6 @@ function lossAt(pm: PreparedMarket, prep: Prepared, shock: number) {
   return { total: (run.realised + run.unrealised) * pm.loanUsd, unrealised: run.unrealised * pm.loanUsd, byLedge };
 }
 
-/** The largest named vault supplying the market, and its share. */
-export function mainVault(pm: PreparedMarket): { name: string; share: number } {
-  const byName = new Map<string, number>();
-  for (const s of pm.suppliers) {
-    const name = s.vaultName ?? "Other lenders";
-    byName.set(name, (byName.get(name) ?? 0) + s.share);
-  }
-  const [name, share] = [...byName.entries()].sort((a, b) => b[1] - a[1])[0] ?? ["Lenders", 1];
-  return { name, share };
-}
-
 function ledges(pm: PreparedMarket, shock: number, losses: Map<number, number>): PictureLedge[] {
   const groups = new Map<number, number>();
   for (const b of pm.borrowers) {
@@ -124,7 +116,7 @@ export interface Moment {
 
 /** Draw one market at one markdown into a picture, its overlay and its legend. */
 export function drawMarket(d: Lending, pm: PreparedMarket, shock: number, picture: Picture, overlay: HTMLElement, legend: HTMLElement): Moment {
-  const cover = Math.max(lossAt(pm, d.prep, COVER_SHOCK).total, 1);
+  const cover = Math.max(lossAt(pm, d.prep, limitFall(d, pm)).total, 1);
   const { total, unrealised, byLedge } = lossAt(pm, d.prep, shock);
   const marksDown = d.facts.get(pm.market.id)?.shockMeans === "issuer marks down";
   const coverPaid = Math.min(total, cover);
@@ -151,54 +143,4 @@ export function drawMarket(d: Lending, pm: PreparedMarket, shock: number, pictur
     tick: (mv) => `−${Math.round(mv * 100)}%`,
   }, legend);
   return { total, unrealised, coverPaid, depositors, marksDown };
-}
-
-/** The story of a market: today, the smallest markdown that costs depositors money, then 25%. */
-export const storyOf = (d: Lending, pm: PreparedMarket): number[] => [0, d.facts.get(pm.market.id)?.firstLoss ?? 0.06, COVER_SHOCK];
-
-const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const ease = (k: number) => (k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2);
-
-/** Plays a story by moving the markdown between its stops. A newer run or a stop ends the current one. */
-export class Player {
-  private run = 0;
-  playing = false;
-  readonly reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-
-  /** `set` gets the markdown and the index of the last stop reached. */
-  constructor(
-    private get: () => number,
-    private set: (shock: number, reached: number) => void,
-  ) {}
-
-  stop(): void {
-    this.run++;
-    this.playing = false;
-  }
-
-  /** Move through the stops once, or forever with `loop`. With reduced motion it jumps between stills. */
-  async play(stops: number[], loop = false): Promise<void> {
-    const run = ++this.run;
-    this.playing = true;
-    const live = () => run === this.run;
-    do {
-      this.set(stops[0] ?? 0, 0);
-      await wait(2500);
-      for (let i = 1; i < stops.length && live(); i++) {
-        const to = stops[i] as number;
-        const from = this.get();
-        const t0 = performance.now();
-        while (!this.reduced && live()) {
-          const k = Math.min(1, (performance.now() - t0) / 2500);
-          if (k >= 1) break;
-          this.set(from + (to - from) * ease(k), i - 1);
-          await new Promise((r) => requestAnimationFrame(r));
-        }
-        if (!live()) break;
-        this.set(to, i);
-        await wait(3500);
-      }
-    } while (loop && live());
-    if (live()) this.playing = false;
-  }
 }
