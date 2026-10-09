@@ -111,6 +111,15 @@ export function fullyPaidUpTo(book: Book, v: Vault, t: TokenCurve): number {
   return best;
 }
 
+/** The smallest drop of `t` at which the vault's depositors start to lose money, or null if none does. */
+export function firstLoss(book: Book, t: TokenCurve): number | null {
+  const i = t.lossUsd.findIndex((x) => x > 0);
+  return i < 0 ? null : (book.shocks[i] ?? null);
+}
+
+/** Below 2% a year is low, up to 10% medium, above that high. */
+export const riskLevel = (rate: number): "low" | "medium" | "high" => (rate < 0.02 ? "low" : rate <= HIGH_RATE ? "medium" : "high");
+
 // ---------------------------------------------------------------- formatting
 
 export const dollars = (n: number): string => `$${Math.round(n).toLocaleString("en-US")}`;

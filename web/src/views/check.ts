@@ -119,7 +119,9 @@ export async function mountCheck(root: HTMLElement): Promise<() => void> {
   };
 
   const book: Book = await loadBook();
-  let vault: Vault = findVault(book, DEFAULT_VAULT);
+  // The landing page links here as #/check?vault=<address>.
+  const asked = new URLSearchParams(location.hash.split("?")[1] ?? "").get("vault")?.toLowerCase();
+  let vault: Vault = book.vaults.find((v) => v.address.toLowerCase() === asked) ?? findVault(book, DEFAULT_VAULT);
   let token: TokenCurve = vault.tokens[0] as TokenCurve;
   let drop = 0.2;
   let deposit = 10_000;
