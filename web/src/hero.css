@@ -1,0 +1,198 @@
+/* The hero: the headline over a clay landscape of the biggest vaults, and how it works told as one
+   check in a small copy of the checker. Pinned and scrubbed by scroll on wide screens; a plain
+   column on phones, with reduced motion and before the script runs. */
+
+.lhero { position: relative; padding: 0; }
+.how-mark { position: absolute; left: 0; top: 0; width: 1px; height: 1px; scroll-margin-top: var(--header); pointer-events: none; }
+.hero-stage { position: relative; }
+.hero-scene { padding-top: 56px; }
+.ribbons { display: none; }
+@media (max-width: 759px) { .hero-scene { padding-top: 32px; } }
+
+/* ------------------------------------------------------------------ the landscape */
+
+.hero-art { margin-top: 20px; }
+.hero-art:empty { aspect-ratio: 1200 / 500; }
+.land { position: relative; margin: 0 auto; }
+.land-stage { position: relative; width: 100%; aspect-ratio: 1200 / 500; }
+.land-ground { position: absolute; inset: 0; width: 100%; height: 100%; }
+.land-river { animation: bob 7s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 0; }
+@keyframes bob { to { transform: translateY(1.5%) scaleX(1.02); opacity: 0.85; } }
+.land-cloud { position: absolute; height: auto; pointer-events: none; user-select: none; animation: cloud 28s ease-in-out infinite alternate; }
+.land-cloud.c1 { animation-duration: 34s; animation-delay: -9s; transform: scaleX(-1); }
+.land-cloud.c2 { animation-duration: 30s; animation-delay: -17s; }
+.land-cloud.c3 { animation-duration: 38s; animation-delay: -4s; }
+@keyframes cloud { from { translate: -14px 0; } to { translate: 14px 0; } }
+.land-bird { position: absolute; width: 1.7%; pointer-events: none; }
+.land-bird svg { display: block; width: 100%; height: auto; }
+
+/* Each object is a button; the open one turns light water-blue and lifts a little. */
+.spr { position: absolute; padding: 0; margin: 0; border: 0; background: none; cursor: pointer; transition: transform 240ms ease-out; -webkit-tap-highlight-color: transparent; }
+.spr[hidden] { display: none; }
+.spr img { display: block; width: 100%; height: 100%; user-select: none; }
+.spr .tint {
+  position: absolute;
+  inset: 0;
+  background: #8cbcf2;
+  mix-blend-mode: multiply;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  opacity: 0;
+  transition: opacity 240ms ease-out;
+  pointer-events: none;
+}
+.spr:hover .tint { opacity: 0.3; }
+.spr.on .tint { opacity: 0.72; }
+.spr:hover, .spr.on { transform: translateY(-4px); }
+.spr:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+
+/* The card above the open object, with a dot pointing down at it. */
+.hcard {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  z-index: 1000;
+  width: 232px;
+  transform: translate(26px, -50%);
+  background: #fff;
+  border: 1px solid var(--hair-2);
+  border-radius: 2px;
+  box-shadow: 0 14px 34px rgba(13, 27, 42, 0.12);
+  padding: 14px 16px 12px;
+  text-align: left;
+  transition: opacity 200ms ease-out, translate 200ms ease-out;
+}
+@starting-style { .hcard { opacity: 0; translate: 0 6px; } }
+.hcard[hidden] { display: none; }
+.hcard[data-side="left"] { transform: translate(calc(-100% - 26px), -50%); }
+/* The dot sits on the object; a short stem joins it to the card. */
+.hcard::after { content: ""; position: absolute; top: 50%; left: -31px; width: 10px; height: 10px; margin-top: -5px; border-radius: 50%; background: var(--water); box-shadow: 0 0 0 4px rgba(31, 95, 214, 0.2); }
+.hcard::before { content: ""; position: absolute; top: 50%; left: -22px; width: 22px; height: 1px; background: var(--water); opacity: 0.5; }
+.hcard[data-side="left"]::after { left: auto; right: -31px; }
+.hcard[data-side="left"]::before { left: auto; right: -22px; }
+.hc-name { margin: 0 0 8px; font-size: 13px; color: var(--ink-2); }
+.hc-facts { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 4px; font-size: 13px; color: var(--ink); }
+.hc-facts li { display: flex; align-items: center; gap: 8px; }
+.hc-facts li::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--water); flex: 0 0 auto; }
+.hc-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+.hc-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.hc-badge.low { background: rgba(198, 244, 50, 0.38); color: #3d5300; }
+.hc-badge.medium { background: #fdf0d5; color: #8a5300; }
+.hc-badge.high { background: #fde4e2; color: #b3261e; }
+.hc-act { display: block; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--hair); font-size: 13px; font-weight: 500; color: var(--ink); text-decoration: none; }
+.hc-act:hover { text-decoration: underline; }
+
+/* Phones: the card sits under the landscape instead of over it. */
+@media (max-width: 759px) {
+  .hero-art { padding: 0; overflow: clip; }
+  .land { padding-bottom: 196px; }
+  .land-stage { width: 140%; margin-left: -20%; }
+  .hcard, .hcard[data-side="left"] { top: 100%; left: 50%; width: min(320px, 78vw); transform: translate(-50%, 14px); }
+  .hcard::before, .hcard::after { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .land-river, .land-cloud { animation: none; }
+  .spr, .spr .tint, .hcard { transition: none; }
+}
+
+/* ------------------------------------------------------------------ the story */
+
+.story-wrap { position: relative; }
+.story { position: relative; padding: 72px 0 88px; text-align: center; }
+.story-head .h2 { max-width: 14em; margin: 0 auto; }
+
+/* The window: a small copy of the checker, built from its own panels. */
+.pw { margin: 36px auto 0; width: min(100%, 560px); text-align: left; }
+.pw-in { position: relative; background: #fff; border: 1px solid var(--hair-2); border-radius: 8px; box-shadow: 0 30px 80px rgba(13, 27, 42, 0.14), 0 2px 6px rgba(13, 27, 42, 0.05); overflow: hidden; }
+.pw-bar { position: relative; display: flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px; border-bottom: 1px solid var(--hair); }
+.pw-bar i { width: 9px; height: 9px; border-radius: 50%; background: var(--hair-2); }
+.pw-url { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 3px 14px; border-radius: 999px; background: var(--mist); font-size: 11.5px; color: var(--ink-2); white-space: nowrap; }
+.pw-body { display: flex; flex-direction: column; gap: 8px; padding: 10px; }
+.pw .panel { padding: 16px 16px 18px; }
+.pw .step-h { font-size: 18px; margin-bottom: 12px; }
+.pw .step-num { width: 24px; height: 24px; font-size: 12px; }
+.pw-picked { cursor: default; padding-right: 16px; transition: box-shadow 240ms ease-out, border-color 240ms ease-out; }
+.pw-picked.on { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(31, 95, 214, 0.16); }
+.pw .ask-line { margin: 0 0 4px; font-size: 22px; }
+/* The slider drawn with transforms so it can glide with the scroll. */
+.pw-range { position: relative; height: 32px; margin: 0 12px; }
+.pw-range::before { content: ""; position: absolute; left: -12px; right: -12px; top: 14px; height: 4px; border-radius: 2px; background: var(--hair); }
+.pw-fill { position: absolute; left: -12px; right: -12px; top: 14px; height: 4px; border-radius: 2px; background: var(--ink); transform: scaleX(0); transform-origin: 0 50%; }
+.pw-thumb { position: absolute; left: -12px; top: 4px; width: 24px; height: 24px; border-radius: 50%; background: var(--bg); border: 2px solid var(--ink); box-sizing: border-box; }
+.pw .results { margin-top: 12px; }
+.pw .res .v { font-size: 26px; }
+.pw .res.mine .v { font-size: 34px; }
+.pw .res .v, .pw .ask-line b { contain: layout paint; }
+.pw-cover .cover-price { margin: 0; }
+.pw .res.mine .k, .pw .res.mine .v { will-change: opacity, transform; }
+.pw-cover .cover-price .v { font-size: 40px; }
+.pw-stamp {
+  position: absolute;
+  left: 68%;
+  top: 89%;
+  padding: 12px 22px;
+  background: var(--accent);
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  border-radius: 2px;
+  box-shadow: 0 16px 40px rgba(13, 27, 42, 0.22);
+  outline: 2px solid var(--ink);
+  outline-offset: -6px;
+  transform: translate(-50%, -50%) rotate(-6deg);
+  pointer-events: none;
+}
+
+/* The three steps, as a list under the window. */
+.story-steps { list-style: none; margin: 40px auto 0; padding: 0; display: grid; gap: 28px; max-width: 560px; text-align: left; }
+.ss { padding-top: 18px; border-top: 1px dashed var(--hair-2); }
+.ss-n { display: block; font-family: var(--mono); font-size: 12px; color: var(--ink-2); margin-bottom: 10px; }
+.ss p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--ink-2); }
+.ss .ss-proof { margin-top: 10px; font-size: 13.5px; color: var(--muted); }
+.story-cta { margin-top: 36px; }
+.story-cta .btn { height: 46px; padding: 0 24px; }
+
+@media (max-width: 759px) {
+  .story { padding-top: 56px; }
+  .pw-stamp { left: 63%; top: 90%; font-size: 15px; padding: 9px 14px; }
+}
+
+/* ------------------------------------------------------------------ pinned, on wide screens */
+
+.lhero.pinned { height: 420vh; }
+.lhero.pinned .hero-stage { position: sticky; top: var(--header); height: calc(100svh - var(--header)); overflow: clip; }
+.lhero.pinned .hero-scene { position: absolute; inset: 0; display: flex; flex-direction: column; padding-top: clamp(28px, 6svh, 56px); transform-origin: 50% 100%; will-change: transform, opacity; }
+.lhero.pinned .hero-wrap .eyebrow { margin-bottom: 16px; }
+.lhero.pinned .hero-sub { margin-top: 16px; }
+.lhero.pinned .cta-row { margin-top: 24px; }
+.lhero.pinned .hero-art { flex: 1 1 auto; min-height: 0; container-type: size; display: flex; align-items: flex-end; justify-content: center; margin-top: 12px; }
+.lhero.pinned .land { width: min(100cqw, 100cqh * 2.4); }
+.lhero.pinned .ribbons { display: block; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; }
+.lhero.pinned .story-wrap { position: absolute; inset: 0; pointer-events: none; }
+.lhero.pinned .story { height: 100%; padding: 0; --s: var(--settle, 0); }
+.lhero.pinned .story-head { position: absolute; top: 24px; left: 0; right: 0; opacity: var(--s); transform: translateY(calc((1 - var(--s)) * 24px)); }
+.lhero.pinned .pw { position: absolute; left: 50%; top: 50%; margin: 0; width: 720px; opacity: 0; transform-origin: 50% 50%; will-change: transform, opacity; }
+.lhero.pinned .story-steps {
+  position: absolute;
+  top: var(--pw-y);
+  left: 0;
+  right: 0;
+  height: var(--pw-h);
+  margin: 0;
+  max-width: none;
+  grid-template-columns: minmax(0, 1fr) var(--pw-w) minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  column-gap: 56px;
+  row-gap: 40px;
+}
+.lhero.pinned .ss { opacity: clamp(0, var(--s) * 2.2 - 1.1, 1); transform: translateY(calc((1 - var(--s)) * 28px)); }
+.lhero.pinned .ss1 { grid-area: 1 / 1; }
+.lhero.pinned .ss2 { grid-area: 2 / 1; }
+.lhero.pinned .ss3 { grid-area: 1 / 3 / span 2; align-self: center; }
+.lhero.pinned .story-cta { position: absolute; left: 0; right: 0; top: calc(var(--pw-y) + var(--pw-h) + 22px); margin: 0; opacity: clamp(0, var(--s) * 2 - 1, 1); }
+.lhero.pinned .story.done .ss, .lhero.pinned .story.done .story-cta { pointer-events: auto; }
+@media (max-width: 1099px) { .lhero.pinned .story-steps { column-gap: 32px; } .lhero.pinned .ss p { font-size: 14px; } }
