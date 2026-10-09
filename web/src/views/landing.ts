@@ -1,16 +1,17 @@
-// The landing page: what Spillway does, how to use it, one worked example, three numbers, a note for
-// those who back the cover, questions, and the way into the checker.
+// The landing page: what Spillway does, a landscape of the biggest vaults, how it works told as one
+// check playing in a small copy of the checker, three numbers, a note for those who back the cover,
+// questions, and the way into the checker.
 
+import "../check.css";
 import "../landing.css";
+import "../hero.css";
 
 import deployment from "../../../contracts/deployments/monad-testnet-lending.json";
 import replay from "../../../contracts/replay/testnet-wstETH-WETH-unrealised-25.json";
-import { DEFAULT_VAULT, type Book, dollars, dollarsShort, findVault, loadBook, percent, quote, yearly } from "../vaults.js";
+import * as Vaults from "../vaults.js";
+import { dollarsShort, loadBook } from "../vaults.js";
+import * as hero from "./hero.js";
 import { REPO } from "./verify.js";
-
-/** The worked example: a deposit, and the sudden drop the testnet replay used. */
-const EXAMPLE_DEPOSIT = 10_000;
-const EXAMPLE_DROP = 0.2;
 
 const PAID = replay.onChain.paid.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const CLAIM_TX = `${deployment.explorer}/tx/${deployment.events.claimShortfall}`;
@@ -20,12 +21,6 @@ const CHEVRON = `<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="tr
 const img = (src: string, w: number, h: number, alt: string, cls = "", eager = false) =>
   `<img class="${cls}" src="${src}" width="${w}" height="${h}" alt="${alt}" ${eager ? `fetchpriority="high"` : `loading="lazy" decoding="async"`} />`;
 const sk = (w: string) => `<span class="skeleton" style="width:${w}"></span>`;
-
-const STEPS: [string, string, string, string][] = [
-  ["Pick your vault", "Choose the Morpho vault your money is in.", "img/tokens.webp", "A stack of white tokens beside a pool of blue water"],
-  ["See your risk and price", "We test every loan in it against a sudden drop and show what you would lose and what cover costs.", "img/gauge.webp", "A white gauge post standing in a pool of blue water"],
-  ["Get paid if it happens", "If the vault takes a loss, cover pays you from on-chain data. No claim form, no vote.", "img/chute.webp", "A white chute carrying a ribbon of blue water"],
-];
 
 const FAQ: [string, string][] = [
   ["What is a Morpho vault?", "A vault pools depositors' money and lends it to borrowers who post collateral, such as wstETH. Its curator picks which loans it makes."],
@@ -39,53 +34,22 @@ const FAQ: [string, string][] = [
 const VIEW = `
   <div class="landing">
     <section class="lhero" aria-labelledby="hero-h">
-      <div class="wrap hero-wrap guides">
-        <div class="eyebrow">Morpho vaults on Monad</div>
-        <h1 class="h1" id="hero-h">Insurance for your Monad lending deposits</h1>
-        <p class="hero-sub">See what a sudden crash would cost your vault, and cover it. Claims pay out automatically.</p>
-        <div class="cta-row">
-          <a class="btn" href="#/check">Check your vault</a>
-          <a class="btn outline" href="#/" data-scroll="how">How it works</a>
-        </div>
-      </div>
-      <div class="wrap hero-art">
-        ${img("img/dam.webp", 1536, 640, "A white clay dam holding a blue reservoir, with water running down its spillway", "hero-img", true)}
-      </div>
-    </section>
-
-    <section class="how" aria-labelledby="how-h" id="sec-how">
-      <div class="wrap sec-top center">
-        <div class="eyebrow">How it works</div>
-        <h2 class="h2" id="how-h">Three steps to cover</h2>
-      </div>
-      <ol class="wrap steps3">
-        ${STEPS.map(([t, p, src, alt], i) => `<li class="step-card"><span class="step-n">0${i + 1}</span>${img(src, 640, 640, alt, "spot")}<h3 class="h4">${t}</h3><p>${p}</p></li>`).join("")}
-      </ol>
-      <div class="wrap center sec-cta"><a class="btn" href="#/check">Check your vault</a></div>
-    </section>
-
-    <section class="band dark example" aria-labelledby="ex-h" id="sec-example">
-      <div class="wrap band-wrap">
-        <div class="eyebrow light">An example</div>
-        <h2 class="h2" id="ex-h">What cover does in a crash</h2>
-        <div class="ex" id="ex">
-          <div class="ex-copy" aria-live="polite">
-            <span class="ex-n" id="ex-n">Step 1 of 4</span>
-            <p class="ex-text" id="ex-text">${sk("80%")}</p>
-            <div class="ex-big" id="ex-big">${sk("3em")}</div>
-            <p class="ex-note" id="ex-note"></p>
-            <p class="ex-proof" id="ex-proof" hidden>This ran for real on Monad testnet: ${PAID} tUSD paid in one transaction. <a href="${CLAIM_TX}" ${ext}>View it on Monadscan ${ARROW}</a></p>
+      <span class="how-mark" id="sec-how" aria-hidden="true"></span>
+      <div class="hero-stage" id="hero-stage">
+        <div class="hero-scene" id="hero-scene">
+          <div class="wrap hero-wrap guides">
+            <div class="eyebrow">Morpho vaults on Monad</div>
+            <h1 class="h1" id="hero-h">Insurance for your Monad lending deposits</h1>
+            <p class="hero-sub">See what a sudden crash would cost your vault, and cover it. Claims pay out automatically.</p>
+            <div class="cta-row">
+              <a class="btn" href="#/check">Check your vault</a>
+              <a class="btn outline" href="#/" data-scroll="how">How it works</a>
+            </div>
           </div>
-          <div class="ex-visual" aria-hidden="true">
-            <div class="ex-bar"><i class="ex-loss" id="ex-loss"></i><i class="ex-paid" id="ex-paid"></i></div>
-            <div class="ex-legend"><span class="d">Your deposit</span><span class="l">Loss</span><span class="p">Paid by cover</span></div>
-          </div>
+          <div class="wrap hero-art" id="hero-art"></div>
         </div>
-        <div class="ex-nav">
-          <button type="button" class="btn light outline-light" id="ex-back">Back</button>
-          <span class="ex-dots" id="ex-dots">${"<i></i>".repeat(4)}</span>
-          <button type="button" class="btn light" id="ex-next">Next</button>
-        </div>
+        <canvas class="ribbons" id="ribbons" aria-hidden="true"></canvas>
+        <div class="wrap story-wrap" id="story-wrap"></div>
       </div>
     </section>
 
@@ -138,87 +102,6 @@ const VIEW = `
     </footer>
   </div>`;
 
-interface Slide {
-  text: string;
-  big: string;
-  note: string;
-  loss: number;
-  paid: number;
-  /** Show the testnet payout under it. */
-  proof?: boolean;
-}
-
-function slides(book: Book): Slide[] {
-  const v = findVault(book, DEFAULT_VAULT);
-  const t = v.tokens[0];
-  if (!t) return [];
-  const q = quote(book, v, t, EXAMPLE_DROP, EXAMPLE_DEPOSIT);
-  const capped = q.payout < q.yourLoss - 0.5;
-  return [
-    { text: `You deposit ${dollars(EXAMPLE_DEPOSIT)} in ${v.name}.`, big: dollars(EXAMPLE_DEPOSIT), note: "Your deposit earns interest from the vault's loans.", loss: 0, paid: 0 },
-    {
-      text: `You add cover for ${dollars(q.premium ?? 0)} a year.`,
-      big: `${dollars(q.premium ?? 0)}<small>a year</small>`,
-      note: `That is ${yearly(v.rate ?? 0)} of your deposit.`,
-      loss: 0,
-      paid: 0,
-    },
-    {
-      text: `${t.symbol} suddenly drops ${percent(EXAMPLE_DROP, 0)}. Some loans go bad and the vault loses ${percent(q.share)}.`,
-      big: `−${dollars(q.yourLoss)}`,
-      note: "Your share of the vault's loss.",
-      loss: q.share,
-      paid: 0,
-    },
-    {
-      text: `Spillway pays you ${dollars(q.payout)} automatically.`,
-      big: dollars(q.payout),
-      note: capped ? `That is the most cover pays on your deposit, ${dollars(q.yourLimit)}.` : "Your whole share of the loss.",
-      proof: true,
-      loss: q.share,
-      paid: q.payout / EXAMPLE_DEPOSIT,
-    },
-  ];
-}
-
-/** Next and Back through the example, with a slow auto-play that stops on the first click. */
-function mountExample(root: HTMLElement, list: Slide[]): () => void {
-  const $ = (id: string) => root.querySelector(`#${id}`) as HTMLElement;
-  let i = 0;
-  const show = (n: number) => {
-    i = Math.max(0, Math.min(list.length - 1, n));
-    const s = list[i] as Slide;
-    $("ex-n").textContent = `Step ${i + 1} of ${list.length}`;
-    $("ex-text").textContent = s.text;
-    $("ex-big").innerHTML = s.big;
-    $("ex-note").textContent = s.note;
-    $("ex-proof").hidden = !s.proof;
-    $("ex-loss").style.width = `${s.loss * 100}%`;
-    $("ex-paid").style.width = `${s.paid * 100}%`;
-    root.querySelectorAll("#ex-dots i").forEach((d, j) => d.classList.toggle("on", j <= i));
-    ($("ex-back") as HTMLButtonElement).disabled = i === 0;
-    $("ex-next").textContent = i === list.length - 1 ? "Start again" : "Next";
-  };
-  let timer = 0;
-  let touched = false;
-  const stop = () => clearInterval(timer);
-  // Plays only while the band is on screen, and never with reduced motion.
-  const seen = new IntersectionObserver(([e]) => {
-    stop();
-    if (e?.isIntersecting && !touched) timer = window.setInterval(() => show((i + 1) % list.length), 5000);
-  });
-  if (!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) seen.observe($("ex"));
-  const touch = () => ((touched = true), stop());
-  $("ex-back").addEventListener("click", () => (touch(), show(i - 1)));
-  $("ex-next").addEventListener("click", () => (touch(), show(i === list.length - 1 ? 0 : i + 1)));
-  $("ex").addEventListener("click", touch);
-  show(0);
-  return () => {
-    stop();
-    seen.disconnect();
-  };
-}
-
 export async function mountLanding(root: HTMLElement): Promise<() => void> {
   root.innerHTML = VIEW;
   const cleanups: (() => void)[] = [];
@@ -226,13 +109,16 @@ export async function mountLanding(root: HTMLElement): Promise<() => void> {
   root.addEventListener("click", onAsk);
   cleanups.push(() => root.removeEventListener("click", onAsk));
 
-  const book = await loadBook();
+  // The story loads beside the data it draws.
+  const [book, story] = await Promise.all([loadBook(), import("./story.js")]);
+  (root.querySelector("#hero-art") as HTMLElement).innerHTML = hero.LAND;
+  (root.querySelector("#story-wrap") as HTMLElement).innerHTML = story.storyHtml(`<p class="ss-proof">It has paid ${PAID} tUSD on Monad testnet. <a href="${CLAIM_TX}" ${ext}>View it</a></p>`, Vaults);
   const s = book.bundle.summary;
   const nums = root.querySelectorAll<HTMLElement>("#numbers .v");
   const set = (i: number, v: string) => nums[i] && (nums[i].textContent = v);
   set(0, book.bundle.vaults.length.toLocaleString("en-US"));
   set(1, dollarsShort(s.supplyUsd));
   set(2, s.borrowers.toLocaleString("en-US"));
-  cleanups.push(mountExample(root, slides(book)));
+  cleanups.push(hero.mountLand(root, book), story.mountStory(root, book, Vaults));
   return () => cleanups.forEach((f) => f());
 }
