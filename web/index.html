@@ -5,31 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Spillway</title>
     <meta name="description" content="Cover for Monad lending, priced in public. Depositors buy cover priced from a public stress test, and claims pay from Morpho's own data." />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#0d1b2a" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
+    <div class="announce">
+      <div class="wrap announce-inner">
+        <span class="badge">New</span>
+        <span class="announce-text">Ask Spillway answers from the stress test</span>
+        <a href="#/" data-scroll="ask">Try it <span aria-hidden="true">&rarr;</span></a>
+      </div>
+    </div>
     <header class="top">
-      <div class="top-inner">
+      <div class="wrap top-inner">
         <a class="brand" href="#/" aria-label="Spillway, home">
           <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
-            <rect width="26" height="26" rx="8" fill="#c6f432" />
-            <path d="M7 5.5v10a4 4 0 0 0 4 4h5a4 4 0 0 0 4-4V12" fill="none" stroke="#0b0d10" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
-            <rect x="7" y="8" width="9" height="2.6" rx="1.3" fill="#0b0d10" />
-            <rect x="13.4" y="10.6" width="2.2" height="5" fill="#0a5cff" />
-            <path d="M8.9 14.6h9.2v.9a2.6 2.6 0 0 1-2.6 2.6h-4a2.6 2.6 0 0 1-2.6-2.6z" fill="#0a5cff" />
+            <rect width="26" height="26" rx="2" fill="#0d1b2a" />
+            <path d="M7 5.5v10a4 4 0 0 0 4 4h5a4 4 0 0 0 4-4V12" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <rect x="7" y="8" width="9" height="2.4" rx="1.2" fill="#c6f432" />
+            <path d="M8.9 14.6h9.2v.9a2.6 2.6 0 0 1-2.6 2.6h-4a2.6 2.6 0 0 1-2.6-2.6z" fill="#3d7bff" />
           </svg>
           <span>Spillway</span>
         </a>
-        <nav class="tabs" aria-label="Sections">
-          <a href="#/app" data-view="app">App</a>
+        <nav class="tabs" id="tabs" aria-label="Sections">
+          <a href="#/" data-scroll="product">Product</a>
+          <a href="#/" data-scroll="roles">Who it is for</a>
+          <a href="#/" data-scroll="proof">Proof</a>
           <a href="#/perpl" data-view="perpl">Perpl</a>
           <a href="https://github.com/resistingdestiny/spillway" target="_blank" rel="noopener">GitHub</a>
-          <a href="#/app" class="btn top-cta">Open the app</a>
         </nav>
+        <div class="top-right">
+          <a href="#/app" class="btn top-cta" data-view="app">Open the app</a>
+          <button type="button" class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="tabs">Menu</button>
+        </div>
       </div>
     </header>
     <main class="app">
