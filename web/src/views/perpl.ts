@@ -4,40 +4,47 @@ import { renderOverlay, usd, usdShort } from "../overlay.js";
 import { COLORS, Picture, type Scene } from "../picture.js";
 
 import { load } from "../load.js";
+import { FOOTER, onFooterAsk } from "./footer.js";
 
 const VIEW = `
-  <div class="explore">
-    <div class="intro">
-      <div class="overline" id="market"><span class="skeleton" style="width:220px"></span></div>
+  <div class="perpl">
+    <section class="wrap guides center phead" aria-labelledby="headline">
+      <div class="eyebrow" id="market"><span class="skeleton" style="width:220px"></span></div>
       <h1 class="headline" id="headline"><span class="skeleton" style="width:90%"></span><span class="skeleton" style="width:60%"></span></h1>
-    </div>
-    <div class="chips scenario" id="scenario" role="group" aria-label="Open interest">
-      <span class="chips-label">Open interest</span>
-      <button type="button" data-k="1" aria-pressed="true">Today</button>
-      <button type="button" data-k="3" aria-pressed="false">3x</button>
-      <button type="button" data-k="10" aria-pressed="false">10x</button>
-    </div>
-    <section class="card stage" id="stage" aria-label="Positions as ledges on a cliff, and losses as water in a basin">
-      <div class="plot">
-        <div class="canvas" id="canvas"></div>
-        <div class="overlay" id="overlay"></div>
-        <div class="loading" id="loading">Loading the Perpl book</div>
+    </section>
+    <section class="wrap explore" aria-label="Price gap test">
+      <div class="pctl">
+        <div class="chips scenario seg" id="scenario" role="group" aria-label="Open interest">
+          <span class="chips-label">Open interest</span>
+          <button type="button" data-k="1" aria-pressed="true">Today</button>
+          <button type="button" data-k="3" aria-pressed="false">3x</button>
+          <button type="button" data-k="10" aria-pressed="false">10x</button>
+        </div>
+        <section class="controls" aria-label="Price gap">
+          <label class="slider" for="drop">
+            <span class="slider-label"><span>Price gap while liquidations are paused</span> <b id="drop-value">0%</b></span>
+            <input type="range" id="drop" min="0" max="40" step="0.5" value="0" />
+            <span class="scale" aria-hidden="true"><span>0%</span><span>10%</span><span>20%</span><span>30%</span><span>40%</span></span>
+          </label>
+        </section>
+        <p class="sentence" id="sentence"></p>
       </div>
-      <div class="legend" id="legend"></div>
+      <section class="card stage" id="stage" aria-label="Positions as ledges on a cliff, and losses as water in a basin">
+        <div class="plot">
+          <div class="canvas" id="canvas"></div>
+          <div class="overlay" id="overlay"></div>
+          <div class="loading" id="loading">Loading the Perpl book</div>
+        </div>
+      </section>
     </section>
-    <div class="story"><p class="sentence" id="sentence"></p></div>
-    <section class="controls" aria-label="Price gap">
-      <label class="slider" for="drop">
-        <span class="slider-label"><span>Price gap while liquidations are paused</span> <b id="drop-value">0%</b></span>
-        <input type="range" id="drop" min="0" max="40" step="0.5" value="0" />
-        <span class="scale" aria-hidden="true"><span>0%</span><span>10%</span><span>20%</span><span>30%</span><span>40%</span></span>
-      </label>
-    </section>
+    <div class="wrap"><div class="numbers legend pnums" id="legend"></div></div>
+    ${FOOTER}
   </div>`;
 
 /** Perpl BTC: how much open interest the fund can carry through a gap, with and without Spillway. */
 export async function mountPerpl(root: HTMLElement): Promise<() => void> {
   root.innerHTML = VIEW;
+  const offAsk = onFooterAsk(root);
   const $ = <T extends HTMLElement>(id: string) => root.querySelector(`#${id}`) as T;
   const [today, bundle] = await Promise.all([load<Snapshot>("data/snapshot.json"), load<Bundle>("data/bundle.json")]);
   const cfg = bundle.config;
@@ -157,6 +164,7 @@ export async function mountPerpl(root: HTMLElement): Promise<() => void> {
   resize.observe($("stage"));
   draw();
   return () => {
+    offAsk();
     resize.disconnect();
     picture.destroy();
   };
