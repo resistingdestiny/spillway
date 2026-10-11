@@ -20,7 +20,7 @@ const STEPS: [string, string][] = [
   ["Get paid if it happens", "If the vault takes a loss, cover pays you from on-chain data. No claim form, no vote."],
 ];
 const sk = (w: string) => `<span class="skeleton" style="width:${w}"></span>`;
-const step = (n: number, h: string) => `<h3 class="step-h"><span class="step-num">${n}</span>${h}</h3>`;
+const step = (n: number, h: string) => `<h3 class="pw-h"><span class="ss-n">0${n}</span>${h}</h3>`;
 
 /** The story's markup; `proof` goes under the last step. */
 export const storyHtml = (proof: string, { dollars }: Kit) => `
@@ -30,20 +30,20 @@ export const storyHtml = (proof: string, { dollars }: Kit) => `
       <div class="pw-in" id="pw-in" aria-hidden="true">
         <div class="pw-bar"><i></i><i></i><i></i><span class="pw-url">spillway / check</span></div>
         <div class="pw-body">
-          <div class="panel">${step(1, "Pick your vault")}<div class="picked pw-picked" id="pw-picked">${sk("60%")}</div></div>
-          <div class="panel">${step(2, "Your risk")}
+          <div class="picked pw-picked" id="pw-picked">${sk("60%")}</div>
+          <div class="pw-sec">${step(1, "Your risk")}
             <p class="ask-line">What if <b id="pw-token">${sk("3em")}</b> suddenly drops <b id="pw-drop">0%</b>?</p>
             <div class="pw-range"><i class="pw-fill" id="pw-fill"></i><i class="pw-thumb" id="pw-thumb"></i></div>
             <div class="scale"><span>0%</span><span>10%</span><span>20%</span><span>30%</span><span>40%</span><span>50%</span></div>
-            <div class="results">
-              <div class="res"><span class="k">This vault would lose</span><span class="v" id="pw-vault">$0</span></div>
-              <div class="res"><span class="k">That is</span><span class="v" id="pw-share">0%</span><span class="k">of deposits</span></div>
-              <div class="res mine" id="pw-mine"><span class="k">Your ${dollars(DEPOSIT)} would lose</span><span class="v" id="pw-loss">${sk("3em")}</span></div>
+            <div class="numbers cnums">
+              <div class="num"><span class="v" id="pw-vault">$0</span><span class="k">this vault would lose</span></div>
+              <div class="num"><span class="v" id="pw-share">0%</span><span class="k">of deposits</span></div>
+              <div class="num mine" id="pw-mine"><span class="v" id="pw-loss">${sk("3em")}</span><span class="k">your ${dollars(DEPOSIT)} would lose</span></div>
             </div>
           </div>
-          <div class="panel pw-cover" id="pw-cover">${step(3, "Cover for this vault")}<div class="cover-price"><span class="v" id="pw-premium">${sk("3em")}</span><span class="k">a year on your ${dollars(DEPOSIT)}</span></div></div>
+          <div class="pw-sec pw-cover" id="pw-cover">${step(2, "Cover")}<div class="cover-price"><span class="v" id="pw-premium">${sk("3em")}</span><span class="k">a year on your ${dollars(DEPOSIT)}</span></div></div>
         </div>
-        <div class="pw-stamp" id="pw-stamp">${sk("6em")}</div>
+        <div class="stamp pw-stamp" id="pw-stamp">${sk("6em")}</div>
       </div>
     </div>
     <ol class="story-steps">${STEPS.map(([h, p], i) => `<li class="ss ss${i + 1}"><span class="ss-n">0${i + 1}</span><h3 class="h4">${h}</h3><p>${p}</p>${i === 2 ? proof : ""}</li>`).join("")}</ol>

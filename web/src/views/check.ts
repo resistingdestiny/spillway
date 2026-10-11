@@ -1,11 +1,13 @@
-// Check a vault: pick a vault, see what a sudden drop in its collateral would cost, see what cover
-// costs, and try the live cover on Monad testnet. The testnet payout, the verify facts and the flood
-// picture of the vault's biggest market open in a drawer at #/check/proof, /verify and /loans.
+// Check a vault: pick a vault and see it as its clay object with its card, see what a sudden drop in
+// its collateral would cost, see what cover costs, and try the live cover on Monad testnet. The
+// testnet payout, the verify facts and the flood picture of the vault's biggest market open in a
+// drawer at #/check/proof, /verify and /loans.
 
 import "../check.css";
 
 import { setAskContext } from "../ask.js";
 import { drawCurve } from "../chart.js";
+import { cast, objectOf } from "../landscape.js";
 import {
   type Book,
   DEFAULT_VAULT,
@@ -24,25 +26,37 @@ import {
   quote,
   yearly,
 } from "../vaults.js";
+import { FOOTER, onFooterAsk } from "./footer.js";
+import { vaultCard } from "./hero.js";
 import { onCopy, verifyFacts } from "./verify.js";
 
 const CLOSE = `<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
 const CARET = `<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-const DRAWERS = { loans: "Every loan in the biggest market", proof: "Paid on Monad testnet", verify: "How we know" } as const;
+const icon = (d: string) => `<svg class="more-icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">${d}</g></svg>`;
+/** Each drawer's overline and title. */
+const DRAWERS = {
+  loans: ["Stress test", "Every loan in the biggest market"],
+  proof: ["Monad testnet", "Paid on Monad testnet"],
+  verify: ["Proof", "How we know"],
+} as const;
 type Drawer = keyof typeof DRAWERS;
+const MORE: [Drawer, string, string, string][] = [
+  ["loans", "See every loan", "Each loan in this vault's biggest market, drawn as ledges.", `<path d="M4 4v16h16"/><path d="M4 8h7M4 12h10M4 16h5"/>`],
+  ["proof", "Testnet payout", "The claim our cover has already paid on Monad testnet.", `<circle cx="12" cy="12" r="8"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/>`],
+  ["verify", "How we know", "The data, hashes and commands behind every number.", `<circle cx="11" cy="11" r="6"/><path d="M15.5 15.5L20 20"/>`],
+];
 const sk = (w: string) => `<span class="skeleton" style="width:${w}"></span>`;
-const stepHead = (n: number, title: string, id: string) => `<h2 class="step-h" id="${id}"><span class="step-num">${n}</span>${title}</h2>`;
+const stepHead = (n: number, title: string, id: string, line: string) => `<div class="ss cstep-head"><span class="ss-n">0${n}</span><h2 class="h4" id="${id}">${title}</h2><p>${line}</p></div>`;
 
 const VIEW = `
   <div class="check">
-    <div class="check-top">
+    <section class="wrap guides center check-head" aria-labelledby="check-h">
       <div class="eyebrow">Check a vault</div>
-      <h1 class="h2">What would a crash cost you?</h1>
-      <p class="check-sub">Pick the Morpho vault your money is in. We show what a sudden price drop would cost and what cover costs.</p>
-    </div>
+      <h1 class="h1" id="check-h">What would a crash cost you?</h1>
+      <p class="hero-sub">Pick the Morpho vault your money is in to see what a sudden price drop would cost and what cover costs.</p>
+    </section>
 
-    <section class="panel" aria-labelledby="s1">
-      ${stepHead(1, "Pick your vault", "s1")}
+    <section class="wrap pick-sec" aria-label="Your vault">
       <div class="picker" id="picker">
         <button type="button" class="picked" id="picked" aria-haspopup="listbox" aria-expanded="false">${sk("60%")}</button>
         <div class="pick-pop" id="pick-pop" hidden>
@@ -50,24 +64,27 @@ const VIEW = `
           <ul role="listbox" id="pick-list" aria-label="Vaults"></ul>
         </div>
       </div>
+      <div class="quick" id="quick" role="group" aria-label="The biggest vaults"></div>
+      <div class="vstage" id="vstage">
+        <figure class="vobj"><img id="v-img" alt="" width="520" height="300" /></figure>
+        <div class="hcard vcard" id="v-card" role="group"></div>
+      </div>
     </section>
 
-    <section class="panel" aria-labelledby="s2">
-      ${stepHead(2, "Your risk", "s2")}
-      <div class="risk">
-        <div>
-          <label class="ask-line" for="drop">What if <b id="token-name">${sk("3em")}</b> suddenly drops <b id="drop-v">25%</b>?</label>
-          <input type="range" id="drop" min="0" max="${MAX_DROP * 100}" step="1" value="20" />
-          <div class="scale" aria-hidden="true"><span>0%</span><span>10%</span><span>20%</span><span>30%</span><span>40%</span><span>50%</span></div>
-          <div class="token-pick" id="token-pick" hidden><span class="muted">Collateral in this vault:</span><div class="chips" id="tokens" role="group" aria-label="Collateral"></div></div>
-          <label class="deposit">Your deposit <span class="money"><span aria-hidden="true">$</span><input type="number" id="deposit" min="0" step="100" inputmode="numeric" value="10000" aria-label="Your deposit in dollars" /></span></label>
-          <div class="results" aria-live="polite">
-            <div class="res"><span class="k">This vault would lose</span><span class="v" id="r-vault">${sk("3em")}</span></div>
-            <div class="res"><span class="k">That is</span><span class="v" id="r-share">${sk("2em")}</span><span class="k">of deposits</span></div>
-            <div class="res mine"><span class="k" id="r-mine-k">Your $10,000 would lose</span><span class="v" id="r-mine">${sk("3em")}</span></div>
-          </div>
-          <p class="note" id="r-note"></p>
+    <section class="wrap cstep" aria-labelledby="s1">
+      ${stepHead(1, "Your risk", "s1", "We test every loan in this vault against a sudden price drop.")}
+      <div class="cstep-body risk">
+        <label class="ask-line" for="drop">What if <b id="token-name">${sk("3em")}</b> suddenly drops <b id="drop-v">25%</b>?</label>
+        <input type="range" id="drop" min="0" max="${MAX_DROP * 100}" step="1" value="20" />
+        <div class="scale" aria-hidden="true"><span>0%</span><span>10%</span><span>20%</span><span>30%</span><span>40%</span><span>50%</span></div>
+        <div class="token-pick" id="token-pick" hidden><span class="muted">Collateral in this vault:</span><div class="chips" id="tokens" role="group" aria-label="Collateral"></div></div>
+        <label class="deposit">Your deposit <span class="money"><span aria-hidden="true">$</span><input type="number" id="deposit" min="0" step="100" inputmode="numeric" value="10000" aria-label="Your deposit in dollars" /></span></label>
+        <div class="numbers cnums" aria-live="polite">
+          <div class="num"><span class="v" id="r-vault">${sk("3em")}</span><span class="k">this vault would lose</span></div>
+          <div class="num"><span class="v" id="r-share">${sk("2em")}</span><span class="k">of deposits</span></div>
+          <div class="num mine"><span class="v" id="r-mine">${sk("3em")}</span><span class="k" id="r-mine-k">your $10,000 would lose</span></div>
         </div>
+        <p class="note" id="r-note"></p>
         <figure class="curve">
           <figcaption class="muted">Loss as a share of deposits, by price drop</figcaption>
           <div id="curve"></div>
@@ -75,29 +92,35 @@ const VIEW = `
       </div>
     </section>
 
-    <section class="panel" aria-labelledby="s3">
-      ${stepHead(3, "Cover for this vault", "s3")}
-      <div class="cover">
-        <div class="cover-price"><span class="v" id="c-rate">${sk("3em")}</span><span class="k">of your deposit a year</span></div>
+    <section class="wrap cstep" aria-labelledby="s2">
+      ${stepHead(2, "Cover", "s2", "Cover pays your share of a loss automatically, from on-chain data.")}
+      <div class="cstep-body cover">
+        <div class="cover-top">
+          <div class="cover-price"><span class="v" id="c-rate">${sk("3em")}</span><span class="k">of your deposit a year</span></div>
+          <div class="stamp c-stamp" id="c-stamp" aria-hidden="true" hidden></div>
+        </div>
         <dl class="rows" id="c-rows"></dl>
         <p class="note" id="c-high" hidden>High because this vault lends against collateral that has failed often or is hard to sell.</p>
       </div>
     </section>
 
-    <section class="panel" aria-labelledby="s4">
-      ${stepHead(4, "Try it on testnet", "s4")}
-      <div class="testnet" id="live"></div>
-      <p class="elsewhere" id="elsewhere" hidden>The testnet cover runs on ${DEFAULT_VAULT}'s loans. <button type="button" class="btn outline small" id="to-default">Switch to ${DEFAULT_VAULT}</button></p>
+    <section class="band dark tband" aria-labelledby="s3">
+      <div class="wrap band-wrap cstep">
+        ${stepHead(3, "Try it on testnet", "s3", "Try the whole flow on Monad testnet with free test dollars.")}
+        <div class="cstep-body">
+          <div class="testnet" id="live"></div>
+          <p class="elsewhere" id="elsewhere" hidden>The testnet cover runs on ${DEFAULT_VAULT}'s loans. <button type="button" class="btn light small" id="to-default">Switch to ${DEFAULT_VAULT}</button></p>
+        </div>
+      </div>
     </section>
 
-    <nav class="check-links" aria-label="More">
-      <a href="#/check/loans">See every loan</a>
-      <a href="#/check/proof">Testnet payout</a>
-      <a href="#/check/verify">How we know</a>
+    <nav class="wrap more-grid" aria-label="More">
+      ${MORE.map(([k, h, p, d]) => `<a class="more-card" href="#/check/${k}">${icon(d)}<span class="more-h">${h}</span><span class="more-p">${p}</span><span class="more-go" aria-hidden="true">&rarr;</span></a>`).join("")}
     </nav>
+    ${FOOTER}
 
     <dialog class="drawer" id="drawer" aria-labelledby="drawer-h">
-      <div class="drawer-head"><h2 class="section" id="drawer-h"></h2><button type="button" class="close" id="drawer-close" aria-label="Close">${CLOSE}</button></div>
+      <div class="drawer-head"><div><div class="eyebrow" id="drawer-o"></div><h2 class="h3" id="drawer-h"></h2></div><button type="button" class="close" id="drawer-close" aria-label="Close">${CLOSE}</button></div>
       <div class="drawer-body" id="drawer-loans"></div>
       <div class="drawer-body" id="drawer-proof"></div>
       <div class="drawer-body" id="drawer-verify"><p class="explain">${sk("70%")}</p></div>
@@ -112,7 +135,7 @@ const drawerOf = (): Drawer | null => {
 export async function mountCheck(root: HTMLElement): Promise<() => void> {
   root.innerHTML = VIEW;
   const $ = <T extends HTMLElement = HTMLElement>(id: string) => root.querySelector(`#${id}`) as T;
-  const cleanups: (() => void)[] = [onCopy(root)];
+  const cleanups: (() => void)[] = [onCopy(root), onFooterAsk(root)];
   const on = <K extends keyof WindowEventMap>(el: EventTarget, type: K, fn: (e: WindowEventMap[K]) => void) => {
     el.addEventListener(type, fn as EventListener);
     cleanups.push(() => el.removeEventListener(type, fn as EventListener));
@@ -133,7 +156,7 @@ export async function mountCheck(root: HTMLElement): Promise<() => void> {
   let loans: { draw: (v: Vault, drop: number) => void; destroy: () => void } | null = null;
   function openDrawer(which: Drawer | null): void {
     if (!which) return void (dialog.open && dialog.close());
-    $("drawer-h").textContent = DRAWERS[which];
+    [$("drawer-o").textContent, $("drawer-h").textContent] = DRAWERS[which];
     for (const k of Object.keys(DRAWERS)) $(`drawer-${k}`).hidden = k !== which;
     if (which === "verify" && !verifyLoaded) {
       verifyLoaded = true;
@@ -212,8 +235,36 @@ export async function mountCheck(root: HTMLElement): Promise<() => void> {
   });
   on(document, "click", (e) => !pop.hidden && !$("picker").contains(e.target as Node) && setPop(false));
 
+  // ---------------------------------------------------------------- the stage
+  const pairs = cast(book);
+  $("quick").innerHTML = pairs
+    .map(([s, v]) => `<button type="button" class="qv" data-a="${v.address}" aria-pressed="false"><img src="img/hero/${s.file}.webp" alt="" loading="lazy" decoding="async" /><span>${escapeHtml(v.name)}</span></button>`)
+    .join("");
+  on($("quick"), "click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-a]");
+    if (b) choose(book.vaults.find((v) => v.address === b.dataset.a) as Vault);
+  });
+  const still = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  let shown: Vault | null = null;
+  function stage(v: Vault): void {
+    const img = $<HTMLImageElement>("v-img");
+    const card = $("v-card");
+    const file = objectOf(pairs, v).file;
+    img.src = `img/hero/${file}.webp`;
+    img.parentElement?.setAttribute("data-file", file);
+    card.innerHTML = vaultCard(book, v, false);
+    card.setAttribute("aria-label", v.name);
+    root.querySelectorAll("#quick button").forEach((b) => b.setAttribute("aria-pressed", String((b as HTMLElement).dataset.a === v.address)));
+    // A short fade when the visitor swaps vaults; none on the first draw or with reduced motion.
+    if (shown && shown !== v && !still()) {
+      for (const el of [img, card]) el.animate([{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }], { duration: 260, easing: "ease-out" });
+    }
+    shown = v;
+  }
+
   function choose(v: Vault): void {
     vault = v;
+    stage(v);
     token = v.tokens[0] as TokenCurve;
     $("picked").innerHTML = `${row(v)}<span class="pv-caret">${CARET}</span>`;
     $("token-pick").hidden = v.tokens.length < 2;
@@ -230,7 +281,7 @@ export async function mountCheck(root: HTMLElement): Promise<() => void> {
     root.querySelectorAll("#tokens button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
     draw();
   });
-  on($("to-default"), "click", () => (choose(findVault(book, DEFAULT_VAULT)), $("s4").scrollIntoView({ block: "start" })));
+  on($("to-default"), "click", () => (choose(findVault(book, DEFAULT_VAULT)), $("s3").scrollIntoView({ block: "start" })));
 
   // ---------------------------------------------------------------- risk and cover
   const slider = $<HTMLInputElement>("drop");
@@ -248,7 +299,7 @@ export async function mountCheck(root: HTMLElement): Promise<() => void> {
     slider.style.setProperty("--fill", `${(drop / MAX_DROP) * 100}%`);
     $("r-vault").textContent = dollarsShort(r.vaultLoss);
     $("r-share").textContent = percent(r.share);
-    $("r-mine-k").textContent = `Your ${dollars(deposit)} would lose`;
+    $("r-mine-k").textContent = `your ${dollars(deposit)} would lose`;
     $("r-mine").textContent = dollars(r.yourLoss);
     const worst = lossAt(book, token, MAX_DROP);
     $("r-note").textContent =
@@ -272,6 +323,9 @@ export async function mountCheck(root: HTMLElement): Promise<() => void> {
         dl(`At a ${percent(drop, 0)} drop it pays you`, `<b>${dollars(r.payout)}</b>`) +
         dl("How it pays", "Pays automatically from Morpho's on-chain data")
       : dl("Why", "Nothing in this vault can lose money in the test, so there is nothing to price.");
+    const stamp = $("c-stamp");
+    stamp.hidden = !priced || r.payout < 0.5;
+    stamp.textContent = `Pays you ${dollars(r.payout)} at a ${percent(drop, 0)} drop`;
     $("c-high").hidden = !(priced && (vault.rate as number) > HIGH_RATE);
     if (loans && dialog.open && drawerOf() === "loans") loans.draw(vault, drop);
   }
