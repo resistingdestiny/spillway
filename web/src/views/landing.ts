@@ -11,7 +11,7 @@ import replay from "../../../contracts/replay/testnet-wstETH-WETH-unrealised-25.
 import * as Vaults from "../vaults.js";
 import { dollarsShort, loadBook } from "../vaults.js";
 import * as hero from "./hero.js";
-import { REPO } from "./verify.js";
+import { FOOTER, onFooterAsk } from "./footer.js";
 
 const PAID = replay.onChain.paid.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const CLAIM_TX = `${deployment.explorer}/tx/${deployment.events.claimShortfall}`;
@@ -89,25 +89,12 @@ const VIEW = `
       </div>
     </section>
 
-    <footer class="foot">
-      <div class="wrap foot-grid">
-        <div class="foot-brand">
-          <span class="brand-name">Spillway</span>
-          <p>Insurance for Morpho vaults on Monad. Built for Monad Metropolis, October 2026.</p>
-        </div>
-        <nav aria-label="Product"><h3>Product</h3><a href="#/check">Check a vault</a><button type="button" class="foot-ask" data-ask>Ask Spillway</button><a href="#/perpl">Perpl</a></nav>
-        <nav aria-label="Proof"><h3>Proof</h3><a href="#/check/proof">Testnet payout</a><a href="#/check/verify">Rerun the numbers</a></nav>
-        <nav aria-label="Code"><h3>Code</h3><a href="${REPO}" ${ext}>GitHub</a></nav>
-      </div>
-    </footer>
+    ${FOOTER}
   </div>`;
 
 export async function mountLanding(root: HTMLElement): Promise<() => void> {
   root.innerHTML = VIEW;
-  const cleanups: (() => void)[] = [];
-  const onAsk = (e: Event) => (e.target as HTMLElement).closest("[data-ask]") && document.querySelector<HTMLButtonElement>(".ask-fab")?.click();
-  root.addEventListener("click", onAsk);
-  cleanups.push(() => root.removeEventListener("click", onAsk));
+  const cleanups: (() => void)[] = [onFooterAsk(root)];
 
   // The story loads beside the data it draws.
   const [book, story] = await Promise.all([loadBook(), import("./story.js")]);

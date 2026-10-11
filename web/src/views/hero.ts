@@ -3,30 +3,9 @@
 // money, what cover costs and a link into the checker. Cycles through the vaults on its own until
 // the visitor points at, focuses or clicks one.
 
-import { type Book, DEFAULT_VAULT, type Vault, dollarsShort, escapeHtml, findVault, firstLoss, percent, riskLevel, yearly } from "../vaults.js";
+import { type Sprite, cast } from "../landscape.js";
+import { type Book, type Vault, dollarsShort, escapeHtml, firstLoss, percent, riskLevel, yearly } from "../vaults.js";
 
-interface Sprite {
-  file: string;
-  /** Left, top and width in stage units (the stage is 1200 by 500), and the image's own aspect. */
-  x: number;
-  y: number;
-  w: number;
-  aspect: number;
-  /** Where the card points, in stage units. */
-  ax: number;
-  ay: number;
-}
-
-const DAM: Sprite = { file: "dam", x: 372, y: 168, w: 456, aspect: 500 / 1200, ax: 720, ay: 214 };
-/** The other vaults, biggest first, take these in turn. */
-const OTHERS: Sprite[] = [
-  { file: "tanks", x: 112, y: 214, w: 214, aspect: 557 / 640, ax: 248, ay: 250 },
-  { file: "reservoir", x: 846, y: 150, w: 176, aspect: 529 / 640, ax: 880, ay: 190 },
-  { file: "pump-house", x: 1010, y: 248, w: 156, aspect: 598 / 600, ax: 1060, ay: 290 },
-  { file: "water-tower", x: 300, y: 62, w: 98, aspect: 1005 / 520, ax: 376, ay: 150 },
-  { file: "lock", x: 24, y: 384, w: 236, aspect: 317 / 760, ax: 200, ay: 410 },
-  { file: "sluice", x: 852, y: 330, w: 118, aspect: 596 / 560, ax: 880, ay: 370 },
-];
 const CLOUDS: [number, number, number][] = [
   [150, 40, 92],
   [470, 70, 70],
@@ -52,14 +31,8 @@ const RIVER = `<svg class="land-ground" viewBox="0 0 1200 500" preserveAspectRat
   <path class="land-river" d="M560 372c-30 30 40 50 10 80s-80 30-60 60h120c-10-30 60-40 50-70s-60-50-40-70z" fill="url(#land-w)"/>
 </svg>`;
 
-/** Sprite and vault pairs: the default vault on the dam, the next six by deposits around it. */
-function cast(book: Book): [Sprite, Vault][] {
-  const dam = findVault(book, DEFAULT_VAULT);
-  const rest = book.vaults.filter((v) => v !== dam).slice(0, OTHERS.length);
-  return [[DAM, dam] as [Sprite, Vault], ...rest.map((v, i) => [OTHERS[i] as Sprite, v] as [Sprite, Vault])];
-}
-
-function card(book: Book, v: Vault): string {
+/** A vault's card: what it holds, where it first loses money and what cover costs. The landing page adds a link into the checker. */
+export function vaultCard(book: Book, v: Vault, link = true): string {
   const t = v.tokens[0];
   const first = t ? firstLoss(book, t) : null;
   const level = v.rate === null ? null : riskLevel(v.rate);
@@ -71,7 +44,7 @@ function card(book: Book, v: Vault): string {
       <li>${v.rate === null ? "Not priced" : `Cover ${yearly(v.rate)} a year`}</li>
     </ul>
     ${level ? `<span class="hc-badge ${level}">${level} risk</span>` : ""}
-    <a class="hc-act" href="#/check?vault=${v.address}">Check this vault <span aria-hidden="true">&rarr;</span></a>`;
+    ${link ? `<a class="hc-act" href="#/check?vault=${v.address}">Check this vault <span aria-hidden="true">&rarr;</span></a>` : ""}`;
 }
 
 /** The landscape's markup, before the data arrives: the ground, clouds and birds. */
@@ -96,6 +69,28 @@ export function mountLand(root: HTMLElement, book: Book): () => void {
       .join(""),
   );
   const buttons = [...stage.querySelectorAll<HTMLButtonElement>("button.spr")];
+  const land = root.querySelector("#land") as HTMLElement;
+  // On phones the card sits under the landscape: leave room for the tallest one at this width.
+  let fitW = 0;
+  const fit = () => {
+    if (stage.offsetWidth === fitW) return;
+    fitW = stage.offsetWidth;
+    const [html, hidden] = [box.innerHTML, box.hidden];
+    box.style.visibility = "hidden";
+    box.hidden = false;
+    let tallest = 0;
+    for (const [, v] of pairs) {
+      box.innerHTML = vaultCard(book, v);
+      tallest = Math.max(tallest, box.offsetHeight);
+    }
+    box.innerHTML = html;
+    box.hidden = hidden;
+    box.style.visibility = "";
+    land.style.setProperty("--hc-h", `${tallest}px`);
+  };
+  fit();
+  const sized = new ResizeObserver(fit);
+  sized.observe(stage);
   // A missing picture takes its button with it; the headline and buttons above never depend on them.
   let open = -1;
   function show(i: number): void {
@@ -106,7 +101,7 @@ export function mountLand(root: HTMLElement, book: Book): () => void {
     });
     if (i < 0) return void (box.hidden = true);
     const [s, v] = pairs[i] as [Sprite, Vault];
-    box.innerHTML = card(book, v);
+    box.innerHTML = vaultCard(book, v);
     box.setAttribute("aria-label", v.name);
     // Beside the object, on the side with more room, so it never covers the headline or buttons.
     box.style.setProperty("--x", `${((s.ax / 1200) * 100).toFixed(2)}%`);
@@ -150,7 +145,6 @@ export function mountLand(root: HTMLElement, book: Book): () => void {
   const seen = new IntersectionObserver(([e]) => (e?.isIntersecting ? start() : clearInterval(timer)));
   seen.observe(stage);
 
-  const land = root.querySelector("#land") as HTMLElement;
   const onClick = (e: Event) => {
     const b = (e.target as HTMLElement).closest<HTMLButtonElement>("button.spr");
     if (!b) return;
@@ -174,5 +168,6 @@ export function mountLand(root: HTMLElement, book: Book): () => void {
   return () => {
     clearInterval(timer);
     seen.disconnect();
+    sized.disconnect();
   };
 }

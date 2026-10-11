@@ -103,9 +103,8 @@ h1, h2, h3 { margin: 0; }
 }
 @media (max-width: 359px) { .top-cta.btn { display: none; } }
 
-/* The app views keep their own padding inside the frame; the landing page runs edge to edge. */
-.app { position: relative; z-index: 1; width: min(var(--frame), 100% - 2 * var(--edge)); margin: 0 auto; padding: 24px var(--gut) 64px; }
-body[data-view="landing"] .app { width: auto; padding: 0; }
+/* Every view runs edge to edge and centres its own sections in the frame with .wrap. */
+.app { position: relative; z-index: 1; }
 
 /* ------------------------------------------------------------------ shared type and buttons */
 
@@ -197,33 +196,39 @@ body[data-view="landing"] .app { width: auto; padding: 0; }
 .card + .card { margin-top: 12px; }
 .card-head { padding: 16px 16px 0; }
 
-/* ------------------------------------------------------------------ explore views: lending and perpl */
+/* ------------------------------------------------------------------ Perpl: a centred head, the controls beside the picture, the results row */
 
-.explore {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "intro" "chips" "stage" "story" "controls";
-}
-.intro { grid-area: intro; }
-.explore > .chips { grid-area: chips; }
-.explore > .stage { grid-area: stage; }
-.story { grid-area: story; margin: 14px 2px 4px; min-height: 4.4em; }
-.explore > .controls { grid-area: controls; }
+.perpl { overflow-x: clip; }
+.phead { padding-top: 64px; padding-bottom: 44px; }
+.phead .eyebrow { letter-spacing: 0.2em; margin-bottom: 22px; font-variant-numeric: tabular-nums; }
+.phead .headline { font-size: clamp(30px, 6.4vw, 52px); line-height: 1.1; letter-spacing: -0.04em; max-width: 15em; min-height: 2.2em; margin: 0 auto; }
+.phead .headline .skeleton { margin: 0.15em auto; }
+@media (max-width: 759px) { .phead { padding-top: 36px; padding-bottom: 28px; } }
 
+.explore { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; padding-top: 8px; }
+.pctl { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.pctl .sentence { font-size: 16px; line-height: 1.55; color: var(--ink-2); min-height: 3.1em; margin: 0; }
+.explore .stage { border-radius: 0; }
 @media (min-width: 960px) {
-
-  .app { padding-top: 28px; }
-  .explore {
-    grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
-    grid-template-rows: auto auto auto auto 1fr;
-    grid-template-areas: "intro stage" "chips stage" "story stage" "controls stage" ". stage";
-    column-gap: 40px;
-  }
-  .headline { font-size: 28px; margin-bottom: 18px; min-height: 3.6em; }
-  .explore > .chips { flex-wrap: wrap; margin: 0 0 14px; padding: 0; overflow: visible; }
-  .explore > .chips button { height: 30px; padding: 0 12px; font-size: 12.5px; }
-  .story { margin: 4px 0 14px; min-height: 0; }
+  .explore { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 64px; align-items: start; }
+  .pctl { padding-top: 22px; border-top: 1px dashed var(--hair-2); }
+  .pctl .sentence { min-height: 4.7em; }
 }
+
+/* Open interest as a segmented control: joined square buttons on one hairline. */
+.chips.seg { margin: 0; padding: 0; gap: 0; overflow: visible; flex-wrap: wrap; }
+.chips.seg .chips-label { flex: 1 0 100%; margin: 0 0 10px; font-size: 13px; color: var(--ink-2); }
+.chips.seg button { height: 40px; padding: 0 20px; border-radius: 0; border-color: var(--hair-2); margin-left: -1px; }
+.chips.seg button:first-of-type { margin-left: 0; }
+.chips.seg button[aria-pressed="true"] { position: relative; z-index: 1; }
+
+/* The three results as the landing page's numbers row. */
+.pnums { margin-top: 40px; border-top: 1px solid var(--hair); }
+.pnums .counter { flex-direction: column-reverse; justify-content: flex-end; align-items: center; gap: 10px; padding: 28px 6px 26px; text-align: center; }
+.pnums .counter + .counter { border-left: 1px solid var(--hair); }
+.pnums .counter .amount { font-size: clamp(28px, 7.4vw, 64px); font-weight: 300; letter-spacing: -0.04em; line-height: 1; margin: 0; }
+.pnums .counter .what { justify-content: center; font-size: 13px; color: var(--ink-2); max-width: 18em; }
+@media (min-width: 760px) { .pnums .counter { padding: 48px 24px 44px; } }
 
 /* ------------------------------------------------------------------ the picture */
 
@@ -232,7 +237,7 @@ body[data-view="landing"] .app { width: auto; padding: 0; }
 /* On a phone, leave the legend clear of the controls bar on the first screen. */
 @media (max-width: 959px) { .plot { height: clamp(320px, calc(100svh - 440px - var(--bar) + 24px), 560px); } }
 @media (min-width: 960px) {
-  .explore > .stage { height: max(600px, min(880px, calc(100svh - var(--header) - 56px))); position: sticky; top: calc(var(--header) + 28px); }
+  .explore > .stage { height: max(520px, min(680px, calc(100svh - var(--header) - 140px))); }
   .plot { flex: 1; height: auto; }
 }
 
@@ -379,8 +384,8 @@ a.btn { color: #fff; }
 
 /* On a phone the controls are a bar fixed to the bottom, so the basin and the slider share the screen. */
 @media (max-width: 959px) {
-  .explore { padding-bottom: var(--bar); }
-  .explore > .controls {
+  .perpl { padding-bottom: var(--bar); }
+  .explore .controls {
     position: fixed;
     left: 0;
     right: 0;
@@ -499,7 +504,7 @@ a.btn { color: #fff; }
 .steps .step.waiting, .steps .step.sent { color: var(--muted); }
 .steps .step.sent::before { background: var(--ink); }
 
-.failure { max-width: 520px; margin: 40px auto; text-align: center; }
+.failure { max-width: 520px; margin: 40px auto; padding: 0 var(--gut); text-align: center; }
 .failure .headline { min-height: 0; }
 
 /* On a phone the wallet actions fill their row, so the buttons line up. */
@@ -538,16 +543,18 @@ a.btn { color: #fff; }
   overscroll-behavior: contain;
 }
 .drawer::backdrop { background: rgba(11, 13, 16, 0.32); }
-.drawer-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; background: var(--bg); border-bottom: 1px solid var(--hair); }
-.drawer-head .section { font-size: 17px; margin: 0; }
-.drawer-body { padding: 16px 16px 32px; }
+.drawer-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 22px 20px 20px 24px; background: var(--bg); border-bottom: 1px solid var(--hair); }
+.drawer-head .eyebrow { margin-bottom: 10px; }
+.drawer-head .h3 { font-size: clamp(24px, 6vw, 30px); }
+.drawer-body { padding: 20px 24px 40px; }
+@media (max-width: 639px) { .drawer-head { padding: 18px 16px 16px 20px; } .drawer-body { padding: 18px 16px 32px; } }
 .drawer-body[hidden] { display: none; }
 .drawer .card { padding: 16px 16px 6px; }
 .drawer .card + .card { margin-top: 12px; }
 .drawer .hero { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .drawer .hero .stat:first-child { grid-column: 1 / -1; }
 .drawer .hero .stat:first-child .v { font-size: 34px; }
-.close { width: 36px; height: 36px; border-radius: 2px; border: 1px solid var(--hair-2); background: var(--bg); color: var(--ink); display: grid; place-items: center; cursor: pointer; flex: 0 0 auto; }
+.close { width: 40px; height: 40px; border-radius: 0; border: 1px solid var(--hair); background: var(--bg); color: var(--ink); display: grid; place-items: center; cursor: pointer; flex: 0 0 auto; }
 .close:hover { border-color: var(--ink); }
 .close:focus-visible { border-radius: 2px; }
 @media (max-width: 639px) {
@@ -560,15 +567,143 @@ a.btn { color: #fff; }
 .stat .v, .counter .amount, .slider b { font-weight: 300; letter-spacing: -0.04em; }
 .stat { border-radius: 2px; }
 .stat .k, .counter .what { font-weight: 400; }
-.explore > .chips button { border-color: var(--hair); }
-.explore > .stage { border-radius: 2px; }
-.explore .intro .headline { letter-spacing: -0.04em; }
-@media (min-width: 960px) {
-  .explore .headline { font-size: 38px; }
-}
 .drawer { border-radius: 0; }
 .drawer .card { border-radius: 2px; }
 .hero .stat.lime .v { font-weight: 300; }
+
+/* ------------------------------------------------------------------ shared with the landing page */
+
+.center { text-align: center; }
+
+/* Dashed column guides behind a head, fading out at the top and bottom. */
+.guides { position: relative; isolation: isolate; }
+.guides::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(to right, var(--hair-2) 1px, transparent 1px) calc(100% / 12) 0 / calc(100% / 12) 100%;
+  -webkit-mask: repeating-linear-gradient(to bottom, #000 0 3px, transparent 3px 7px), linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+  -webkit-mask-composite: source-in;
+  mask: repeating-linear-gradient(to bottom, #000 0 3px, transparent 3px 7px), linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+  mask-composite: intersect;
+  opacity: 0.7;
+}
+@media (max-width: 759px) { .guides::before { display: none; } }
+
+/* Full-bleed navy bands. */
+
+.band.dark { position: relative; z-index: 1; background: var(--navy); color: #e6edf4; }
+.band.dark .band-wrap { position: relative; padding-top: 104px; padding-bottom: 104px; }
+@media (min-width: 760px) {
+  .band.dark .band-wrap { border-left: 1px solid rgba(255, 255, 255, 0.07); border-right: 1px solid rgba(255, 255, 255, 0.07); padding-top: 136px; padding-bottom: 136px; }
+}
+/* Fine dot texture at the band's top and bottom edges. */
+.band.dark .band-wrap::before, .band.dark .band-wrap::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: radial-gradient(circle, rgba(170, 196, 230, 0.22) 0.8px, transparent 1.2px) 0 0 / 8px 8px;
+  pointer-events: none;
+}
+.band.dark .band-wrap::before { top: 0; -webkit-mask: linear-gradient(#000, transparent); mask: linear-gradient(#000, transparent); }
+.band.dark .band-wrap::after { bottom: 0; -webkit-mask: linear-gradient(transparent, #000); mask: linear-gradient(transparent, #000); }
+.band.dark .h2 { color: #fff; }
+.band-text { font-size: 16px; line-height: 1.6; color: #b4c3d3; margin: 22px 0 32px; max-width: 30em; }
+.band .btn.light svg { margin-left: 2px; }
+
+.h4 { font-size: 22px; font-weight: 300; letter-spacing: -0.03em; line-height: 1.2; margin: 0 0 8px; }
+
+/* Big light numbers in cells divided by hairlines. */
+.numbers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 0; border-bottom: 1px solid var(--hair); }
+.num { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 32px 6px; text-align: center; min-width: 0; }
+.num + .num { border-left: 1px solid var(--hair); }
+.num .v { font-size: clamp(28px, 7.4vw, 64px); font-weight: 300; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+.num .k { font-size: 13px; color: var(--ink-2); max-width: 18em; text-wrap: balance; }
+@media (min-width: 760px) {
+  .numbers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .num { padding: 56px 24px 52px; }
+  .num + .num { border-top: 0; border-left: 1px solid var(--hair); }
+}
+
+/* ------------------------------------------------------------------ footer */
+
+.foot { position: relative; z-index: 1; background: var(--bg); border-top: 1px solid var(--hair); }
+.foot-grid { display: grid; gap: 32px; padding-top: 48px; padding-bottom: 56px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.foot-brand { grid-column: 1 / -1; }
+.foot-brand .brand-name { font-size: 18px; font-weight: 500; letter-spacing: -0.03em; }
+.foot-brand p { margin: 10px 0 0; font-size: 13.5px; color: var(--muted); max-width: 22em; }
+.foot nav { display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
+.foot nav h3 { font-size: 11.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.foot nav a, .foot-ask { color: var(--ink-2); text-decoration: none; font: inherit; background: none; border: 0; padding: 0; text-align: left; cursor: pointer; }
+.foot nav a:hover, .foot-ask:hover { color: var(--ink); text-decoration: underline; }
+@media (min-width: 760px) {
+  .foot .wrap { border-left: 1px solid var(--hair); border-right: 1px solid var(--hair); }
+  .foot-grid { grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)); padding-top: 64px; padding-bottom: 80px; }
+  .foot-brand { grid-column: auto; }
+}
+
+/* A vault's card: name, facts and risk badge, with a dot and stem pointing at its object. */
+.hcard {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  z-index: 1000;
+  width: 232px;
+  transform: translate(26px, -50%);
+  background: #fff;
+  border: 1px solid var(--hair-2);
+  border-radius: 2px;
+  box-shadow: 0 14px 34px rgba(13, 27, 42, 0.12);
+  padding: 14px 16px 12px;
+  text-align: left;
+  transition: opacity 200ms ease-out, translate 200ms ease-out;
+}
+@starting-style { .hcard { opacity: 0; translate: 0 6px; } }
+.hcard[hidden] { display: none; }
+.hcard[data-side="left"] { transform: translate(calc(-100% - 26px), -50%); }
+/* The dot sits on the object; a short stem joins it to the card. */
+.hcard::after { content: ""; position: absolute; top: 50%; left: -31px; width: 10px; height: 10px; margin-top: -5px; border-radius: 50%; background: var(--water); box-shadow: 0 0 0 4px rgba(31, 95, 214, 0.2); }
+.hcard::before { content: ""; position: absolute; top: 50%; left: -22px; width: 22px; height: 1px; background: var(--water); opacity: 0.5; }
+.hcard[data-side="left"]::after { left: auto; right: -31px; }
+.hcard[data-side="left"]::before { left: auto; right: -22px; }
+.hc-name { margin: 0 0 8px; font-size: 13px; color: var(--ink-2); }
+.hc-facts { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 4px; font-size: 13px; color: var(--ink); }
+.hc-facts li { display: flex; align-items: center; gap: 8px; }
+.hc-facts li::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--water); flex: 0 0 auto; }
+.hc-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+.hc-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.hc-badge.low { background: rgba(198, 244, 50, 0.38); color: #3d5300; }
+.hc-badge.medium { background: #fdf0d5; color: #8a5300; }
+.hc-badge.high { background: #fde4e2; color: #b3261e; }
+.hc-act { display: block; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--hair); font-size: 13px; font-weight: 500; color: var(--ink); text-decoration: none; }
+.hc-act:hover { text-decoration: underline; }
+
+/* A numbered step: a mono number over a dashed rule, a light title and a muted sentence. */
+.ss { padding-top: 18px; border-top: 1px dashed var(--hair-2); }
+.ss-n { display: block; font-family: var(--mono); font-size: 12px; color: var(--ink-2); margin-bottom: 10px; }
+.ss p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--ink-2); }
+
+/* The tilted lime stamp the story ends on, also the checker's payout. */
+.stamp {
+  display: inline-block;
+  padding: 12px 22px;
+  background: var(--accent);
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  border-radius: 2px;
+  box-shadow: 0 16px 40px rgba(13, 27, 42, 0.22);
+  outline: 2px solid var(--ink);
+  outline-offset: -6px;
+  transform: rotate(-6deg);
+  pointer-events: none;
+}
 
 /* ------------------------------------------------------------------ the floating Ask button and its panel */
 

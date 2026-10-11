@@ -2,24 +2,7 @@
    full-bleed navy bands with dot texture at their edges, and mist panels. */
 
 .landing { overflow-x: clip; }
-.center { text-align: center; }
 
-/* Dashed column guides behind a head, fading out at the top and bottom. */
-.guides { position: relative; isolation: isolate; }
-.guides::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background: linear-gradient(to right, var(--hair-2) 1px, transparent 1px) calc(100% / 12) 0 / calc(100% / 12) 100%;
-  -webkit-mask: repeating-linear-gradient(to bottom, #000 0 3px, transparent 3px 7px), linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
-  -webkit-mask-composite: source-in;
-  mask: repeating-linear-gradient(to bottom, #000 0 3px, transparent 3px 7px), linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
-  mask-composite: intersect;
-  opacity: 0.7;
-}
-@media (max-width: 759px) { .guides::before { display: none; } }
 
 /* ------------------------------------------------------------------ hero */
 
@@ -38,34 +21,11 @@
   .lhero .cta-row .btn { flex: 1 1 0; padding: 0 12px; }
 }
 
-/* ------------------------------------------------------------------ dark bands */
-
-.band.dark { position: relative; z-index: 1; background: var(--navy); color: #e6edf4; }
-.band.dark .band-wrap { position: relative; padding-top: 104px; padding-bottom: 104px; }
-@media (min-width: 760px) {
-  .band.dark .band-wrap { border-left: 1px solid rgba(255, 255, 255, 0.07); border-right: 1px solid rgba(255, 255, 255, 0.07); padding-top: 136px; padding-bottom: 136px; }
-}
-/* Fine dot texture at the band's top and bottom edges. */
-.band.dark .band-wrap::before, .band.dark .band-wrap::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 64px;
-  background: radial-gradient(circle, rgba(170, 196, 230, 0.22) 0.8px, transparent 1.2px) 0 0 / 8px 8px;
-  pointer-events: none;
-}
-.band.dark .band-wrap::before { top: 0; -webkit-mask: linear-gradient(#000, transparent); mask: linear-gradient(#000, transparent); }
-.band.dark .band-wrap::after { bottom: 0; -webkit-mask: linear-gradient(transparent, #000); mask: linear-gradient(transparent, #000); }
-.band.dark .h2 { color: #fff; }
-.band-text { font-size: 16px; line-height: 1.6; color: #b4c3d3; margin: 22px 0 32px; max-width: 30em; }
-.band .btn.light svg { margin-left: 2px; }
 
 /* ------------------------------------------------------------------ sections */
 
 .landing > section:not(.band):not(.lhero) { position: relative; z-index: 1; }
 
-.h4 { font-size: 22px; font-weight: 300; letter-spacing: -0.03em; line-height: 1.2; margin: 0 0 8px; }
 
 /* The figures under the hero. */
 .figures { padding-top: 0; }
@@ -87,17 +47,6 @@
 .faq .accordion details p { font-size: 15px; margin: -4px 0 20px 22px; max-width: 38em; }
 @media (min-width: 960px) { .faq-wrap { grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 64px; padding-top: 128px; padding-bottom: 128px; } }
 
-/* Big light numbers in cells divided by hairlines. */
-.numbers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 0; border-bottom: 1px solid var(--hair); }
-.num { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 32px 6px; text-align: center; min-width: 0; }
-.num + .num { border-left: 1px solid var(--hair); }
-.num .v { font-size: clamp(28px, 7.4vw, 64px); font-weight: 300; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
-.num .k { font-size: 13px; color: var(--ink-2); max-width: 18em; text-wrap: balance; }
-@media (min-width: 760px) {
-  .numbers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .num { padding: 56px 24px 52px; }
-  .num + .num { border-top: 0; border-left: 1px solid var(--hair); }
-}
 
 .accordion { border-top: 1px solid var(--hair); margin-bottom: 32px; }
 .accordion details { border-bottom: 1px solid var(--hair); }
@@ -110,18 +59,4 @@
 
 .band.closing .band-wrap { display: flex; flex-direction: column; align-items: center; gap: 32px; }
 .band.closing .h2 { max-width: 12em; }
-.foot { position: relative; z-index: 1; background: var(--bg); border-top: 1px solid var(--hair); }
-.foot-grid { display: grid; gap: 32px; padding-top: 48px; padding-bottom: 56px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.foot-brand { grid-column: 1 / -1; }
-.foot-brand .brand-name { font-size: 18px; font-weight: 500; letter-spacing: -0.03em; }
-.foot-brand p { margin: 10px 0 0; font-size: 13.5px; color: var(--muted); max-width: 22em; }
-.foot nav { display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
-.foot nav h3 { font-size: 11.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
-.foot nav a, .foot-ask { color: var(--ink-2); text-decoration: none; font: inherit; background: none; border: 0; padding: 0; text-align: left; cursor: pointer; }
-.foot nav a:hover, .foot-ask:hover { color: var(--ink); text-decoration: underline; }
-@media (min-width: 760px) {
-  .foot .wrap { border-left: 1px solid var(--hair); border-right: 1px solid var(--hair); }
-  .foot-grid { grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)); padding-top: 64px; padding-bottom: 80px; }
-  .foot-brand { grid-column: auto; }
-}
 
