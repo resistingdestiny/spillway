@@ -22,6 +22,8 @@ const server = askServer({
     ratePerWindow: int(env.ASK_RATE_LIMIT, 8),
     windowMs: int(env.ASK_RATE_WINDOW_MS, 60_000),
     maxInFlight: int(env.ASK_MAX_IN_FLIGHT, 4),
+    perDay: int(env.ASK_DAILY_LIMIT, 400),
+    perIpDay: int(env.ASK_IP_DAILY_LIMIT, 40),
   },
   trustProxy: env.ASK_TRUST_PROXY === "1",
   allowOrigin: env.ASK_ALLOW_ORIGIN,

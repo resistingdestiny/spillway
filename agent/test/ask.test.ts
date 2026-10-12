@@ -155,6 +155,30 @@ describe("the server", () => {
     expect((await post(url, { question: "d" })).status).toBe(200);
   });
 
+  it("caps the questions in a day", async () => {
+    let t = Date.UTC(2026, 9, 12, 23, 59);
+    const url = await start({ answer: async () => ({ answer: "ok", tools: [] }), limits: { perDay: 2, ratePerWindow: 100 }, now: () => t });
+    expect((await post(url, { question: "a" })).status).toBe(200);
+    expect((await post(url, { question: "b" })).status).toBe(200);
+    const capped = await post(url, { question: "c" });
+    expect(capped.status).toBe(503);
+    expect((await capped.json()).error).toBe("Ask has answered all the questions it can for today. Try again tomorrow.");
+    t += 60_000;
+    expect((await post(url, { question: "d" })).status).toBe(200);
+  });
+
+  it("caps one IP's questions in a day", async () => {
+    let t = 0;
+    const url = await start({ answer: async () => ({ answer: "ok", tools: [] }), limits: { perIpDay: 2, ratePerWindow: 100 }, now: () => t });
+    expect((await post(url, { question: "a" })).status).toBe(200);
+    expect((await post(url, { question: "b" })).status).toBe(200);
+    const capped = await post(url, { question: "c" });
+    expect(capped.status).toBe(429);
+    expect((await capped.json()).error).toBe("That is all the questions for today. Try again tomorrow.");
+    t += 86_400_000;
+    expect((await post(url, { question: "d" })).status).toBe(200);
+  });
+
   it("caps the input", async () => {
     const url = await start({ answer: async () => ({ answer: "ok", tools: [] }) });
     expect((await post(url, { question: "x".repeat(501) })).status).toBe(400);

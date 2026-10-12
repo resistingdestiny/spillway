@@ -69,6 +69,8 @@ Tests: `pnpm --filter @spillway/agent test`. The live test calls Bedrock and the
 | `ASK_RATE_LIMIT` | `8` | Questions per IP per window |
 | `ASK_RATE_WINDOW_MS` | `60000` | Rate limit window |
 | `ASK_MAX_IN_FLIGHT` | `4` | Questions answered at once, across every IP |
+| `ASK_DAILY_LIMIT` | `400` | Questions answered per UTC day, across every IP; `0` for no cap |
+| `ASK_IP_DAILY_LIMIT` | `40` | Questions per IP in any 24 hours |
 | `ASK_TRUST_PROXY` | unset | `1` to take the client IP from the last `X-Forwarded-For` entry, behind your own proxy only |
 | `ASK_ALLOW_ORIGIN` | unset | An origin allowed to call the API from a browser on another host |
 | `MONAD_TESTNET_RPC` | `https://testnet-rpc.monad.xyz` | Monad testnet RPC |
@@ -77,6 +79,6 @@ Tests: `pnpm --filter @spillway/agent test`. The live test calls Bedrock and the
 
 - Binds to 127.0.0.1 unless told otherwise.
 - A question is at most 500 characters, a body at most 16 KB, and only the last 6 turns of history are kept, at 1,500 characters each.
-- 8 questions per IP per minute (HTTP 429 with `Retry-After`), and at most 4 in flight (HTTP 503).
+- 8 questions per IP per minute (HTTP 429 with `Retry-After`) and 40 in any 24 hours (HTTP 429), at most 4 in flight (HTTP 503), and 400 a day across everyone (HTTP 503).
 - At most 6 model calls per question and 45 s in all. The tools only read: the snapshot, and testnet through `eth_call` and receipts.
 - Errors reach the client as one plain sentence. The server logs only an error's name and message, never a stack, and no credentials are read or written by the code.

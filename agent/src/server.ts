@@ -1,5 +1,5 @@
-// The HTTP side: POST /api/ask and GET /api/health, with an input cap, a per-IP rate limit and a cap
-// on questions in flight. Errors go out as one plain sentence; details stay in the server log.
+// The HTTP side: POST /api/ask and GET /api/health, with an input cap, a per-IP rate limit, a cap
+// on questions in flight and a cap on questions per day. Errors go out as one plain sentence; details stay in the server log.
 
 import { type IncomingMessage, type Server, type ServerResponse, createServer } from "node:http";
 import { type AskInput, type AskOutput, type Turn } from "./ask.js";
@@ -17,6 +17,10 @@ export interface Limits {
   windowMs: number;
   /** Questions answered at once, across every IP. */
   maxInFlight: number;
+  /** Questions answered per UTC day, across every IP; 0 for no cap. */
+  perDay: number;
+  /** Questions per IP in any 24 hours. */
+  perIpDay: number;
 }
 
 export const DEFAULT_LIMITS: Limits = {
@@ -27,6 +31,8 @@ export const DEFAULT_LIMITS: Limits = {
   ratePerWindow: 8,
   windowMs: 60_000,
   maxInFlight: 4,
+  perDay: 400,
+  perIpDay: 40,
 };
 
 export interface ServerOptions {
@@ -130,7 +136,11 @@ function send(res: ServerResponse, status: number, body: unknown, headers: Recor
 export function askServer(opts: ServerOptions): Server {
   const limits = { ...DEFAULT_LIMITS, ...opts.limits };
   const allow = rateLimiter(limits.ratePerWindow, limits.windowMs, opts.now);
+  const allowDay = rateLimiter(limits.perIpDay, 86_400_000, opts.now);
   let inFlight = 0;
+  const now = opts.now ?? Date.now;
+  let day = "";
+  let today = 0;
   const cors: Record<string, string> = opts.allowOrigin
     ? { "access-control-allow-origin": opts.allowOrigin, "access-control-allow-methods": "POST, GET, OPTIONS", "access-control-allow-headers": "content-type", vary: "origin" }
     : {};
@@ -149,12 +159,21 @@ export function askServer(opts: ServerOptions): Server {
       }
       if (path !== "/api/ask") throw new HttpError(404, "Not found.");
       if (req.method !== "POST") throw new HttpError(405, "Use POST.");
-      if (!allow(clientIp(req, opts.trustProxy ?? false))) {
+      const ip = clientIp(req, opts.trustProxy ?? false);
+      if (!allow(ip)) {
         send(res, 429, { error: "Too many questions. Try again in a minute." }, { ...cors, "retry-after": String(Math.ceil(limits.windowMs / 1000)) });
+        return;
+      }
+      if (!allowDay(ip)) {
+        send(res, 429, { error: "That is all the questions for today. Try again tomorrow." }, cors);
         return;
       }
       const input = parseAsk(await readBody(req, limits.maxBody), limits);
       if (inFlight >= limits.maxInFlight) throw new HttpError(503, "Busy right now. Try again shortly.");
+      const d = new Date(now()).toISOString().slice(0, 10);
+      if (d !== day) (day = d), (today = 0);
+      if (limits.perDay > 0 && today >= limits.perDay) throw new HttpError(503, "Ask has answered all the questions it can for today. Try again tomorrow.");
+      today++;
       inFlight++;
       try {
         send(res, 200, await opts.answer(input), cors);
