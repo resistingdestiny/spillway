@@ -7,7 +7,7 @@ export const FOOTER = `
       <div class="wrap foot-grid">
         <div class="foot-brand">
           <span class="brand-name">Spillway</span>
-          <p>Insurance for Morpho vaults on Monad. Built for Monad Metropolis, October 2026.</p>
+          <p>Protection for Morpho vaults on Monad. Built for Monad Metropolis, October 2026.</p>
         </div>
         <nav aria-label="Product"><h3>Product</h3><a href="#/check">Check a vault</a><button type="button" class="foot-ask" data-ask>Ask Spillway</button><a href="#/perpl">Perpl</a></nav>
         <nav aria-label="Proof"><h3>Proof</h3><a href="#/check/proof">Testnet payout</a><a href="#/check/verify">Rerun the numbers</a></nav>

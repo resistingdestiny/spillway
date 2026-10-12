@@ -39,7 +39,7 @@ const VIEW = `
         <div class="hero-scene" id="hero-scene">
           <div class="wrap hero-wrap guides">
             <div class="eyebrow">Morpho vaults on Monad</div>
-            <h1 class="h1" id="hero-h">Insurance for your Monad lending deposits</h1>
+            <h1 class="h1" id="hero-h">Protection for your Monad lending deposits</h1>
             <p class="hero-sub">See what a sudden crash would cost your vault, and cover it. Claims pay out automatically.</p>
             <div class="cta-row">
               <a class="btn" href="#/check">Check your vault</a>
