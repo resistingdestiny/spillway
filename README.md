@@ -1,10 +1,21 @@
 # Spillway
 
-Cover for Monad lending depositors, priced from a public stress test anyone can rerun, and paid from chain state without a vote.
+Protection for money deposited in Monad's Morpho lending vaults. It is priced from a public test of every loan in every vault, and it pays automatically from on-chain data, with no claim form and no vote.
 
-When a borrower's collateral fails, the loss lands on the people who deposited. Spillway tests every Morpho market on Monad position by position, prices cover for each vault's depositors from that test, and pays when Morpho's own data shows the loss.
+When a borrower's collateral suddenly drops in price, some loans go bad and the vault's depositors lose money. Spillway tests every Morpho market on Monad position by position, prices protection for each vault's depositors from that test, and pays when Morpho's own data shows the loss.
 
 Built for the Monad Metropolis hackathon.
+
+![The home page: each object in the landscape is a real Monad vault](docs/img/home.png)
+
+## Try it
+
+- **Check a vault.** Pick a vault, drag the price drop, and see what the vault and your deposit would lose and what protection costs. Steakhouse Prime ETH at a 20% drop of wstETH: the vault loses $3.84M, $10,000 in it loses $992, and protection costs $71 a year.
+- **Try the cover on testnet.** Connect a wallet on Monad testnet, take free test dollars, back the cover, and send the claim for the covered depositor. The contract checks the loss from Morpho's data and pays.
+- **Ask Spillway.** Ask a question in plain English and get an answer worked out with the same engine, with the tools it used shown under it (`agent/`).
+- **Check the numbers.** "How we know" lists the snapshot, its hash and the command that reruns it.
+
+![Check a vault: what a 20% drop of wstETH would cost Steakhouse Prime ETH and a $10,000 deposit](docs/img/check.png)
 
 ## What the test shows (Monad, 6 October 2026)
 
@@ -58,7 +69,8 @@ Its first payout (transaction `0x9d033418e9f67bc6faaadd095dcfc3aefc1cf48f83ce8c8
 | `snapshot/` | Rust reader for Perpl through its SDK |
 | `watcher/` | Keeper and scenario runner for the Perpl vault |
 | `cre/` | Chainlink CRE workflow that claims the Morpho cover's losses on Monad testnet, unwritten ones included |
-| `web/` | The app: a flood picture per market, the Perpl tab and a verify page |
+| `web/` | The site: the home page, Check a vault, the testnet cover, the Perpl tab and the proof drawers |
+| `agent/` | Ask Spillway: a small server that answers questions on Amazon Bedrock with the engine and testnet as its tools |
 
 ## Run it
 
